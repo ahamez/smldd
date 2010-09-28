@@ -9,7 +9,4 @@ sig
 
   val apply         : operation -> result
 
-  (*val toString      : operation -> string  *)
-  (*val resToString   : result    -> string*)
-  
 end
