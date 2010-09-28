@@ -3,7 +3,7 @@
 
 signature SDD =
 sig
-  
+
   type SDD
   type variable
   type valuation
@@ -38,7 +38,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Define an SDD *)
   structure Definition =
   struct
-  
+
     datatype t    = SDD of ( sdd * Word32.word ) (* Word32.word: hash value *)
     and sdd       = Zero
                   | One
@@ -48,7 +48,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   | HNode of { variable : Variable.t
                              , alpha : ( t ref * t ref ) Vector.vector
                              }
-  
+
     (* Compare two SDDs *)
     fun eq (l,r) =
     let
@@ -59,7 +59,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         false
       else
         case lsdd of
-          
+
           Zero => (case rsdd of
                     Zero  => true
                   | _     => false
@@ -162,7 +162,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-  
+
   (* Return a node with a nested node on arc *)
   fun node  ( vr : Variable.t, nested : SDD ref , next : SDD ref )
             : SDD ref
@@ -186,24 +186,24 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-  
+
   local (* Valuations manipulations *)
-  
+
     (* Operations to manipulate valuations. Used by the cache. *)
     structure ValuationOperations (* : OPERATION *) =
     struct
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       type result        = valuation ref
       datatype operation = Union of valuation ref list
                          | Inter of valuation ref list
                          | Diff  of valuation ref * valuation ref
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun eq (l,r) =
         case l of
           Union(xs) =>    (case r of
@@ -218,10 +218,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                             Diff(rx,ry) => lx = rx andalso ly = ry
                           | _ => false
                           )
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun hash x =
         let
           (* Valuation.hash(!x) -> problem: we have to compute again
@@ -238,38 +238,38 @@ functor SDDFun ( structure Variable  : VARIABLE
                                                  , Valuation.hash(!r))
                                     )
         end
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun apply operation =
-    
+
         case operation of
-    
+
           Union []     => raise DoNotPanic
         | Union(x::xs) =>
             ValUT.unify(foldl ( fn (x,res) => Valuation.union(!x,res) )
                               (!x)
                               xs
                         )
-    
+
         | Inter []     => raise DoNotPanic
         | Inter(x::xs) =>
             ValUT.unify(foldl ( fn (x,res) => Valuation.intersection(!x,res) )
                               (!x) 
                               xs
                         )
-    
+
         | Diff(x,y)    => ValUT.unify( Valuation.difference( !x, !y) )
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
     end (* end structure ValuationOperations *)
-    
+
     (*----------------------------------------------------------------------*)
     (*----------------------------------------------------------------------*)
-    
+
     (* Cache of operations on valuations *)
     structure ValOpCache = CacheFun( structure Operation = ValuationOperations )
 
@@ -312,10 +312,10 @@ functor SDDFun ( structure Variable  : VARIABLE
     (* Operations to manipulate SDD. Used by the cache. *)
     structure SDDOperations (* : OPERATION *) =
     struct
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-      
+
       type result        = SDD ref
       datatype operation = Union of
                               ( SDD ref list * (operation -> result) )
@@ -323,23 +323,23 @@ functor SDDFun ( structure Variable  : VARIABLE
                               ( SDD ref list * (operation -> result) )
                          | Diff  of
                               ( SDD ref * SDD ref * (operation -> result))
-          
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       (* Check compatibility of operands *)
       fun check(x,xs) =
-    
+
         foldl (fn (x,y) =>
-    
+
                 case !x of
-    
+
                     SDD(One,_)  =>
                       (case !y of
                         SDD(One,_) => y
                       | _ => raise IncompatibleSDD
                       )
-    
+
                   | SDD(Node{variable=var1,...},_) =>
                       (case !y of
                         SDD(Node{variable=var2,...},_) =>
@@ -349,7 +349,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                             y
                       | _ => raise IncompatibleSDD
                       )
-    
+
                   | SDD(HNode{variable=var1,...},_) =>
                       (case !y of
                         SDD(HNode{variable=var2,...},_) =>
@@ -359,40 +359,40 @@ functor SDDFun ( structure Variable  : VARIABLE
                             y
                       | _ => raise IncompatibleSDD
                       )
-    
+
                   (* Zero should have been filtered out *)
                   | SDD(Zero,_) => raise DoNotPanic
               )
               x
               xs
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun union( [], _ )                  = raise DoNotPanic
       |   union( (xs as (y::ys)), lookup) =
       let
-    
+
         (* Remove |0| *)
         val xs' = List.filter (fn x => case !x of 
                                           SDD(Zero,_) => false
                                         | _           => true
                               ) 
                               xs
-    
+
          (* Check operands compatibility *)
          val _ = check( y, xs )
       in
         raise NotYetImplemented
       end (* end fun union *)
-        
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun intersection( [], _ )                  = raise DoNotPanic
       |   intersection( (xs as (y::ys)), lookup) =
       let
-    
+
         (* Test if there are any zero in operands *)
         val has_zero = case List.find (fn x => case !x of
                                                   SDD(Zero,_) => true
@@ -402,7 +402,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                        of
                           NONE    => false
                         | SOME _  => true
-    
+
       in
         (* Intersection with |0| is always |0| *)
         if has_zero then
@@ -412,26 +412,26 @@ functor SDDFun ( structure Variable  : VARIABLE
           check( y, ys);
           raise NotYetImplemented
       end (* end fun intersection *) 
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun difference( (l,r), lookup ) =
-    
+
         case !l of
-    
+
           SDD(Zero,_) => (case !r of
                             SDD(Zero,_) => zero
                           | SDD(One,_)  => one
                           | _           => raise IncompatibleSDD
                           )
-    
+
         | SDD(One,_)  => (case !r of
                             SDD(Zero,_) => one
                           | SDD(One,_)  => zero
                           | _           => raise IncompatibleSDD
                           )
-    
+
         | SDD( Node{variable=lvr,alpha=lalpha}, _ ) =>
             (case !r of
               SDD(Zero,_)       => raise IncompatibleSDD
@@ -443,25 +443,25 @@ functor SDDFun ( structure Variable  : VARIABLE
                 else
                   raise NotYetImplemented
             )
-    
+
         | SDD(HNode{variable=lvr,alpha=lalpha},_) =>
             raise NotYetImplemented
-    
+
       (* end fun difference *)
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       (* Apply an SDD operation. *)
       fun apply x =
         case x of
           Union(xs,lookup)  => union( xs, lookup )
         | Inter(xs,lookup)  => intersection( xs, lookup )
         | Diff(x,y,lookup)  => difference( (x,y), lookup)
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
       fun hash x =
         let
           fun hash_operands( h0, xs ) = 
@@ -475,10 +475,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                                                     , Definition.hash(!r) )
                                        )
         end
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-      
+
       fun eq (x,y) =
         case x of
           Union( xs, _ )    =>  (case y of
@@ -493,10 +493,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                                   Diff( yl, yr, _ ) => xl = yl andalso xr = yr
                                 | _ => false
                                 )
-    
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-    
+
     end (* end struct SDDOperations *)
 
     (*--------------------------------------------------------------------*)
@@ -507,7 +507,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (* Let operations in Op call the cache *)
     val lookup_cache    = SDDOpCache.lookup
-    
+
     (* Sort operands of union and intersection *)
     fun qsort []       = []
     |   qsort (x::xs)  =
@@ -588,7 +588,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   value
                 end
               )
-          
+
           | HNode{alpha=(arcs),...} =>
               (case (HashTable.find (!cache) x) of
                 SOME r => r
