@@ -14,8 +14,7 @@ end
 
 functor CacheFun ( structure Operation : OPERATION )
   : CACHE
-  =
-struct
+= struct
 
   structure W = MLton.Weak
   structure H = HashTable

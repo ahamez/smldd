@@ -14,8 +14,7 @@ end
 
 functor UnicityTableFun ( structure Data : DATA )
   : UnicityTable
-  =
-struct
+= struct
 
   structure W = MLton.Weak
   structure H = HashTable
