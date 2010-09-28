@@ -1,4 +1,5 @@
 (*--------------------------------------------------------------------------*)
+(*--------------------------------------------------------------------------*)
 
 signature SDD =
 sig
@@ -7,38 +8,38 @@ sig
   type variable
   type valuation
 
-  val zero          : SDD
-  val one           : SDD
-  val flat_node     : variable * valuation * SDD -> SDD
-  val node          : variable * SDD * SDD -> SDD
+  val zero          : SDD ref
+  val one           : SDD ref
+  val flat_node     : variable * valuation * SDD ref -> SDD ref
+  val node          : variable * SDD ref * SDD ref -> SDD ref
 
-  val union         : SDD list -> SDD
-  val intersection  : SDD list -> SDD
-  val difference    : SDD * SDD -> SDD
+  val union         : SDD ref list -> SDD ref
+  val intersection  : SDD ref list -> SDD ref
+  val difference    : SDD ref * SDD ref -> SDD ref
 
-  val paths         : SDD -> int
+  val paths         : SDD ref -> int
 
-  val toString      : SDD -> string
-  val toDot         : SDD -> string
+  val toString      : SDD ref -> string
+  val toDot         : SDD ref -> string
 
 end
 
 (*--------------------------------------------------------------------------*)
+(*--------------------------------------------------------------------------*)
 
-structure SDD =
-struct
-
-  (*----------------------------------------------------------------------*)
-
-  structure Variable  : VARIABLE    = IntVariable
-  structure Valuation : VALUATION   = DiscreteIntValuation
+functor SDDFun ( structure Variable  : VARIABLE
+               ; structure Valuation : VALUATION )
+  : SDD
+= struct
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
-  structure SDD =
+  (* Define an SDD *)
+  structure Definition =
   struct
   
-    datatype t    = SDD of ( sdd * Word32.word )
+    datatype t    = SDD of ( sdd * Word32.word ) (* Word32.word: hash value *)
     and sdd       = Zero
                   | One
                   | Node of  { variable : Variable.t 
@@ -90,41 +91,56 @@ struct
             )
 
     end (* fun eq *)
-  
-    fun hash (SDD(_,h)) = h
-    
-  end (* struct SDD *)
-  open SDD
 
+    (* The hash value of a node is stored with it, because we can't
+       use the address of the reference (like in C). Thus, it has to
+       be computed by functions who construct SDD nodes. *)
+    fun hash (SDD(_,h)) = h
+
+  end (* end struct Definition *)
+  open Definition
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  type SDD        = Definition.t
+  type variable   = Variable.t
+  type valuation  = Valuation.t
+
+  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Unicity *)
   structure ValUT = UnicityTableFun( structure Data = Valuation )
-  structure SDDUT = UnicityTableFun( structure Data = SDD )
+  structure SDDUT = UnicityTableFun( structure Data = Definition )
 
+  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   exception IncompatibleSDD
   exception NotYetImplemented
-  exception DoNotPanic (* Code 42 *)
+  exception DoNotPanic
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
-  (* Return the |0| (zero) terminal *)
-  val zero : SDD.t ref
+  (* Return the |0| ("zero") terminal *)
+  val zero : SDD ref
     = SDDUT.unify( SDD( Zero , MLton.hash 0 ) )
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
-  (* Return the |1| (one) terminal *)
-  val one : SDD.t ref
+  (* Return the |1| ("one") terminal *)
+  val one : SDD ref
     = SDDUT.unify( SDD( One  , MLton.hash 1 ) )
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
   (* Return a node with a set of discrete values on arc *)
-  fun flat_node ( vr : Variable.t , values : Valuation.t , next : SDD.t ref )
-                : SDD.t ref
+  fun flat_node ( vr : Variable.t , values : Valuation.t , next : SDD ref )
+                : SDD ref
 
     = case !next of
       SDD(Zero,_) => zero
@@ -146,10 +162,11 @@ struct
         end
 
   (*----------------------------------------------------------------------*)
-
+  (*----------------------------------------------------------------------*)
+  
   (* Return a node with a nested node on arc *)
-  fun node  ( vr : Variable.t, nested : SDD.t ref , next : SDD.t ref )
-            : SDD.t ref
+  fun node  ( vr : Variable.t, nested : SDD ref , next : SDD ref )
+            : SDD ref
 
     = case !next of
       SDD(Zero,_) => zero
@@ -169,31 +186,39 @@ struct
         end
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
   (* Operations to manipulate SDD *)
   structure Op =
   struct
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
     
-    type result        = SDD.t ref
+    type result        = SDD ref
 
     datatype operation = Union of
-                            ( SDD.t ref list * (operation -> result) )
+                            ( SDD ref list * (operation -> result) )
                        | Inter of 
-                            ( SDD.t ref list * (operation -> result) )
+                            ( SDD ref list * (operation -> result) )
                        | Diff  of
-                            ( SDD.t ref * SDD.t ref * (operation -> result))
+                            ( SDD ref * SDD ref * (operation -> result))
         
-    (*------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+    
     fun union( [], _ )                    = zero
     |   union( (x::[]), _)                = x  
     |   union( (xs as (y::ys)), lookup)   =
     let
+
       (* Remove |0| *)
       val xs' = List.filter (fn x => case !x of 
                                         SDD(Zero,_) => false
                                       | _           => true
                             ) 
                             xs
+
       (* Check compatibility of operands *)
       val _ = foldl ( fn (x,y) => case !x of 
                                     SDD(One,_)  => 
@@ -218,14 +243,17 @@ struct
                     y
                     xs'
     in
-      zero
-    end (* fun union *)
+      raise NotYetImplemented
+    end (* end fun union *)
       
-    (*------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
     fun intersection( [], _ )                   = zero
     |   intersection( (x::[]), _ )              = x
     |   intersection( (xs as (y::ys)), lookup)  =
     let
+
       (* Test if there are any zero in operands *)
       val has_zero = case List.find (fn x => case !x of
                                                 SDD(Zero,_) => true
@@ -235,6 +263,7 @@ struct
                      of
                         NONE    => false
                       | SOME _  => true
+
       (* Check compatibility of operands *)
       fun check(x,xs) = foldl (fn (x,y) => case !x of 
                                     SDD(One,_)  => 
@@ -264,10 +293,12 @@ struct
         zero
       else
         check( y, ys);
-        zero
-    end (* fun intersection *) 
+        raise NotYetImplemented
+    end (* end fun intersection *) 
     
-    (*------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
     fun difference( (l,r), lookup ) =
       if l = r then
         zero
@@ -297,9 +328,10 @@ struct
 
         | SDD(HNode{variable=lvr,alpha=lalpha},_) =>
             raise NotYetImplemented
-    (* fun difference *)
+    (* end fun difference *)
 
-    (*------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
 
     (* Apply an SDD operation. Sort operands of union and intersection *)
     fun apply x =
@@ -319,18 +351,24 @@ struct
         | Inter(xs,lookup)  => intersection( qsort xs, lookup )
         | Diff(x,y,lookup)  => difference( (x,y), lookup)
       end
-    
-    (* Compute the hash value of an SDD operation *)
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
     fun hash x =
       let
         fun hash_operands( h0, xs ) = 
-          foldl (fn(x,h) => Word32.xorb( SDD.hash(!x), h)) h0 xs
+          foldl (fn(x,h) => Word32.xorb( Definition.hash(!x), h)) h0 xs
       in        
         case x of
           Union(xs,_)  => hash_operands( Word32.fromInt 15411567, xs)
         | Inter(xs,_ ) => hash_operands( Word32.fromInt 78995947, xs)
-        | Diff(l,r,_)  => Word32.xorb( SDD.hash(!l), SDD.hash(!r) )
+        | Diff(l,r,_)  => Word32.xorb( Definition.hash(!l)
+                                     , Definition.hash(!r) )
       end
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
     
     fun eq (x,y) =
       case x of
@@ -347,8 +385,12 @@ struct
                               | _ => false
                               )
 
-    end (* struct Op *)
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
 
+    end (* end struct Op *)
+
+  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Cache of operations on SDDs *)
@@ -362,14 +404,14 @@ struct
   fun difference(x,y) = OpCache.lookup(Op.Diff( x, y, lookup_cache ))
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
   (* Count the number of distinct paths in a SDD *)
   fun paths x =
     let
-      exception entry_not_found
-      val cache : (( SDD.t ref , int ) HashTable.hash_table) ref
-          = ref (HashTable.mkTable( fn x => SDD.hash(!x) , op = )
-                                  ( 10000, entry_not_found ))
+      val cache : (( SDD ref , int ) HashTable.hash_table) ref
+          = ref (HashTable.mkTable( fn x => hash(!x) , op = )
+                                  ( 10000, DoNotPanic ))
       fun helper x = 
         let
           val SDD(sdd,_) = !x
@@ -415,8 +457,9 @@ struct
         end
     in
       helper x
-    end (* fun paths *)
+    end (* end fun paths *)
 
+  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Export an SDD to a string *)
@@ -453,15 +496,24 @@ struct
                                         alpha
                             ))
         ^ " ]"
-    end (* fun toString *)
+    end (* end fun toString *)
 
+  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Export an SDD to a DOT representation *)
-  fun toDot _         = ""
+  fun toDot _         = raise NotYetImplemented
 
   (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
-end
+end (* end functor SDDFun *)
 
+(*--------------------------------------------------------------------------*)
+(*--------------------------------------------------------------------------*)
+
+structure SDD = SDDFun( structure Variable  = IntVariable
+                      ; structure Valuation = DiscreteIntValuation )
+
+(*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
