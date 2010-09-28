@@ -363,8 +363,10 @@ functor SDDFun ( structure Variable  : VARIABLE
         case x of
           Union(xs,_)  => hash_operands( Word32.fromInt 15411567, xs)
         | Inter(xs,_ ) => hash_operands( Word32.fromInt 78995947, xs)
-        | Diff(l,r,_)  => Word32.xorb( Definition.hash(!l)
-                                     , Definition.hash(!r) )
+        | Diff(l,r,_)  => Word32.xorb( Word32.fromInt 94169137
+                                     , Word32.xorb( Definition.hash(!l)
+                                                  , Definition.hash(!r) )
+                                     )
       end
 
     (*------------------------------------------------------------------*)
