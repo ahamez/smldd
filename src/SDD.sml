@@ -153,8 +153,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           val SDD(_,hash_next)    = !next
           val hash_values         = Valuation.hash sorted_values
           val h = Word32.xorb( MLton.hash vr
-                             , Word32.xorb( hash_next, hash_values )
-                             )
+                             , Word32.xorb( hash_next, hash_values ))
           val unik_values = ValUT.unify sorted_values
           val alpha = Vector.fromList [( unik_values, next )]
         in
@@ -188,15 +187,115 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  (* Operations to manipulate valuations *)
+  structure ValuationOperations (* : OPERATION *) =
+  struct
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
+    type result        = valuation ref
+    datatype operation = Union of valuation ref list
+                       | Inter of valuation ref list
+                       | Diff  of valuation ref * valuation ref
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
+    fun eq (l,r) =
+      case l of
+        Union(xs) =>    (case r of
+                          Union(ys) => xs = ys
+                        |  _ => false
+                        )
+      | Inter(xs) =>    (case r of
+                          Inter(ys) => xs = ys
+                        | _ => false
+                        )
+      | Diff(lx,ly) =>  (case r of
+                          Diff(rx,ry) => lx = rx andalso ly = ry
+                        | _ => false
+                        )
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
+    fun hash x =
+      let
+        (* Valuation.hash(!x) -> problem: we have to compute again
+           the hash value of the valuation... Maybe we should store
+           this hash alongside the valuation? *)
+        fun hash_operands( h0, xs ) =
+          foldl (fn(x,h) => Word32.xorb( Valuation.hash(!x), h)) h0 xs
+      in
+        case x of
+          Union(xs) => hash_operands( Word32.fromInt 15411567, xs)
+        | Inter(xs) => hash_operands( Word32.fromInt 78995947, xs)
+        | Diff(l,r) => Word32.xorb( Word32.fromInt 94165961
+                                  , Word32.xorb( Valuation.hash(!l)
+                                               , Valuation.hash(!r))
+                                  )
+      end
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
+    fun apply operation =
+
+      case operation of
+
+        Union []     => raise DoNotPanic
+      | Union(x::xs) =>
+          ValUT.unify(foldl ( fn (x,res) => Valuation.union(!x,res) )
+                            (!x)
+                            xs
+                      )
+
+      | Inter []     => raise DoNotPanic
+      | Inter(x::xs) =>
+          ValUT.unify(foldl ( fn (x,res) => Valuation.intersection(!x,res) )
+                            (!x) 
+                            xs
+                      )
+
+      | Diff(x,y)    => ValUT.unify( Valuation.difference( !x, !y) )
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
+  end (* end structure ValuationOperations *)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  (* Cache of operations on valuations *)
+  structure ValOpCache = CacheFun( structure Operation = ValuationOperations )
+
+  fun val_union xs =
+    case xs of
+      []      => raise DoNotPanic
+    | (x::[]) => x (* No need to cache *)
+    | _       => ValOpCache.lookup(ValuationOperations.Union(xs))
+
+  fun val_intersection xs =
+    case xs of
+      []      => raise DoNotPanic
+    | (x::[]) => x (* No need to cache *)
+    | _       => ValOpCache.lookup(ValuationOperations.Inter(xs))
+
+  fun val_difference(x,y) = ValOpCache.lookup(ValuationOperations.Diff(x,y))
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
   (* Operations to manipulate SDD *)
-  structure Op =
+  structure SDDOperations (* : OPERATION *) =
   struct
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
     
     type result        = SDD ref
-
     datatype operation = Union of
                             ( SDD ref list * (operation -> result) )
                        | Inter of 
@@ -207,9 +306,9 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
     
-    fun union( [], _ )                    = zero
-    |   union( (x::[]), _)                = x  
-    |   union( (xs as (y::ys)), lookup)   =
+    fun union( [], _ )                  = zero
+    |   union( (x::[]), _)              = x  
+    |   union( (xs as (y::ys)), lookup) =
     let
 
       (* Remove |0| *)
@@ -249,9 +348,9 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    fun intersection( [], _ )                   = zero
-    |   intersection( (x::[]), _ )              = x
-    |   intersection( (xs as (y::ys)), lookup)  =
+    fun intersection( [], _ )                  = zero
+    |   intersection( (x::[]), _ )             = x
+    |   intersection( (xs as (y::ys)), lookup) =
     let
 
       (* Test if there are any zero in operands *)
@@ -390,20 +489,25 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    end (* end struct Op *)
+    end (* end struct SDDOperations *)
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Cache of operations on SDDs *)
-  structure OpCache = CacheFun( structure Operation = Op )
+  structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
 
   (* Let operations in Op call the cache *)
-  val lookup_cache    = OpCache.lookup
+  val lookup_cache    = SDDOpCache.lookup
 
-  fun union xs        = OpCache.lookup(Op.Union( xs, lookup_cache ))
-  fun intersection xs = OpCache.lookup(Op.Inter( xs, lookup_cache ))
-  fun difference(x,y) = OpCache.lookup(Op.Diff( x, y, lookup_cache ))
+  fun union xs
+    = SDDOpCache.lookup(SDDOperations.Union( xs, lookup_cache ))
+
+  fun intersection xs
+    = SDDOpCache.lookup(SDDOperations.Inter( xs, lookup_cache ))
+
+  fun difference(x,y)
+    = SDDOpCache.lookup(SDDOperations.Diff( x, y, lookup_cache ))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
