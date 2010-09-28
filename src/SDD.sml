@@ -306,8 +306,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
     
-    fun union( [], _ )                  = zero
-    |   union( (x::[]), _)              = x  
+    fun union( [], _ )                  = raise DoNotPanic
     |   union( (xs as (y::ys)), lookup) =
     let
 
@@ -348,8 +347,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    fun intersection( [], _ )                  = zero
-    |   intersection( (x::[]), _ )             = x
+    fun intersection( [], _ )                  = raise DoNotPanic
     |   intersection( (xs as (y::ys)), lookup) =
     let
 
@@ -399,34 +397,31 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
 
     fun difference( (l,r), lookup ) =
-      if l = r then
-        zero
-      else
-        case !l of
-    
-          SDD(Zero,_) => (case !r of
-                            SDD(Zero,_) => zero
-                          | SDD(One,_)  => one
-                          | _           => raise IncompatibleSDD
-                          )
-    
-        | SDD(One,_)  => (case !r of
-                            SDD(Zero,_) => one
-                          | SDD(One,_)  => zero
-                          | _           => raise IncompatibleSDD
-                          )
-    
-        | SDD( Node{variable=lvr,alpha=lalpha}, _ ) =>
-            (case !r of
-              SDD(Zero,_)       => raise IncompatibleSDD
-            | SDD(One,_)        => raise IncompatibleSDD
-            | SDD(HNode{...},_) => raise IncompatibleSDD
-            | SDD(Node{variable=rvr,alpha=ralpha},_) => 
-                raise NotYetImplemented
-            )
+      case !l of
 
-        | SDD(HNode{variable=lvr,alpha=lalpha},_) =>
-            raise NotYetImplemented
+        SDD(Zero,_) => (case !r of
+                          SDD(Zero,_) => zero
+                        | SDD(One,_)  => one
+                        | _           => raise IncompatibleSDD
+                        )
+
+      | SDD(One,_)  => (case !r of
+                          SDD(Zero,_) => one
+                        | SDD(One,_)  => zero
+                        | _           => raise IncompatibleSDD
+                        )
+
+      | SDD( Node{variable=lvr,alpha=lalpha}, _ ) =>
+          (case !r of
+            SDD(Zero,_)       => raise IncompatibleSDD
+          | SDD(One,_)        => raise IncompatibleSDD
+          | SDD(HNode{...},_) => raise IncompatibleSDD
+          | SDD(Node{variable=rvr,alpha=ralpha},_) => 
+              raise NotYetImplemented
+          )
+
+      | SDD(HNode{variable=lvr,alpha=lalpha},_) =>
+          raise NotYetImplemented
     (* end fun difference *)
 
     (*------------------------------------------------------------------*)
@@ -500,14 +495,23 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Let operations in Op call the cache *)
   val lookup_cache    = SDDOpCache.lookup
 
-  fun union xs
-    = SDDOpCache.lookup(SDDOperations.Union( xs, lookup_cache ))
+  fun union xs =
+    case xs of
+      []      => zero (* No need to cache *)
+    | (x::[]) => x    (* No need to cache *)
+    | _       => SDDOpCache.lookup(SDDOperations.Union( xs, lookup_cache ))
 
-  fun intersection xs
-    = SDDOpCache.lookup(SDDOperations.Inter( xs, lookup_cache ))
+  fun intersection xs =
+    case xs of
+      []      => zero (* No need to cache *)
+    | (x::[]) => x    (* No need to cache *)
+    | _       => SDDOpCache.lookup(SDDOperations.Inter( xs, lookup_cache ))
 
-  fun difference(x,y)
-    = SDDOpCache.lookup(SDDOperations.Diff( x, y, lookup_cache ))
+  fun difference(x,y) =
+    if x = y then
+      zero (* No need to cache *)
+    else
+      SDDOpCache.lookup(SDDOperations.Diff( x, y, lookup_cache ))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
