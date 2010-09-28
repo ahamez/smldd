@@ -305,7 +305,49 @@ functor SDDFun ( structure Variable  : VARIABLE
         
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
+
+    (* Check compatibility of operands *)
+    fun check(x,xs) =
+
+      foldl (fn (x,y) =>
+
+              case !x of
+
+                  SDD(One,_)  =>
+                    (case !y of
+                      SDD(One,_) => y
+                    | _ => raise IncompatibleSDD
+                    )
+
+                | SDD(Node{variable=var1,...},_) =>
+                    (case !y of
+                      SDD(Node{variable=var2,...},_) =>
+                        if not( Variable.eq( var1, var2 ) ) then
+                          raise IncompatibleSDD
+                        else
+                          y
+                    | _ => raise IncompatibleSDD
+                    )
+
+                | SDD(HNode{variable=var1,...},_) =>
+                    (case !y of
+                      SDD(HNode{variable=var2,...},_) =>
+                        if not( Variable.eq( var1, var2 ) ) then
+                          raise IncompatibleSDD
+                        else
+                          y
+                    | _ => raise IncompatibleSDD
+                    )
     
+                (* Zero should have been filtered out *)
+                | SDD(Zero,_) => raise DoNotPanic
+            )
+            x
+            xs
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
+
     fun union( [], _ )                  = raise DoNotPanic
     |   union( (xs as (y::ys)), lookup) =
     let
@@ -317,29 +359,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                             ) 
                             xs
 
-      (* Check compatibility of operands *)
-      val _ = foldl ( fn (x,y) => case !x of 
-                                    SDD(One,_)  => 
-                                      (case !y of
-                                        SDD(One,_) => y
-                                      | _ => raise IncompatibleSDD
-                                      )
-                                  | SDD(Node{...},_) =>
-                                      (case !y of
-                                        SDD(Node{...},_) => y
-                                      | _ => raise IncompatibleSDD
-                                      )
-                                  | SDD(HNode{...},_) =>
-                                      (case !y of
-                                        SDD(HNode{...},_) => y
-                                      | _ => raise IncompatibleSDD
-                                      )
-                                  (* Zero should have been filtered out *)
-                                  | SDD(Zero,_) => raise DoNotPanic
-    
-                    )
-                    y
-                    xs'
+       (* Check operands compatibility *)
+       val _ = check( y, xs )
     in
       raise NotYetImplemented
     end (* end fun union *)
@@ -361,42 +382,21 @@ functor SDDFun ( structure Variable  : VARIABLE
                         NONE    => false
                       | SOME _  => true
 
-      (* Check compatibility of operands *)
-      fun check(x,xs) = foldl (fn (x,y) => case !x of 
-                                    SDD(One,_)  => 
-                                      (case !y of
-                                        SDD(One,_) => y
-                                      | _ => raise IncompatibleSDD
-                                      )
-                                  | SDD(Node{...},_) =>
-                                      (case !y of
-                                        SDD(Node{...},_) => y
-                                      | _ => raise IncompatibleSDD
-                                      )
-                                  | SDD(HNode{...},_) =>
-                                      (case !y of
-                                        SDD(HNode{...},_) => y
-                                      | _ => raise IncompatibleSDD
-                                      )
-                                  (* Zero should have been filtered out *)
-                                  | SDD(Zero,_) => raise DoNotPanic
-                              )
-                              x
-                              xs
-    
     in
       (* Intersection with |0| is always |0| *)
       if has_zero then
         zero
       else
+        (* Check operands compatibility *)
         check( y, ys);
         raise NotYetImplemented
     end (* end fun intersection *) 
-    
+
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
     fun difference( (l,r), lookup ) =
+
       case !l of
 
         SDD(Zero,_) => (case !r of
@@ -417,11 +417,15 @@ functor SDDFun ( structure Variable  : VARIABLE
           | SDD(One,_)        => raise IncompatibleSDD
           | SDD(HNode{...},_) => raise IncompatibleSDD
           | SDD(Node{variable=rvr,alpha=ralpha},_) => 
-              raise NotYetImplemented
+              if not( Variable.eq(lvr,rvr) ) then
+                raise IncompatibleSDD
+              else
+                raise NotYetImplemented
           )
 
       | SDD(HNode{variable=lvr,alpha=lalpha},_) =>
           raise NotYetImplemented
+
     (* end fun difference *)
 
     (*------------------------------------------------------------------*)
