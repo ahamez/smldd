@@ -2,7 +2,7 @@
 
 signature CACHE =
 sig
-  
+
   type operation
   type result
 
@@ -32,10 +32,10 @@ functor CacheFun ( structure Operation : OPERATION )
                 ( 100000, entry_not_found )
 
   fun lookup x =
-  
+
     (
     if ( H.numItems cache ) > 100000 then
-      let 
+      let
         fun keep (k,v) = case W.get v of
                           NONE    => false
                         | SOME _  => true
@@ -44,10 +44,9 @@ functor CacheFun ( structure Operation : OPERATION )
       end
     else
       ();
-      
-  
+
     let
-      
+
       fun store x =
         let
           val res  = O.apply x
@@ -57,10 +56,10 @@ functor CacheFun ( structure Operation : OPERATION )
           valOf( W.get wres )
         end
     in
-    
+
       case (H.find cache x) of
         SOME r  =>  (
-                    case W.get r of 
+                    case W.get r of
                       SOME r' => r'
                     | NONE    => (
                                   H.remove cache x;
@@ -68,7 +67,7 @@ functor CacheFun ( structure Operation : OPERATION )
                                  )
                     )
       | NONE    =>  store x
-    
+
     end
     )
 

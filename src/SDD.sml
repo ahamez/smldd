@@ -271,7 +271,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*----------------------------------------------------------------------*)
 
     (* Cache of operations on valuations *)
-    structure ValOpCache = CacheFun( structure Operation = ValuationOperations )
+    structure ValOpCache = CacheFun(structure Operation = ValuationOperations)
 
   in (* local valuations manipulations *)
 
@@ -328,7 +328,8 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Check compatibility of operands *)
-      fun check(x,xs) =
+      fun check []     = raise DoNotPanic
+      |   check(x::xs) =
 
         foldl (fn (x,y) =>
 
@@ -369,28 +370,56 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      fun union( [], _ )                  = raise DoNotPanic
-      |   union( (xs as (y::ys)), lookup) =
+      fun union( xs, lookup ) =
       let
 
         (* Remove |0| *)
-        val xs' = List.filter (fn x => case !x of 
+        val xs' = List.filter (fn x => case !x of
                                           SDD(Zero,_) => false
                                         | _           => true
-                              ) 
+                              )
                               xs
 
-         (* Check operands compatibility *)
-         val _ = check( y, xs )
+        (* Check operands compatibility *)
+        val _ = check xs'
+
       in
-        raise NotYetImplemented
+
+        case !(hd xs') of
+
+          SDD(One,_)        => one
+        | SDD(Zero,_)       => raise DoNotPanic
+
+        | SDD(Node{...},_)  =>
+        let
+          (* Convert all operands into Node{...} *)
+          val xs'' = map (fn x => case !x of
+                                    SDD( n as Node{...}, _ ) => n
+                                  | _ => raise DoNotPanic
+                         )
+                         xs'
+        in
+          raise NotYetImplemented
+        end
+
+        | SDD(HNode{...},_) =>
+        let
+          (* Convert all operands into HNode{...} *)
+          val xs'' = map (fn x => case !x of
+                                    SDD( n as HNode{...}, _ ) => n
+                                  | _ => raise DoNotPanic
+                         )
+                         xs'
+        in
+          raise NotYetImplemented
+        end
+
       end (* end fun union *)
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      fun intersection( [], _ )                  = raise DoNotPanic
-      |   intersection( (xs as (y::ys)), lookup) =
+      fun intersection( xs, lookup ) =
       let
 
         (* Test if there are any zero in operands *)
@@ -402,14 +431,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                        of
                           NONE    => false
                         | SOME _  => true
-
       in
         (* Intersection with |0| is always |0| *)
         if has_zero then
           zero
         else
           (* Check operands compatibility *)
-          check( y, ys);
+          check xs;
           raise NotYetImplemented
       end (* end fun intersection *) 
 
@@ -444,7 +472,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   raise NotYetImplemented
             )
 
-        | SDD(HNode{variable=lvr,alpha=lalpha},_) =>
+        | SDD( HNode{variable=lvr,alpha=lalpha}, _ ) =>
             raise NotYetImplemented
 
       (* end fun difference *)
@@ -508,7 +536,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (* Let operations in Op call the cache *)
     val lookup_cache    = SDDOpCache.lookup
 
-    (* Sort operands of union and intersection *)
+    (* Sort operands of union and intersection, using their hash values *)
     fun qsort []       = []
     |   qsort (x::xs)  =
     let

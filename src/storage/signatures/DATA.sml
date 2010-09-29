@@ -5,5 +5,5 @@ sig
 
   val eq    : t * t -> bool
   val hash  : t -> Word32.word
-  
+
 end

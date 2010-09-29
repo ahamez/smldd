@@ -2,7 +2,7 @@
 
 signature UnicityTable =
 sig
-  
+
   type data
   type rdata  = data ref
 
