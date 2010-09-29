@@ -36,6 +36,7 @@ struct
   val length = IntVector.length
 
   (*----------------------------------------------------------------------*)
+  fun empty vec = IntVector.length vec = 0
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
