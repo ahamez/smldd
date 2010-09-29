@@ -7,7 +7,6 @@ sig
   val hash          : t -> Word32.word
   val length        : t -> int
   (* Must also remove duplicate elements *)
-  val sort_unique   : t -> t
   val toString      : t -> string
   val union         : t * t -> t
   val intersection  : t * t -> t

@@ -36,31 +36,6 @@ struct
   val length = IntVector.length
 
   (*----------------------------------------------------------------------*)
-  (* Sort with quicksort and remove duplicates *)
-  fun sort_unique vec =
-    if IntVector.length vec = 0 then
-      vec
-    else
-      let
-        val head = IntVector.sub( vec, 0 )
-        fun filter p v
-          = IntVector.foldl (fn (elm,acc) => 
-                              if p elm then
-                                IntVector.concat [ acc
-                                                 , IntVector.fromList [elm]
-                                                 ]
-                              else
-                                acc
-                            )
-                            (IntVector.fromList ([] : Int32.int list) )
-                            v
-      in
-        IntVector.concat
-        [ sort_unique (filter (fn x => x < head ) vec )
-        , IntVector.fromList [head]
-        , sort_unique (filter (fn x => x > head ) vec )
-        ]
-      end
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
