@@ -427,7 +427,9 @@ functor SDDFun ( structure Variable  : VARIABLE
                          alpha
           end
 
-          val (initial::operands) = map alphaNodeToList xs
+          val (initial,operands) = case map alphaNodeToList xs of
+                                       []       => raise DoNotPanic
+                                   |  (y::ys)  => (y,ys)
 
           (* Merge two operands *)
           fun process ( [], ( res, []) )
