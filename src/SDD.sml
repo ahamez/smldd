@@ -151,7 +151,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           val SDD(_,hash_next)    = !next
           val hash_values         = Valuation.hash values
-          val h = Word32.xorb( MLton.hash vr
+          val h = Word32.xorb( Variable.hash vr
                              , Word32.xorb( hash_next, hash_values ))
           val unik_values = ValUT.unify values
           val alpha = Vector.fromList [( unik_values, next )]
@@ -175,9 +175,8 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           val SDD(_,hash_next)    = !next
           val SDD(_,hash_nested)  = !nested
-          val h = Word32.xorb( MLton.hash vr
-                             , Word32.xorb( hash_next, hash_nested )
-                             )
+          val h = Word32.xorb( Variable.hash vr
+                             , Word32.xorb( hash_next, hash_nested ) )
           val alpha = Vector.fromList [( nested, next )]
         in
           SDDUT.unify( SDD(HNode{ variable=vr, alpha=alpha}, h) )
@@ -255,7 +254,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         | Inter []     => raise DoNotPanic
         | Inter(x::xs) =>
             ValUT.unify(foldl ( fn (x,res) => Valuation.intersection(!x,res) )
-                              (!x) 
+                              (!x)
                               xs
                         )
 
@@ -318,10 +317,10 @@ functor SDDFun ( structure Variable  : VARIABLE
       type result        = SDD ref
       datatype operation = Union of
                               ( SDD ref list * (operation -> result) )
-                         | Inter of 
+                         | Inter of
                               ( SDD ref list * (operation -> result) )
                          | Diff  of
-                              ( SDD ref * SDD ref * (operation -> result))
+                              ( SDD ref * SDD ref * (operation -> result) )
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
