@@ -5,20 +5,20 @@ fun main () =
 
     val v1  = Vector.fromList [1,2];
     val uv1 = ValuationUT.unify v1;
-    
+
     val v2 = Vector.fromList [1,2];
     val uv2 = ValuationUT.unify v2;
 
     val v3 = Vector.fromList [~1,0,1,2,42];
     val uv3 = ValuationUT.unify v3;
-    
+
     val v4= valuation_discrete_int.union (v2,v3)
     val v5 = valuation_discrete_int.intersection(v3,v1)
     val v6 = valuation_discrete_int.intersection(v0,v1)
     val v7 = valuation_discrete_int.difference(v2,v0)
     val v8 = valuation_discrete_int.difference(v3,v2)
     val v9 = valuation_discrete_int.difference(v8,v0)
-    
+
     val l0 = [v0,v1,v2,v3,v4,v5,v6,v7,v8,v9,(Vector.fromList [101])]
     val o0 = (Union l0);
     val v10 = (Valuation_Operation.apply o0)*)
@@ -26,23 +26,29 @@ fun main () =
     (*val v0 = Vector.fromList [0,1,2,3]
     val v1 = Vector.fromList [0,45,2,~8773]
     val v2 = Vector.fromList [0,45,2,45,2,~1,0]
-    
+
 val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v0))
 val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v1))
 val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v2))
 *)
-    
-    (*val zero = SDD.zero*)
-    (*val zer1 = SDD.zero*)
+
+    val zero = SDD.zero
+    val zer1 = SDD.zero
     val one  = SDD.one
-    
+
     val s0 = SDD.flat_node(1,IntVector.fromList[1,2,0],one)
-    val s0bis = SDD.flat_node(1,IntVector.fromList[1,2,0],one)
-    val s4 = SDD.flat_node(2,IntVector.fromList[1,2,0],s0)
-    val s1 = SDD.flat_node(2,IntVector.fromList[1,2,0],s0)
+    val s1 = SDD.flat_node(1,IntVector.fromList[1,2,3],one)
+
+    val s2 = SDD.flat_node(2,IntVector.fromList[1],s0)
+    val s3 = SDD.flat_node(2,IntVector.fromList[1],s1)
+    val s4 = SDD.flat_node(2,IntVector.fromList[0],s1)
+
+    val u0 = SDD.union [s0,s1]
+    val u1 = SDD.union [s2,s3]
+    val u2 = SDD.union [s2,s4]
     (*val s2 = SDD.node(0,s1,one)*)
     (*val s3 = SDD.node(1,s1,s2)*)
-    
+
     (*val u0 = SDD.union [one,one]*)
     (*val u1 = SDD.union [one,one]*)
   in
@@ -77,12 +83,12 @@ val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v2))
     print "\n";
     print (Bool.toString (s1 = s0));
     print "\n";*)
-    print "\n s0 = s0 ";
+    (*print "\n s0 = s0 ";
     print (Bool.toString (s0 = s0));
     print "\n s0 = s0bis ";
     print (Bool.toString (s0 = s0bis));
     print "\n s1 = s4 ";
-    print (Bool.toString (s1 = s4));
+    print (Bool.toString (s1 = s4));*)
     (*print "\n";
     print (Int.toString (SDD.paths one));
     print "\n";
@@ -98,9 +104,14 @@ val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v2))
     print "\n";
     print (SDD.toString one);*)
     print "\n";
-    print (SDD.toString s1);
+    print (SDD.toString u0);
     print "\n";
-    print (SDD.toString s4);
+    print (SDD.toString u1);
+    print "\n";
+    print (SDD.toString u2);
+
+    (*print "\n";
+    print (SDD.toString s4);*)
     (*print "\n";*)
     (*print (Bool.toString (u0 = u1));*)
     print "\nEND TEST\n"

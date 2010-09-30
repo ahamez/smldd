@@ -1,6 +1,6 @@
 structure DiscreteIntValuation : VALUATION =
 struct
-  
+
   (*----------------------------------------------------------------------*)
   type t  = IntVector.vector
 
@@ -23,7 +23,7 @@ struct
   (*----------------------------------------------------------------------*)
   fun hash vec =
     let
-      fun helper (x1,x2) = Word32.xorb ( MLton.hash x1, x2 ) 
+      fun helper (x1,x2) = Word32.xorb ( MLton.hash x1, x2 )
     in
       IntVector.foldl helper (Word32.fromInt 42) vec
     end
@@ -63,7 +63,7 @@ struct
                                         IntVectorSlice.slice( s1, 1, NONE))
                                 )
                          ]
-                       )        
+                       )
         else
           IntVector.concat( [ IntVector.fromList([s1_head])
                          , union( IntVectorSlice.vector(
@@ -72,7 +72,7 @@ struct
                                     IntVectorSlice.slice( s2, 1, NONE))
                                 )
                          ]
-                       )        
+                       )
       end
 
   (*----------------------------------------------------------------------*)
@@ -107,7 +107,7 @@ struct
       end
 
   (*----------------------------------------------------------------------*)
-  (* s1 and s2 MUST already be sorted *)  
+  (* s1 and s2 MUST already be sorted *)
   fun difference (s1,s2) =
     if IntVector.length s1 = 0 orelse IntVector.length s2 = 0 then
       s1
@@ -135,5 +135,5 @@ struct
       end
 
   (*----------------------------------------------------------------------*)
-  
+
 end (* DiscreteIntValuation *)

@@ -42,7 +42,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     datatype t    = SDD of ( sdd * Word32.word ) (* Word32.word: hash value *)
     and sdd       = Zero
                   | One
-                  | Node of  { variable : Variable.t 
+                  | Node of  { variable : Variable.t
                              , alpha : (Valuation.t ref * t ref) Vector.vector
                              }
                   | HNode of { variable : Variable.t
@@ -395,7 +395,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           (* All operands are |1| *)
           SDD(One,_)        => one
-          
+
           (* There shouldn't be any |0| *)
         | SDD(Zero,_)       => raise DoNotPanic
 
@@ -407,7 +407,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           val var = case !(hd xs) of
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
-          
+
           (* Transform the alpha of a node into :
             (valuation ref,SDD ref list) list *)
           fun alphaNodeToList n =
@@ -416,9 +416,9 @@ functor SDDFun ( structure Variable  : VARIABLE
                           SDD(Node{alpha=alpha,...},_) => alpha
                         | _ => raise DoNotPanic
           in
-            Vector.foldr (fn (x,acc) => 
-                         let 
-                           val (vl,succ) = x 
+            Vector.foldr (fn (x,acc) =>
+                         let
+                           val (vl,succ) = x
                          in
                            (vl,[succ])::acc
                          end
@@ -432,7 +432,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           (* Merge two operands *)
           fun process ( [], ( res, []) )
           = ( [], res )
-          
+
           (* No more elements in alpha_a *)
           |   process ( [], ( res, bxs ))
           = ( [], bxs @ res )
@@ -445,14 +445,14 @@ functor SDDFun ( structure Variable  : VARIABLE
           |   process ( alpha_a as ((a,a_succs)::axs)
                       , ( res, (b,b_succs)::bxs )
                       )
-          = 
+          =
           if a = b then
             process ( axs
                     , ( ( a, a_succs@b_succs )::res
                       , bxs
                       )
                     )
-          else 
+          else
           let
             val inter = ValUT.unify( Valuation.intersection( (!a), (!b) ))
           in
@@ -462,7 +462,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                         , bxs
                         )
                       )
-            else 
+            else
             let
               val diff  = ValUT.unify( Valuation.difference((!a),(!inter)))
             in
@@ -509,7 +509,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             val tbl : (( SDD ref , valuation ref ) HashTable.hash_table)
                     = (HashTable.mkTable( fn x => hash(!x) , op = )
                       ( 10000, DoNotPanic ))
-            
+
             val _ = app (fn ( vl, succs ) =>
                         let
                           val u = union_cache succs
@@ -521,7 +521,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                                 tbl
                                 ( u
                                 , ValUT.unify(Valuation.union(!vl,!x) )
-                                ) 
+                                )
                         end
                         )
                         alpha
@@ -565,7 +565,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         val has_zero = case List.find (fn x => case !x of
                                                   SDD(Zero,_) => true
                                                 | _           => false
-                                      ) 
+                                      )
                                       xs
                        of
                           NONE    => false
@@ -578,7 +578,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           (* Check operands compatibility *)
           check xs;
           raise NotYetImplemented
-      end (* end fun intersection *) 
+      end (* end fun intersection *)
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -604,7 +604,7 @@ functor SDDFun ( structure Variable  : VARIABLE
               SDD(Zero,_)       => raise IncompatibleSDD
             | SDD(One,_)        => raise IncompatibleSDD
             | SDD(HNode{...},_) => raise IncompatibleSDD
-            | SDD(Node{variable=rvr,alpha=ralpha},_) => 
+            | SDD(Node{variable=rvr,alpha=ralpha},_) =>
                 if not( Variable.eq(lvr,rvr) ) then
                   raise IncompatibleSDD
                 else
@@ -631,9 +631,9 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       fun hash x =
         let
-          fun hash_operands( h0, xs ) = 
+          fun hash_operands( h0, xs ) =
             foldl (fn(x,h) => Word32.xorb( Definition.hash(!x), h)) h0 xs
-        in        
+        in
           case x of
             Union(xs,_)  => hash_operands( Word32.fromInt 15411567, xs)
           | Inter(xs,_ ) => hash_operands( Word32.fromInt 78995947, xs)
@@ -729,7 +729,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       val cache : (( SDD ref , int ) HashTable.hash_table) ref
           = ref (HashTable.mkTable( fn x => hash(!x) , op = )
                                   ( 10000, DoNotPanic ))
-      fun helper x = 
+      fun helper x =
         let
           val SDD(sdd,_) = !x
         in
@@ -739,9 +739,9 @@ functor SDDFun ( structure Variable  : VARIABLE
           | Node{alpha=(arcs),...} =>
               (case (HashTable.find (!cache) x) of
                 SOME r => r
-              | NONE   => 
+              | NONE   =>
                 let
-                  val value = Vector.foldl 
+                  val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
                                       ( n + Valuation.length(!v) )
                                       * (helper succ )
@@ -757,11 +757,11 @@ functor SDDFun ( structure Variable  : VARIABLE
           | HNode{alpha=(arcs),...} =>
               (case (HashTable.find (!cache) x) of
                 SOME r => r
-              | NONE   => 
+              | NONE   =>
                 let
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
-                                      ( n + helper v ) 
+                                      ( n + helper v )
                                       * ( helper succ )
                                     )
                                     0
@@ -781,18 +781,18 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (* Export an SDD to a string *)
   fun toString x      =
-    let 
+    let
       val SDD(sdd,_) = !x
     in
       case sdd of
         Zero  => "|0|"
-      | One   => "|1|"  
+      | One   => "|1|"
       | Node{ variable=vr, alpha=alpha} =>
         (Variable.toString vr)
         ^ " [ "
         ^ String.concatWith " + "
                             (VectorToList
-                            (Vector.map (fn (values,succ) => 
+                            (Vector.map (fn (values,succ) =>
                                           Valuation.toString(!values)
                                         ^ " --> "
                                         ^ (toString succ)
@@ -802,10 +802,10 @@ functor SDDFun ( structure Variable  : VARIABLE
         ^ " ]"
       | HNode{ variable=vr, alpha=alpha} =>
         (Variable.toString vr)
-        ^ " [ " 
+        ^ " [ "
         ^ String.concatWith " + "
                             (VectorToList
-                            (Vector.map (fn (nested,succ) => 
+                            (Vector.map (fn (nested,succ) =>
                                           (toString nested)
                                         ^ " --> "
                                         ^ (toString succ)
