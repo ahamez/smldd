@@ -500,7 +500,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                                   xs
           in
             case xs' of
-              []    => zero   (* No need to cache *)
+              []      => zero   (* No need to cache *)
             | (x::[]) => x    (* No need to cache *)
             | _       => lookup(Union( qsort xs, lookup ))
           end
@@ -682,6 +682,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
+    (* Warning! Duplicate code with SDD.SDDOperations.union! *)
     fun union xs =
       let
         (* Remove all |0| *)
