@@ -307,6 +307,21 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   local (* SDD manipulation *)
 
+    (* Sort operands of union and intersection, using their hash values *)
+    fun qsort []       = []
+    |   qsort (x::xs)  =
+    let
+      fun h x = let val SDD(_,res) = !x in res end
+    in
+        qsort (List.filter (fn y => (h y) < (h x) )  xs )
+      @ [x]
+      @ qsort (List.filter (fn y => (h y) >= (h x) ) xs )
+    end
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+
     (* Operations to manipulate SDD. Used by the cache. *)
     structure SDDOperations (* : OPERATION *) =
     struct
@@ -371,46 +386,172 @@ functor SDDFun ( structure Variable  : VARIABLE
       fun union( xs, lookup ) =
       let
 
-        (* Remove |0| *)
-        val xs' = List.filter (fn x => case !x of
-                                          SDD(Zero,_) => false
-                                        | _           => true
-                              )
-                              xs
-
         (* Check operands compatibility *)
-        val _ = check xs'
+        val _ = check xs
 
       in
 
-        case !(hd xs') of
+        case !(hd xs) of
 
+          (* All operands are |1| *)
           SDD(One,_)        => one
+          
+          (* There shouldn't be any |0| *)
         | SDD(Zero,_)       => raise DoNotPanic
 
+          (* Flat node case *)
         | SDD(Node{...},_)  =>
         let
-          (* Convert all operands into Node{...} *)
-          val xs'' = map (fn x => case !x of
-                                    SDD( n as Node{...}, _ ) => n
-                                  | _ => raise DoNotPanic
+
+          (* The variable of the current level *)
+          val var = case !(hd xs) of
+                      SDD(Node{variable=v,...},_) => v
+                    | _ => raise DoNotPanic
+          
+          (* Transform the alpha of a node into :
+            (valuation ref,SDD ref list) list *)
+          fun alphaNodeToList n =
+          let
+            val alpha = case !n of
+                          SDD(Node{alpha=alpha,...},_) => alpha
+                        | _ => raise DoNotPanic
+          in
+            Vector.foldr (fn (x,acc) => 
+                         let 
+                           val (vl,succ) = x 
+                         in
+                           (vl,[succ])::acc
+                         end
                          )
-                         xs'
+                         []
+                         alpha
+          end
+
+          val (initial::operands) = map alphaNodeToList xs
+
+          (* Merge two operands *)
+          fun process ( [], ( res, []) )
+          = ( [], res )
+          
+          (* No more elements in alpha_a *)
+          |   process ( [], ( res, bxs ))
+          = ( [], bxs @ res )
+
+          (* Empty intersection for a *)
+          |   process ( (a,a_succs)::axs, ( res, [] ))
+          = process ( axs, ( [], (a,a_succs)::res ) )
+
+          (* General case *)
+          |   process ( alpha_a as ((a,a_succs)::axs)
+                      , ( res, (b,b_succs)::bxs )
+                      )
+          = 
+          if a = b then
+            process ( axs
+                    , ( ( a, a_succs@b_succs )::res
+                      , bxs
+                      )
+                    )
+          else 
+          let
+            val inter = ValUT.unify( Valuation.intersection( (!a), (!b) ))
+          in
+            if Valuation.empty (!inter) then
+              process ( alpha_a
+                      , ( ( b, b_succs )::res
+                        , bxs
+                        )
+                      )
+            else 
+            let
+              val diff  = ValUT.unify( Valuation.difference((!a),(!inter)))
+            in
+              if b = inter then
+                process ( ( diff, a_succs )::axs
+                        , ( ( inter, a_succs@b_succs )::res
+                          , bxs
+                          )
+                        )
+                else
+                let
+                  val diff2 = ValUT.unify(Valuation.difference((!b),(!inter)))
+                in
+                  process ( (diff, a_succs )::axs
+                        , ( ( inter, a_succs@b_succs)::res
+                          , ( diff2, b_succs)::bxs
+                          )
+                      )
+                end
+            end
+          end
+
+          val (_,tmp) = foldl process ([],initial) operands
+
+          (* Warning: duplicate code with SDD.union! Keep in sync! *)
+          fun union_cache xs =
+          let
+            (* Remove all |0| *)
+            val xs' = List.filter (fn x => case !x of
+                                            SDD(Zero,_) => false
+                                          | _           => true
+                                  )
+                                  xs
+          in
+            case xs' of
+              []    => zero   (* No need to cache *)
+            | (x::[]) => x    (* No need to cache *)
+            | _       => lookup(Union( qsort xs, lookup ))
+          end
+
+
+          fun square_union alpha =
+          let
+            val tbl : (( SDD ref , valuation ref ) HashTable.hash_table)
+                    = (HashTable.mkTable( fn x => hash(!x) , op = )
+                      ( 10000, DoNotPanic ))
+            
+            val _ = app (fn ( vl, succs ) =>
+                        let
+                          val u = union_cache succs
+                        in
+                          case HashTable.find tbl u of
+                            NONE   => HashTable.insert tbl (u,vl)
+                          | SOME x =>
+                              HashTable.insert
+                                tbl
+                                ( u
+                                , ValUT.unify(Valuation.union(!vl,!x) )
+                                ) 
+                        end
+                        )
+                        alpha
+          in
+            HashTable.foldi (fn ( succ, vl, acc) =>
+                              Vector.concat [acc, Vector.fromList [(vl,succ)]]
+                            )
+                            (Vector.fromList [])
+                            tbl
+          end
+
+          val alpha = square_union tmp
+
+          val hash_alpha = Vector.foldl
+                           (fn ((vl,succ),h) =>
+                              Word32.xorb( Valuation.hash(!vl)
+                                         , Word32.xorb( hash(!succ), h )
+                                         )
+                           )
+                           (Word32.fromInt 0)
+                           alpha
+
+          val h = Word32.xorb( Variable.hash var, hash_alpha )
+
         in
-          raise NotYetImplemented
+          SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
         end
 
-        | SDD(HNode{...},_) =>
-        let
-          (* Convert all operands into HNode{...} *)
-          val xs'' = map (fn x => case !x of
-                                    SDD( n as HNode{...}, _ ) => n
-                                  | _ => raise DoNotPanic
-                         )
-                         xs'
-        in
-          raise NotYetImplemented
-        end
+          (* Hierachical node case *)
+        | SDD(HNode{...},_) => raise NotYetImplemented
 
       end (* end fun union *)
 
@@ -534,28 +675,26 @@ functor SDDFun ( structure Variable  : VARIABLE
     (* Let operations in Op call the cache *)
     val lookup_cache    = SDDOpCache.lookup
 
-    (* Sort operands of union and intersection, using their hash values *)
-    fun qsort []       = []
-    |   qsort (x::xs)  =
-    let
-      fun h x = let val SDD(_,res) = !x in res end
-    in
-        qsort (List.filter (fn y => (h y) < (h x) )  xs )
-      @ [x]
-      @ qsort (List.filter (fn y => (h y) >= (h x) ) xs )
-    end
-
   in (* local SDD manipulations *)
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
     fun union xs =
-      case xs of
-        []      => zero (* No need to cache *)
-      | (x::[]) => x    (* No need to cache *)
-      | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs
-                                                        , lookup_cache ))
+      let
+        (* Remove all |0| *)
+        val xs' = List.filter (fn x => case !x of
+                                          SDD(Zero,_) => false
+                                        | _           => true
+                              )
+                              xs
+      in
+        case xs' of
+          []      => zero (* No need to cache *)
+        | (x::[]) => x    (* No need to cache *)
+        | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs
+                                                          , lookup_cache ))
+      end
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
