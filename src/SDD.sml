@@ -577,9 +577,120 @@ functor SDDFun ( structure Variable  : VARIABLE
         if has_zero then
           zero
         else
+        let
           (* Check operands compatibility *)
-          check xs;
-          raise NotYetImplemented
+          val _ = check xs
+
+                    (* The variable of the current level *)
+          val var = case !(hd xs) of
+                      SDD(Node{variable=v,...},_) => v
+                    | _ => raise DoNotPanic
+
+          (* Transform the alpha of a node into :
+            (valuation ref,SDD ref list) list *)
+          fun alphaNodeToList n =
+          let
+            val alpha = case !n of
+                          SDD(Node{alpha=alpha,...},_) => alpha
+                        | _ => raise DoNotPanic
+          in
+            Vector.foldr (fn (x,acc) =>
+                         let
+                           val (vl,succ) = x
+                         in
+                           (vl,[succ])::acc
+                         end
+                         )
+                         []
+                         alpha
+          end
+
+          val (initial,operands) = case map alphaNodeToList xs of
+                                       []       => raise DoNotPanic
+                                   |  (y::ys)  => (y,ys)
+
+          (* Merge two operands *)
+          fun process ( [], ( res, []) )
+          = raise NotYetImplemented
+
+          (* No more elements in alpha_a *)
+          |   process ( [], ( res, bxs ))
+          = raise NotYetImplemented
+
+          (* Empty intersection for a *)
+          |   process ( (a,a_succs)::axs, ( res, [] ))
+          = raise NotYetImplemented
+
+          (* General case *)
+          |   process ( alpha_a as ((a,a_succs)::axs)
+                      , ( res, (b,b_succs)::bxs )
+                      )
+          = raise NotYetImplemented
+
+          val (_,tmp) = foldl process ([],initial) operands
+
+          (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
+          fun intersection_cache xs =
+          let
+            (* Remove all |0| *)
+            val xs' = List.filter (fn x => case !x of
+                                            SDD(Zero,_) => false
+                                          | _           => true
+                                  )
+                                  xs
+          in
+            case xs' of
+              []      => zero   (* No need to cache *)
+            | (x::[]) => x    (* No need to cache *)
+            | _       => lookup(Inter( qsort xs, lookup ))
+          end
+
+
+          fun square_union alpha =
+          let
+            val tbl : (( SDD ref , valuation ref ) HashTable.hash_table)
+                    = (HashTable.mkTable( fn x => hash(!x) , op = )
+                      ( 10000, DoNotPanic ))
+
+            val _ = app (fn ( vl, succs ) =>
+                        let
+                          val u = intersection_cache succs
+                        in
+                          case HashTable.find tbl u of
+                            NONE   => HashTable.insert tbl (u,vl)
+                          | SOME x =>
+                              HashTable.insert
+                                tbl
+                                ( u
+                                , ValUT.unify(Valuation.union(!vl,!x) )
+                                )
+                        end
+                        )
+                        alpha
+          in
+            HashTable.foldi (fn ( succ, vl, acc) =>
+                              Vector.concat [acc, Vector.fromList [(vl,succ)]]
+                            )
+                            (Vector.fromList [])
+                            tbl
+          end
+
+          val alpha = square_union tmp
+
+          val hash_alpha = Vector.foldl
+                           (fn ((vl,succ),h) =>
+                              Word32.xorb( Valuation.hash(!vl)
+                                         , Word32.xorb( hash(!succ), h )
+                                         )
+                           )
+                           (Word32.fromInt 0)
+                           alpha
+
+          val h = Word32.xorb( Variable.hash var, hash_alpha )
+
+        in
+          SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
+        end
       end (* end fun intersection *)
 
       (*------------------------------------------------------------------*)
