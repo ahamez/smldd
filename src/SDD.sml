@@ -631,19 +631,10 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
           fun intersection_cache xs =
-          let
-            (* Remove all |0| *)
-            val xs' = List.filter (fn x => case !x of
-                                            SDD(Zero,_) => false
-                                          | _           => true
-                                  )
-                                  xs
-          in
-            case xs' of
-              []      => zero   (* No need to cache *)
+            case xs of
+              []      => zero (* No need to cache *)
             | (x::[]) => x    (* No need to cache *)
-            | _       => lookup(Inter( qsort xs, lookup ))
-          end
+            | _       => lookup( Inter( qsort xs, lookup) )
 
 
           fun square_union alpha =
