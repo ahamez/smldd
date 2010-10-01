@@ -501,7 +501,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           in
             case xs' of
               []      => zero   (* No need to cache *)
-            | (x::[]) => x    (* No need to cache *)
+            | (x::[]) => x      (* No need to cache *)
             | _       => lookup(Union( qsort xs, lookup ))
           end
 
