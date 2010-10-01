@@ -669,7 +669,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           (* Check operands compatibility *)
           val _ = check xs
 
-                    (* The variable of the current level *)
+          (* The variable of the current level *)
           val var = case !(hd xs) of
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
