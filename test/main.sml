@@ -36,21 +36,28 @@ val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v2))
     val zer1 = SDD.zero
     val one  = SDD.one
 
-    val s0 = SDD.flat_node(1,IntVector.fromList[1,2,0],one)
-    val s1 = SDD.flat_node(1,IntVector.fromList[1,2,3],one)
+    val s0 = SDD.flatNode(1,IntVector.fromList[1,2,0],one)
+    val s1 = SDD.flatNode(1,IntVector.fromList[1,2,3],one)
+    val s2 = SDD.flatNode(1,IntVector.fromList[42,100],one)
 
-    val s2 = SDD.flat_node(2,IntVector.fromList[1],s0)
-    val s3 = SDD.flat_node(2,IntVector.fromList[1],s1)
-    val s4 = SDD.flat_node(2,IntVector.fromList[0],s1)
+    val u0 = SDD.union [s0,s1,s2]
 
-    val u0 = SDD.union [s0,s1]
-    val u1 = SDD.union [s2,s3]
-    val u2 = SDD.union [s2,s4]
+    val s3 = SDD.flatNode(2,IntVector.fromList[1],s0)
+    val s4 = SDD.flatNode(2,IntVector.fromList[1],u0)
+    val s5 = SDD.flatNode(2,IntVector.fromList[0],s1)
+    val s6 = SDD.flatNode(2,IntVector.fromList[9],s0)
+
+    val u1 = SDD.union [s3,s6]
+    (*val u2 = SDD.union [s2,s4]*)
     (*val s2 = SDD.node(0,s1,one)*)
     (*val s3 = SDD.node(1,s1,s2)*)
 
     (*val u0 = SDD.union [one,one]*)
     (*val u1 = SDD.union [one,one]*)
+
+    val i0 = SDD.intersection [zero,s0,s1,s2]
+    val i1 = SDD.intersection [s0,s1]
+    (*val i2 = SDD.intersection [s0,s2]*)
   in
     print "\nBEGIN TEST\n";
     (*print (Bool.toString(uv1 = uv2));
@@ -107,8 +114,17 @@ val _ = print(valuation_discrete_int.toString(valuation_discrete_int.sort v2))
     print (SDD.toString u0);
     print "\n";
     print (SDD.toString u1);
+
     print "\n";
-    print (SDD.toString u2);
+    print (SDD.toString i0);
+    print "\n";
+    print (SDD.toString i1);
+    (*print "\n";
+    print (SDD.toString i2);*)
+
+
+    (*print "\n";
+    print (SDD.toString u2);*)
 
     (*print "\n";
     print (SDD.toString s4);*)

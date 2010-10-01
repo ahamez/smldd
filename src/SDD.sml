@@ -10,7 +10,7 @@ sig
 
   val zero          : SDD ref
   val one           : SDD ref
-  val flat_node     : variable * valuation * SDD ref -> SDD ref
+  val flatNode      : variable * valuation * SDD ref -> SDD ref
   val node          : variable * SDD ref * SDD ref -> SDD ref
 
   val union         : SDD ref list -> SDD ref
@@ -178,8 +178,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a set of discrete values on arc *)
-  fun flat_node ( vr : Variable.t , values : Valuation.t , next : SDD ref )
-                : SDD ref
+  fun flatNode ( var : Variable.t , values : Valuation.t , next : SDD ref )
+               : SDD ref
 
     = case !next of
       SDD(Zero,_) => zero
