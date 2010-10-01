@@ -508,7 +508,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           fun square_union alpha =
           let
-            val tbl : (( SDD ref , valuation ref ) HashTable.hash_table)
+            val tbl : (( SDD ref , valuation ref list ) HashTable.hash_table)
                     = (HashTable.mkTable( fn x => hash(!x) , op = )
                       ( 10000, DoNotPanic ))
 
@@ -517,19 +517,34 @@ functor SDDFun ( structure Variable  : VARIABLE
                           val u = union_cache succs
                         in
                           case HashTable.find tbl u of
-                            NONE   => HashTable.insert tbl (u,vl)
+                            NONE   => HashTable.insert tbl (u,[vl])
                           | SOME x =>
-                              HashTable.insert
-                                tbl
-                                ( u
-                                , ValUT.unify(Valuation.union(!vl,!x) )
-                                )
+                            (
+                              HashTable.remove tbl u;
+                              HashTable.insert tbl( u, vl::x )
+                            )
                         end
                         )
                         alpha
           in
-            HashTable.foldi (fn ( succ, vl, acc) =>
-                              Vector.concat [acc, Vector.fromList [(vl,succ)]]
+            HashTable.foldi (fn ( succ, vls, acc) =>
+                             let
+                               val vl = (case vls of
+                                          []      => raise DoNotPanic
+                                        | (x::[]) => x
+                                        | (x::xs) =>
+                                            ValUT.unify
+                                            (
+                                            foldl (fn (y,acc) =>
+                                                    Valuation.union(!y,acc)
+                                                   )
+                                                   (!x)
+                                                   xs
+                                            )
+                                        )
+                            in
+                              Vector.concat[acc,Vector.fromList[(vl,succ)]]
+                            end
                             )
                             (Vector.fromList [])
                             tbl
