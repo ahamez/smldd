@@ -685,16 +685,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           val alpha = square_union tmp
 
-          val hash_alpha = Vector.foldl
-                           (fn ((vl,succ),h) =>
-                              Word32.xorb( Valuation.hash(!vl)
-                                         , Word32.xorb( hash(!succ), h )
-                                         )
-                           )
-                           (Word32.fromInt 0)
-                           alpha
-
-          val h = Word32.xorb( Variable.hash var, hash_alpha )
 
         in
           flatNodeAlpha( var, alpha )
