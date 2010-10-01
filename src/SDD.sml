@@ -508,8 +508,13 @@ functor SDDFun ( structure Variable  : VARIABLE
           end
 
 
+          (* Perform all unions on SDD successors that the above 'process'
+             function created. It then merge all valuations that lead to
+             the same successor, using a hash table. *)
           fun square_union alpha =
           let
+            (* This table associates a list of valuations to a single
+               SDD successor *)
             val tbl :
               ( ( SDD ref , valuation ref list ref) HashTable.hash_table )
               = (HashTable.mkTable( fn x => hash(!x) , op = )
