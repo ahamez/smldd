@@ -490,6 +490,58 @@ functor SDDFun ( structure Variable  : VARIABLE
         | (x::[]) => x    (* No need to cache *)
         | _       => lookup( Inter( qsort xs, lookup) )
 
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
+       (* Merge all valuations that lead to the same successor,
+          using a hash table. *)
+       fun flatSquareUnion ( lookup, alpha ) =
+       let
+         (* This table associates a list of valuations to a single
+            SDD successor *)
+         val tbl :
+           ( ( SDD ref , valuation ref list ref) HashTable.hash_table )
+           = (HashTable.mkTable( fn x => hash(!x) , op = )
+             ( 10000, DoNotPanic ))
+
+         val _ = app (fn ( vl, succs ) =>
+                     let
+                       val u = unionCallback( lookup, succs )
+                     in
+                       case HashTable.find tbl u of
+                         NONE   => HashTable.insert tbl ( u, ref [vl] )
+                         (* update list of valuations *)
+                       | SOME x => x := vl::(!x)
+                     end
+                     )
+                     alpha
+       in
+         HashTable.foldi (fn ( succ, vls, acc) =>
+                          let
+                            val vl = (case !vls of
+                                       []      => raise DoNotPanic
+                                     | (x::[]) => x
+                                     | (x::xs) =>
+                                         ValUT.unify
+                                         (
+                                         foldl (fn (y,acc) =>
+                                                 Valuation.union(!y,acc)
+                                                )
+                                                (!x)
+                                                xs
+                                         )
+                                     )
+                         in
+                           Vector.concat[acc,Vector.fromList[(vl,succ)]]
+                         end
+                         )
+                         (Vector.fromList [])
+                         tbl
+       end
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
       (* Do the union of a list of SDDs.
          Note:  Valuation.t operations are currently not cached. *)
       fun union( xs, lookup ) =
