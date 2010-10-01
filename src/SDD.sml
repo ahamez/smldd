@@ -634,57 +634,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           val (_,tmp) = foldl process ([],initial) operands
 
-
-
-          (* Perform all unions on SDD successors that the above 'process'
-             function created. It then merge all valuations that lead to
-             the same successor, using a hash table. *)
-          fun square_union alpha =
-          let
-            (* This table associates a list of valuations to a single
-               SDD successor *)
-            val tbl :
-              ( ( SDD ref , valuation ref list ref) HashTable.hash_table )
-              = (HashTable.mkTable( fn x => hash(!x) , op = )
-                ( 10000, DoNotPanic ))
-
-            val _ = app (fn ( vl, succs ) =>
-                        let
-                          val u = union_cache succs
-                        in
-                          case HashTable.find tbl u of
-                            NONE   => HashTable.insert tbl ( u, ref [vl] )
-                            (* update list of valuations *)
-                          | SOME x => x := vl::(!x)
-                        end
-                        )
-                        alpha
-          in
-            HashTable.foldi (fn ( succ, vls, acc) =>
-                             let
-                               val vl = (case !vls of
-                                          []      => raise DoNotPanic
-                                        | (x::[]) => x
-                                        | (x::xs) =>
-                                            ValUT.unify
-                                            (
-                                            foldl (fn (y,acc) =>
-                                                    Valuation.union(!y,acc)
-                                                   )
-                                                   (!x)
-                                                   xs
-                                            )
-                                        )
-                            in
-                              Vector.concat[acc,Vector.fromList[(vl,succ)]]
-                            end
-                            )
-                            (Vector.fromList [])
-                            tbl
-          end
-
-          val alpha = square_union tmp
-
+          val alpha = flatSquareUnion( lookup, tmp )
 
         in
           flatNodeAlpha( var, alpha )
