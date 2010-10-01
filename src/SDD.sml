@@ -510,28 +510,26 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           fun square_union alpha =
           let
-            val tbl : (( SDD ref , valuation ref list ) HashTable.hash_table)
-                    = (HashTable.mkTable( fn x => hash(!x) , op = )
-                      ( 10000, DoNotPanic ))
+            val tbl :
+              ( ( SDD ref , valuation ref list ref) HashTable.hash_table )
+              = (HashTable.mkTable( fn x => hash(!x) , op = )
+                ( 10000, DoNotPanic ))
 
             val _ = app (fn ( vl, succs ) =>
                         let
                           val u = union_cache succs
                         in
                           case HashTable.find tbl u of
-                            NONE   => HashTable.insert tbl (u,[vl])
-                          | SOME x =>
-                            (
-                              HashTable.remove tbl u;
-                              HashTable.insert tbl( u, vl::x )
-                            )
+                            NONE   => HashTable.insert tbl ( u, ref [vl] )
+                            (* update list of valuations *)
+                          | SOME x => x := vl::(!x)
                         end
                         )
                         alpha
           in
             HashTable.foldi (fn ( succ, vls, acc) =>
                              let
-                               val vl = (case vls of
+                               val vl = (case !vls of
                                           []      => raise DoNotPanic
                                         | (x::[]) => x
                                         | (x::xs) =>
