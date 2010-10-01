@@ -190,12 +190,12 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           val SDD(_,hash_next)    = !next
           val hash_values         = Valuation.hash values
-          val h = Word32.xorb( Variable.hash vr
+          val h = Word32.xorb( Variable.hash var
                              , Word32.xorb( hash_next, hash_values ))
           val unik_values = ValUT.unify values
           val alpha = Vector.fromList [( unik_values, next )]
         in
-          SDDUT.unify( SDD( Node{ variable=vr, alpha=alpha}, h) )
+          SDDUT.unify( SDD( Node{ variable=var, alpha=alpha}, h) )
         end
 
   (*----------------------------------------------------------------------*)
