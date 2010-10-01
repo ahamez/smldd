@@ -463,6 +463,33 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
+
+      (* Warning: duplicate code with SDD.union! Keep in sync! *)
+      fun unionCallback ( lookup, xs ) =
+      let
+        (* Remove all |0| *)
+        val xs' = List.filter (fn x => case !x of
+                                        SDD(Zero,_) => false
+                                      | _           => true
+                              )
+                              xs
+      in
+        case xs' of
+          []      => zero   (* No need to cache *)
+        | (x::[]) => x      (* No need to cache *)
+        | _       => lookup(Union( qsort xs, lookup ))
+      end
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
+      (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
+      fun intersectionCallback ( lookup, xs ) =
+        case xs of
+          []      => zero (* No need to cache *)
+        | (x::[]) => x    (* No need to cache *)
+        | _       => lookup( Inter( qsort xs, lookup) )
+
       (* Do the union of a list of SDDs.
          Note:  Valuation.t operations are currently not cached. *)
       fun union( xs, lookup ) =
