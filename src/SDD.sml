@@ -661,7 +661,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                           NONE    => false
                         | SOME _  => true
       in
-        (* Intersection with |0| is always |0| *)
+
+        (* Intersection of anything with |0| is always |0| *)
         if has_zero then
           zero
         else
