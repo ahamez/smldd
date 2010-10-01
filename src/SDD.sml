@@ -674,10 +674,12 @@ functor SDDFun ( structure Variable  : VARIABLE
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
 
-
-          val (initial,operands) = case map alphaNodeToList xs of
-                                       []       => raise DoNotPanic
-                                   |  (y::ys)  => (y,ys)
+          val ( initial  : (valuation ref * SDD ref list) list
+              , operands : (valuation ref * SDD ref list) list list
+              )
+          = case map alphaNodeToList xs of
+              []       => raise DoNotPanic
+            |  (y::ys)  => (y,ys)
 
           (* Merge two operands *)
           fun process ( [], ( res, []) )
