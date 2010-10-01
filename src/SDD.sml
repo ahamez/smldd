@@ -202,8 +202,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a nested node on arc *)
-  fun node  ( vr : Variable.t, nested : SDD ref , next : SDD ref )
-            : SDD ref
+  fun node ( vr : Variable.t, nested : SDD ref , next : SDD ref )
+           : SDD ref
 
     = case !next of
       SDD(Zero,_) => zero
