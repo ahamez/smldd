@@ -666,6 +666,16 @@ functor SDDFun ( structure Variable  : VARIABLE
         if has_zero then
           zero
         else
+          case !(hd xs) of
+
+            (* All operands are |1| *)
+            SDD(One,_)        => one
+
+            (* There shouldn't be any |0| *)
+          | SDD(Zero,_)       => raise DoNotPanic
+
+            (* Flat node case *)
+          | SDD(Node{...},_)  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
@@ -755,6 +765,10 @@ functor SDDFun ( structure Variable  : VARIABLE
         in
           flatNodeAlpha( var, alpha )
         end
+
+        (* Hierachical node case *)
+        | SDD(HNode{...},_)  => raise NotYetImplemented
+
       end (* end fun intersection *)
 
       (*------------------------------------------------------------------*)
