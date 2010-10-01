@@ -383,6 +383,8 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Do the union of a list of SDDs.
+         Note:  Valuation.t operations are currently not cached. *)
       fun union( xs, lookup ) =
       let
 
