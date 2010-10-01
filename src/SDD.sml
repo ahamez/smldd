@@ -124,6 +124,45 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  (* Export an SDD to a string *)
+  fun toString x =
+    let
+      val SDD(sdd,_) = !x
+    in
+      case sdd of
+        Zero  => "|0|"
+      | One   => "|1|"
+      | Node{ variable=vr, alpha=alpha} =>
+        (Variable.toString vr)
+        ^ " [ "
+        ^ String.concatWith " + "
+                            (VectorToList
+                            (Vector.map (fn (values,succ) =>
+                                          Valuation.toString(!values)
+                                        ^ " --> "
+                                        ^ (toString succ)
+                                        )
+                                        alpha
+                            ))
+        ^ " ]"
+      | HNode{ variable=vr, alpha=alpha} =>
+        (Variable.toString vr)
+        ^ " [ "
+        ^ String.concatWith " + "
+                            (VectorToList
+                            (Vector.map (fn (nested,succ) =>
+                                          (toString nested)
+                                        ^ " --> "
+                                        ^ (toString succ)
+                                        )
+                                        alpha
+                            ))
+        ^ " ]"
+    end (* end fun toString *)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
   (* Return the |0| ("zero") terminal *)
   val zero : SDD ref
     = SDDUT.unify( SDD( Zero , MLton.hash 0 ) )
@@ -900,45 +939,6 @@ functor SDDFun ( structure Variable  : VARIABLE
     in
       helper x
     end (* end fun paths *)
-
-  (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
-  (* Export an SDD to a string *)
-  fun toString x      =
-    let
-      val SDD(sdd,_) = !x
-    in
-      case sdd of
-        Zero  => "|0|"
-      | One   => "|1|"
-      | Node{ variable=vr, alpha=alpha} =>
-        (Variable.toString vr)
-        ^ " [ "
-        ^ String.concatWith " + "
-                            (VectorToList
-                            (Vector.map (fn (values,succ) =>
-                                          Valuation.toString(!values)
-                                        ^ " --> "
-                                        ^ (toString succ)
-                                        )
-                                        alpha
-                            ))
-        ^ " ]"
-      | HNode{ variable=vr, alpha=alpha} =>
-        (Variable.toString vr)
-        ^ " [ "
-        ^ String.concatWith " + "
-                            (VectorToList
-                            (Vector.map (fn (nested,succ) =>
-                                          (toString nested)
-                                        ^ " --> "
-                                        ^ (toString succ)
-                                        )
-                                        alpha
-                            ))
-        ^ " ]"
-    end (* end fun toString *)
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
