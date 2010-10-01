@@ -580,21 +580,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           val (_,tmp) = foldl process ([],initial) operands
 
-          (* Warning: duplicate code with SDD.union! Keep in sync! *)
-          fun union_cache xs =
-          let
-            (* Remove all |0| *)
-            val xs' = List.filter (fn x => case !x of
-                                            SDD(Zero,_) => false
-                                          | _           => true
-                                  )
-                                  xs
-          in
-            case xs' of
-              []      => zero   (* No need to cache *)
-            | (x::[]) => x      (* No need to cache *)
-            | _       => lookup(Union( qsort xs, lookup ))
-          end
 
 
           (* Perform all unions on SDD successors that the above 'process'
