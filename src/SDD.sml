@@ -441,6 +441,28 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Transform the alpha of a node into :
+         (valuation ref,SDD ref list) list *)
+      fun alphaNodeToList ( n : SDD ref )
+        : ( valuation ref * SDD ref list ) list
+      = let
+        val alpha = case !n of
+                      SDD(Node{alpha=alpha,...},_) => alpha
+                    | _ => raise DoNotPanic
+      in
+        Vector.foldr (fn (x,acc) =>
+                     let
+                       val (vl,succ) = x
+                     in
+                       (vl,[succ])::acc
+                     end
+                     )
+                     []
+                     alpha
+      end
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
       (* Do the union of a list of SDDs.
          Note:  Valuation.t operations are currently not cached. *)
       fun union( xs, lookup ) =
@@ -468,24 +490,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
 
-          (* Transform the alpha of a node into :
-            (valuation ref,SDD ref list) list *)
-          fun alphaNodeToList n =
-          let
-            val alpha = case !n of
-                          SDD(Node{alpha=alpha,...},_) => alpha
-                        | _ => raise DoNotPanic
-          in
-            Vector.foldr (fn (x,acc) =>
-                         let
-                           val (vl,succ) = x
-                         in
-                           (vl,[succ])::acc
-                         end
-                         )
-                         []
-                         alpha
-          end
 
           val (initial,operands) = case map alphaNodeToList xs of
                                        []       => raise DoNotPanic
@@ -664,24 +668,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
 
-          (* Transform the alpha of a node into :
-            (valuation ref,SDD ref list) list *)
-          fun alphaNodeToList n =
-          let
-            val alpha = case !n of
-                          SDD(Node{alpha=alpha,...},_) => alpha
-                        | _ => raise DoNotPanic
-          in
-            Vector.foldr (fn (x,acc) =>
-                         let
-                           val (vl,succ) = x
-                         in
-                           (vl,[succ])::acc
-                         end
-                         )
-                         []
-                         alpha
-          end
 
           val (initial,operands) = case map alphaNodeToList xs of
                                        []       => raise DoNotPanic
