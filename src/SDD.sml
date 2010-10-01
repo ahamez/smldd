@@ -201,6 +201,25 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  fun flatNodeAlpha ( var   : Variable.t
+                    , alpha : (valuation ref * SDD ref ) vector )
+  = let
+    val hash_alpha = Vector.foldl (fn ((vl,succ),h) =>
+                                    Word32.xorb( Valuation.hash(!vl)
+                                               , Word32.xorb( hash(!succ), h )
+                                               )
+                                  )
+                     (Word32.fromInt 0)
+                     alpha
+
+    val h = Word32.xorb( Variable.hash var, hash_alpha )
+  in
+    SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
+  end
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
   (* Return a node with a nested node on arc *)
   fun node ( vr : Variable.t, nested : SDD ref , next : SDD ref )
            : SDD ref
@@ -608,7 +627,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           val h = Word32.xorb( Variable.hash var, hash_alpha )
 
         in
-          SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
+          flatNodeAlpha( var, alpha )
         end
 
           (* Hierachical node case *)
@@ -739,7 +758,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           val h = Word32.xorb( Variable.hash var, hash_alpha )
 
         in
-          SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
+          flatNodeAlpha( var, alpha )
         end
       end (* end fun intersection *)
 
