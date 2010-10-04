@@ -596,7 +596,7 @@ functor SDDFun ( structure Variable  : VARIABLE
               if succ = zero then
                 []
               else
-                [ ( inter, [] ) ]
+                [ ( inter, [succ] ) ]
             end
         end
 
