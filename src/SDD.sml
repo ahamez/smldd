@@ -796,7 +796,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      (* Apply an SDD operation. *)
+      (* Apply an SDD operation. Called by CacheFun. *)
       fun apply x =
         case x of
           Union(xs,lookup)  => union( xs, lookup )
