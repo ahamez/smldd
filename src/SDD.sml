@@ -350,7 +350,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    fun val_union xs =
+    fun valUnion xs =
       case xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
@@ -359,7 +359,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    fun val_intersection xs =
+    fun valIntersection xs =
       case xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
@@ -368,8 +368,8 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    fun val_difference(x,y) =
       ValOpCache.lookup( ValuationOperations.Diff(x,y) )
+    fun valDifference(x,y) =
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
