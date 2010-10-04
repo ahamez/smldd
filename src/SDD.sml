@@ -822,7 +822,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
 
     (* Let operations in Op call the cache *)
-    val lookup_cache    = SDDOpCache.lookup
+    val lookupCache     = SDDOpCache.lookup
 
   in (* local SDD manipulations *)
 
@@ -843,27 +843,29 @@ functor SDDFun ( structure Variable  : VARIABLE
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
         | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs
-                                                          , lookup_cache ))
+                                                          , lookupCache ))
       end
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
+    (* Warning! Duplicate code with SDD.SDDOperations.intersection! *)
     fun intersection xs =
       case xs of
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
       | _       => SDDOpCache.lookup(SDDOperations.Inter( qsort xs
-                                                        , lookup_cache ))
+                                                        , lookupCache ))
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
+    (* Warning! Duplicate code with SDD.SDDOperations.difference! *)
     fun difference(x,y) =
       if x = y then
         zero (* No need to cache *)
       else
-        SDDOpCache.lookup(SDDOperations.Diff( x, y, lookup_cache ))
+        SDDOpCache.lookup(SDDOperations.Diff( x, y, lookupCache ))
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
