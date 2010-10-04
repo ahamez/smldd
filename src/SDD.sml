@@ -590,7 +590,14 @@ functor SDDFun ( structure Variable  : VARIABLE
           if Valuation.empty (!inter) then
             []
           else
-            [ ( inter, [cont( lookup, a_succs@b_succs)] ) ]
+            let
+              val succ = cont( lookup, a_succs@b_succs )
+            in
+              if succ = zero then
+                []
+              else
+                [ ( inter, [] ) ]
+            end
         end
 
         fun helper2( [], _ )   = []
