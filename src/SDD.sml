@@ -202,8 +202,12 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   fun flatNodeAlpha ( var   : Variable.t
-                    , alpha : (valuation ref * SDD ref ) vector )
-  = let
+                    , alpha : (valuation ref * SDD ref ) Vector.vector )
+  =
+  if Vector.length alpha = 0 then
+    zero
+  else
+  let
     val hash_alpha = Vector.foldl (fn ((vl,succ),h) =>
                                     Word32.xorb( Valuation.hash(!vl)
                                                , Word32.xorb( hash(!succ), h )
