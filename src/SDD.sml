@@ -201,6 +201,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  (* Construct a flat node with an already computed alpha.
+     For internal use only! *)
   fun flatNodeAlpha ( var   : Variable.t
                     , alpha : (valuation ref * SDD ref ) Vector.vector )
   =
