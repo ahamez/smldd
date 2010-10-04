@@ -184,7 +184,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     = case !next of
       SDD(Zero,_) => zero
     | _           =>
-      if Valuation.length values = 0 then
+      if Valuation.empty values then
         zero
       else
         let
