@@ -249,6 +249,16 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  (* Construct a node with an already computed alpha.
+     For internal use only! *)
+  fun nodeAlpha ( var   : Variable.t
+                , alpha : (SDD ref * SDD ref ) Vector.vector )
+  = raise NotYetImplemented
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+
   local (* Valuations manipulations *)
 
     (* Operations to manipulate valuations. Used by the cache. *)
