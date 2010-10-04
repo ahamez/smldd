@@ -673,7 +673,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           case !(hd xs) of
 
             (* All operands are |1| *)
-            SDD(One,_)        => one
+            SDD(One,_)        => check xs
 
             (* There shouldn't be any |0| *)
           | SDD(Zero,_)       => raise DoNotPanic
