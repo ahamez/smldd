@@ -577,13 +577,12 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      (* Used by intersection and difference to propagate operations on
-         successors *)
-      fun flatCommonApply( x, y, lookup, cont ) =
+      fun flatCommonApply( [], _, _, _ )             = []
+      |   flatCommonApply( x::xs, ys, lookup, cont ) =
       let
 
-        fun helper1( _, [] ) =  []
-        |   helper1( (a,a_succs), (b,b_succs)::_) =
+        fun propagate _    ( _, [] )                       =  []
+        |   propagate cont ( (a,a_succs), (b,b_succs)::_ ) =
         let
           val inter = valIntersection [a,b]
         in
@@ -600,11 +599,10 @@ functor SDDFun ( structure Variable  : VARIABLE
             end
         end
 
-        fun helper2( [], _ )   = []
-        |   helper2( x::xs, ys) = helper1( x, ys ) @ helper2( xs, ys )
+        val propagate' = propagate cont
 
       in
-        helper2( x, y )
+        propagate'( x, ys  ) @ flatCommonApply( xs, ys, lookup, cont )
       end
 
       (*------------------------------------------------------------------*)
