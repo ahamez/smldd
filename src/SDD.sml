@@ -690,18 +690,35 @@ functor SDDFun ( structure Variable  : VARIABLE
                     | _ => raise DoNotPanic
 
           val ( initial  : (valuation ref * SDD ref list) list
-              , operands : (valuation ref * SDD ref list) list list
-              )
+              , operands : (valuation ref * SDD ref list) list list )
           = case map alphaNodeToList xs of
               []       => raise DoNotPanic
             |  (y::ys)  => (y,ys)
 
-          (* Merge two operands *)
-          fun process (_,_) = raise NotYetImplemented
+          (* Intersect two operands *)
+          fun process (xs,ys) =
+          let
+            fun helper1( _, [] ) =  []
+            |   helper1( (a,a_succ), (b,b_succ)::ys) =
+            let
+              val inter = Valuation.intersection( !a, !b )
+            in
+              if Valuation.empty inter then
+                []
+              else
+                [( ValUT.unify(inter)
+                 , [intersectionCallback( lookup, a_succ@b_succ)] )
+                ]
+            end
 
-          val (_,tmp) = foldl process ([],initial) operands
+            fun helper2( [], _ )   = []
+            |   helper2( x::xs, ys) = helper1( x, ys ) @ helper2( xs, ys )
+          in
+            helper2( xs, ys )
+          end
 
-          val alpha = flatSquareUnion( lookup, tmp )
+          val alpha = flatSquareUnion( lookup
+                                     , foldl process initial operands )
 
         in
           flatNodeAlpha( var, alpha )
