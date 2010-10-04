@@ -909,7 +909,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       val cache : (( SDD ref , int ) HashTable.hash_table) ref
           = ref (HashTable.mkTable( fn x => hash(!x) , op = )
                                   ( 10000, DoNotPanic ))
-      fun helper x =
+      fun pathsHelper x =
         let
           val SDD(sdd,_) = !x
         in
@@ -924,7 +924,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
                                       ( n + Valuation.length(!v) )
-                                      * (helper succ )
+                                      * (pathsHelper succ )
                                     )
                                     0
                                     arcs
@@ -941,8 +941,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                 let
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
-                                      ( n + helper v )
-                                      * ( helper succ )
+                                      ( n + pathsHelper v )
+                                      * ( pathsHelper succ )
                                     )
                                     0
                                     arcs
@@ -953,7 +953,7 @@ functor SDDFun ( structure Variable  : VARIABLE
               )
         end
     in
-      helper x
+      pathsHelper x
     end (* end fun paths *)
 
   (*----------------------------------------------------------------------*)
