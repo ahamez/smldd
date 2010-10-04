@@ -368,8 +368,15 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-      ValOpCache.lookup( ValuationOperations.Diff(x,y) )
     fun valDifference(x,y) =
+      let
+        val empty = ValUT.unify( Valuation.mkEmpty() )
+      in
+        if x = y then
+          empty
+        else
+          ValOpCache.lookup( ValuationOperations.Diff(x,y) )
+      end
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)

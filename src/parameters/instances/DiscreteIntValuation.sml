@@ -39,6 +39,9 @@ struct
   fun empty vec = IntVector.length vec = 0
 
   (*----------------------------------------------------------------------*)
+  fun mkEmpty vec = IntVector.fromList []
+
+  (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
   fun union (s1,s2) =
     if IntVector.length s1 = 0 then
