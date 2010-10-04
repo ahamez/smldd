@@ -258,7 +258,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-
   local (* Valuations manipulations *)
 
     (* Operations to manipulate valuations. Used by the cache. *)
@@ -526,7 +525,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
        (* Merge all valuations that lead to the same successor,
-          using a hash table. *)
+          using an hash table. *)
        fun flatSquareUnion ( lookup, alpha ) =
        let
          (* This table associates a list of valuations to a single
@@ -536,6 +535,7 @@ functor SDDFun ( structure Variable  : VARIABLE
            = (HashTable.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
+         (* Fill the hash table *)
          val _ = app (fn ( vl, succs ) =>
                      let
                        val u = unionCallback( lookup, succs )
