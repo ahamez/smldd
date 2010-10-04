@@ -617,7 +617,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             let
               val diff  = ValUT.unify( Valuation.difference((!a),(!inter)))
             in
-              if b = inter then
+              if b = inter then (* No need to go further *)
                 process ( ( diff, a_succs )::axs
                         , ( ( inter, a_succs@b_succs )::res
                           , bxs
