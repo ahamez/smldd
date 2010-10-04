@@ -313,6 +313,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Evaluation an operation on valuations. Called by CacheFun. *)
       fun apply operation =
 
         case operation of
