@@ -713,8 +713,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         (* Test if there are any zero in operands *)
         val has_zero = case List.find (fn x => case !x of
-                                                  SDD(Zero,_) => true
-                                                | _           => false
+                                                 SDD(Zero,_) => true
+                                               | _           => false
                                       )
                                       xs
                        of
