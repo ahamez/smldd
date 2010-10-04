@@ -612,24 +612,24 @@ functor SDDFun ( structure Variable  : VARIABLE
             |  (y::ys)  => (y,ys)
 
           (* Merge two operands *)
-          fun process ( [], ( res, []) )
+          fun unionHelper ( [], ( res, []) )
           = ( [], res )
 
           (* No more elements in alpha_a *)
-          |   process ( [], ( res, bxs ))
+          |   unionHelper ( [], ( res, bxs ))
           = ( [], bxs @ res )
 
           (* Empty intersection for a *)
-          |   process ( (a,a_succs)::axs, ( res, [] ))
-          = process ( axs, ( [], (a,a_succs)::res ) )
+          |   unionHelper ( (a,a_succs)::axs, ( res, [] ))
+          = unionHelper ( axs, ( [], (a,a_succs)::res ) )
 
           (* General case *)
-          |   process ( alpha_a as ((a,a_succs)::axs)
+          |   unionHelper ( alpha_a as ((a,a_succs)::axs)
                       , ( res, (b,b_succs)::bxs )
                       )
           =
           if a = b then
-            process ( axs
+            unionHelper ( axs
                     , ( ( a, a_succs@b_succs )::res
                       , bxs
                       )
@@ -639,7 +639,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             val inter = valIntersection [a,b]
           in
             if Valuation.empty(!inter) then
-              process ( alpha_a
+              unionHelper ( alpha_a
                       , ( ( b, b_succs )::res
                         , bxs
                         )
@@ -649,25 +649,25 @@ functor SDDFun ( structure Variable  : VARIABLE
               val diff  = valDifference( a, inter )
             in
               if b = inter then (* No need to go further *)
-                process ( ( diff, a_succs )::axs
-                        , ( ( inter, a_succs@b_succs )::res
-                          , bxs
-                          )
-                        )
+                unionHelper ( ( diff, a_succs )::axs
+                            , ( ( inter, a_succs@b_succs )::res
+                              , bxs
+                              )
+                            )
                 else
                 let
                   val diff2 = valDifference( b, inter )
                 in
-                  process ( (diff, a_succs )::axs
-                        , ( ( inter, a_succs@b_succs)::res
-                          , ( diff2, b_succs)::bxs
-                          )
-                      )
+                  unionHelper ( (diff, a_succs )::axs
+                              , ( ( inter, a_succs@b_succs)::res
+                                , ( diff2, b_succs)::bxs
+                                )
+                              )
                 end
             end
           end
 
-          val (_,tmp) = foldl process ([],initial) operands
+          val (_,tmp) = foldl unionHelper ([],initial) operands
 
           val alpha = flatSquareUnion( lookup, tmp )
 
