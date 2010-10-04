@@ -791,6 +791,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   raise NotYetImplemented
             )
 
+        (* Difference of two hierarchical nodes *)
         | SDD( HNode{variable=lvr,alpha=lalpha}, _ ) =>
             raise NotYetImplemented
 
