@@ -492,7 +492,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         case xs of
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
-        | _       => lookup( Inter( qsort xs, lookup) )
+        | _       => lookup(Inter( qsort xs, lookup))
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
