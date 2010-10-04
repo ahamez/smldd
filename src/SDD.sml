@@ -562,14 +562,9 @@ functor SDDFun ( structure Variable  : VARIABLE
                                        []      => raise DoNotPanic
                                      | (x::[]) => x
                                      | (x::xs) =>
-                                         ValUT.unify
-                                         (
-                                         foldl (fn (y,acc) =>
-                                                 Valuation.union(!y,acc)
-                                                )
-                                                (!x)
+                                         foldl (fn (y,acc) => valUnion[y,acc])
+                                                x
                                                 xs
-                                         )
                                      )
                          in
                            Vector.concat[acc,Vector.fromList[(vl,succ)]]
@@ -641,9 +636,9 @@ functor SDDFun ( structure Variable  : VARIABLE
                     )
           else
           let
-            val inter = ValUT.unify( Valuation.intersection( (!a), (!b) ))
+            val inter = valIntersection [a,b]
           in
-            if Valuation.empty (!inter) then
+            if Valuation.empty(!inter) then
               process ( alpha_a
                       , ( ( b, b_succs )::res
                         , bxs
@@ -651,7 +646,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                       )
             else
             let
-              val diff  = ValUT.unify( Valuation.difference((!a),(!inter)))
+              val diff  = valDifference( a, inter )
             in
               if b = inter then (* No need to go further *)
                 process ( ( diff, a_succs )::axs
@@ -661,7 +656,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                         )
                 else
                 let
-                  val diff2 = ValUT.unify(Valuation.difference((!b),(!inter)))
+                  val diff2 = valDifference( b, inter )
                 in
                   process ( (diff, a_succs )::axs
                         , ( ( inter, a_succs@b_succs)::res
