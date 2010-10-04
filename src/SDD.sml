@@ -786,17 +786,51 @@ functor SDDFun ( structure Variable  : VARIABLE
                           | _           => raise IncompatibleSDD
                           )
 
-        | SDD( Node{variable=lvr,alpha=lalpha}, _ ) =>
-            (case !r of
-              SDD(Zero,_)       => raise IncompatibleSDD
-            | SDD(One,_)        => raise IncompatibleSDD
-            | SDD(HNode{...},_) => raise IncompatibleSDD
-            | SDD(Node{variable=rvr,alpha=ralpha},_) =>
-                if not( Variable.eq(lvr,rvr) ) then
-                  raise IncompatibleSDD
-                else
-                  raise NotYetImplemented
-            )
+        | SDD( Node{variable=lvr,alpha=la}, _ ) =>
+
+        (case !r of
+          SDD(Zero,_)       => raise IncompatibleSDD
+        | SDD(One,_)        => raise IncompatibleSDD
+        | SDD(HNode{...},_) => raise IncompatibleSDD
+
+        (* Difference of two flat nodes *)
+        | SDD( Node{variable=rvr,alpha=ra}, _ ) =>
+        if not( Variable.eq(lvr,rvr) ) then
+          raise IncompatibleSDD
+        else
+        let
+
+          val lalpha = flatAlphaToList la
+          val ralpha = flatAlphaToList ra
+
+          val commonPart =
+          let
+            (* Difference is a binary operation, while flatCommonApply
+               expects an n-ary operation *)
+            fun callback( lookup, xs ) =
+              case xs of
+                (x::y::[]) => differenceCallback( lookup, x, y )
+              | _          => raise DoNotPanic
+          in
+            flatCommonApply( lalpha, ralpha, lookup, callback )
+          end
+
+          val diffPart =
+          let
+            val bUnion = valUnion( map (fn (x,_)=>x) ralpha )
+          in
+            foldl (fn ((a,a_succs),acc) =>
+                    ( valDifference(a,bUnion), a_succs ) :: acc
+                  )
+                  []
+                  lalpha
+          end
+
+          val alpha = flatSquareUnion( lookup, diffPart @ commonPart )
+        in
+          flatNodeAlpha( lvr, alpha )
+        end
+        )
 
         (* Difference of two hierarchical nodes *)
         | SDD( HNode{variable=lvr,alpha=lalpha}, _ ) =>
