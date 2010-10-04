@@ -497,6 +497,16 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
+      fun differenceCallback( lookup, x, y ) =
+        if x = y then
+          zero (* No need to cache *)
+        else
+          lookup(Diff( x, y, lookup ))
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
        (* Merge all valuations that lead to the same successor,
           using a hash table. *)
        fun flatSquareUnion ( lookup, alpha ) =
