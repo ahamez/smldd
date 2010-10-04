@@ -577,8 +577,33 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      (* Do the union of a list of SDDs.
-         Note:  Valuation.t operations are currently not cached. *)
+      (* Used by intersection and difference to propagate operations on
+         successors *)
+      fun flatCommonApply( x, y, lookup, cont ) =
+      let
+
+        fun helper1( _, [] ) =  []
+        |   helper1( (a,a_succs), (b,b_succs)::_) =
+        let
+          val inter = valIntersection [a,b]
+        in
+          if Valuation.empty (!inter) then
+            []
+          else
+            [ ( inter, [cont( lookup, a_succs@b_succs)] ) ]
+        end
+
+        fun helper2( [], _ )   = []
+        |   helper2( x::xs, ys) = helper1( x, ys ) @ helper2( xs, ys )
+
+      in
+        helper2( x, y )
+      end
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
+      (* Do the union of a list of SDDs. *)
       fun union( xs, lookup ) =
       let
 
@@ -727,29 +752,11 @@ functor SDDFun ( structure Variable  : VARIABLE
             |  (y::ys)  => (y,ys)
 
           (* Intersect two operands *)
-          fun process (xs,ys) =
-          let
-            fun helper1( _, [] ) =  []
-            |   helper1( (a,a_succ), (b,b_succ)::ys) =
-            let
-              val inter = Valuation.intersection( !a, !b )
-            in
-              if Valuation.empty inter then
-                []
-              else
-                [( ValUT.unify(inter)
-                 , [intersectionCallback( lookup, a_succ@b_succ)] )
-                ]
-            end
-
-            fun helper2( [], _ )   = []
-            |   helper2( x::xs, ys) = helper1( x, ys ) @ helper2( xs, ys )
-          in
-            helper2( xs, ys )
-          end
+          fun interHelper (xs,ys)
+            = flatCommonApply( xs, ys, lookup, intersectionCallback)
 
           val alpha = flatSquareUnion( lookup
-                                     , foldl process initial operands )
+                                     , foldl interHelper initial operands )
 
         in
           flatNodeAlpha( var, alpha )
