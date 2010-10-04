@@ -665,10 +665,10 @@ functor SDDFun ( structure Variable  : VARIABLE
           in
             if Valuation.empty(!inter) then
               unionHelper ( alpha_a
-                      , ( ( b, b_succs )::res
-                        , bxs
-                        )
-                      )
+                          , ( ( b, b_succs )::res
+                            , bxs
+                            )
+                          )
             else
             let
               val diff  = valDifference( a, inter )
