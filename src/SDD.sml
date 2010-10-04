@@ -445,7 +445,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      fun alphaToList( alpha : (valuation ref * SDD ref) Vector.vector )
+      fun flatAlphaToList( alpha : (valuation ref * SDD ref) Vector.vector )
         : ( valuation ref * SDD ref list ) list
       =
       Vector.foldr (fn (x,acc) =>
@@ -461,14 +461,14 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Transform the alpha of a node into :
          (valuation ref,SDD ref list) list *)
-      fun alphaNodeToList ( n : SDD ref )
+      fun flatAlphaNodeToList ( n : SDD ref )
         : ( valuation ref * SDD ref list ) list
       = let
         val alpha = case !n of
                       SDD(Node{alpha=alpha,...},_) => alpha
                     | _ => raise DoNotPanic
       in
-        alphaToList alpha
+        flatAlphaToList alpha
       end
 
       (*------------------------------------------------------------------*)
@@ -592,7 +592,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           val ( initial  : (valuation ref * SDD ref list) list
               , operands : (valuation ref * SDD ref list) list list
               )
-          = case map alphaNodeToList xs of
+          = case map flatAlphaNodeToList xs of
               []       => raise DoNotPanic
             |  (y::ys)  => (y,ys)
 
@@ -707,7 +707,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           val ( initial  : (valuation ref * SDD ref list) list
               , operands : (valuation ref * SDD ref list) list list )
-          = case map alphaNodeToList xs of
+          = case map flatAlphaNodeToList xs of
               []       => raise DoNotPanic
             |  (y::ys)  => (y,ys)
 
