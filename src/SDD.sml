@@ -780,12 +780,18 @@ functor SDDFun ( structure Variable  : VARIABLE
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
 
-          val ( initial  : (valuation ref * SDD ref list) list
-              , operands : (valuation ref * SDD ref list) list list )
-          = case map flatAlphaNodeToList xs of
-              []       => raise DoNotPanic
-            |  (y::ys)  => (y,ys)
+          (* Transform the alpha of each node into :
+             (valuation ref,SDD ref list) list.
+             This type is also used as the accumulator for the foldl
+             on the list of operands, as it will be given to the
+             square union operation.
 
+             initial  : (valuation ref * SDD ref list) list
+             operands : (valuation ref * SDD ref list) list list
+          *)
+          val ( initial, operands ) = case map flatAlphaNodeToList xs of
+                                        []       => raise DoNotPanic
+                                      | (y::ys)  => (y,ys)
 
           val flatCommonApply' = flatCommonApply lookup intersectionCallback
           val flatSquareUnion' = flatSquareUnion lookup
