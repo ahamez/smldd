@@ -819,15 +819,15 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           SDD(Zero,_) => (case !r of
                             SDD(Zero,_) => zero
-                          | SDD(One,_)  => one
-                          | _           => raise IncompatibleSDD
-                          )
+                         | SDD(One,_)  => one
+                         | _           => raise IncompatibleSDD
+                         )
 
         | SDD(One,_)  => (case !r of
                             SDD(Zero,_) => one
-                          | SDD(One,_)  => zero
-                          | _           => raise IncompatibleSDD
-                          )
+                         | SDD(One,_)  => zero
+                         | _           => raise IncompatibleSDD
+                         )
 
         | SDD( Node{variable=lvr,alpha=la}, _ ) =>
 
