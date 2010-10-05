@@ -871,7 +871,14 @@ functor SDDFun ( structure Variable  : VARIABLE
           val bUnion = valUnion( map (fn (x,_)=>x) ralpha )
         in
           foldl (fn ((a,a_succs),acc) =>
-                  ( valDifference(a,bUnion), a_succs ) :: acc
+                  let
+                    val diff = valDifference(a,bUnion)
+                  in
+                    if Valuation.empty(!diff) then
+                      acc
+                    else
+                      ( diff, a_succs)::acc
+                  end
                 )
                 []
                 lalpha
