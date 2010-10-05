@@ -586,32 +586,31 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* Used by the intersection and difference operations which need
          to apply an operation ('cont') recursively on common parts.
       *)
-      fun flatCommonApply _ _         ( [], _ )    = []
-      |   flatCommonApply lookup cont ( x::xs, ys) =
+      fun flatCommonApply _ _         ( [], _ )                = []
+      |   flatCommonApply lookup cont ( aArc::aAlpha, bAlpha ) =
       let
 
-        fun propagate _    ( _, [] )                       =  []
-        |   propagate cont ( (aVal,aSuccs), (bVal,bSuccs)::_ ) =
+        fun propagate _    ( _, [] ) =  []
+        |   propagate cont ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
         let
           val inter = valIntersection [aVal,bVal]
         in
           if Valuation.empty(!inter) then
-            []
+            propagate cont ( aArc, bAlpha)
           else
             let
               val succ = cont( lookup, aSuccs@bSuccs )
             in
               if succ = zero then
-                []
+                propagate cont ( aArc, bAlpha )
               else
-                [ ( inter, [succ] ) ]
+                ( inter, [succ] ) :: propagate cont ( aArc, bAlpha)
             end
         end
 
-        val propagate'       = propagate cont
-        val flatCommonApply' = flatCommonApply lookup cont
       in
-        propagate' ( x, ys  ) @ flatCommonApply' (xs, ys )
+          propagate cont ( aArc, bAlpha  )
+        @ flatCommonApply lookup cont ( aAlpha, bAlpha )
       end
 
       (*------------------------------------------------------------------*)
