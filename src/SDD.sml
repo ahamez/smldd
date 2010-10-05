@@ -22,6 +22,9 @@ sig
   val toString      : SDD ref -> string
   val toDot         : SDD ref -> string
 
+  exception IncompatibleSDD
+  exception NotYetImplemented
+
 end
 
 (*--------------------------------------------------------------------------*)
