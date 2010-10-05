@@ -906,7 +906,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
 
     (* Let operations in Op call the cache *)
-    val lookupCache     = SDDOpCache.lookup
+    val cacheLookup = SDDOpCache.lookup
 
   in (* local SDD manipulations *)
 
@@ -927,7 +927,7 @@ functor SDDFun ( structure Variable  : VARIABLE
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
         | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs
-                                                          , lookupCache ))
+                                                          , cacheLookup ))
       end
 
     (*------------------------------------------------------------------*)
@@ -939,7 +939,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
       | _       => SDDOpCache.lookup(SDDOperations.Inter( qsort xs
-                                                        , lookupCache ))
+                                                        , cacheLookup ))
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
@@ -949,7 +949,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       if x = y then
         zero (* No need to cache *)
       else
-        SDDOpCache.lookup(SDDOperations.Diff( x, y, lookupCache ))
+        SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
