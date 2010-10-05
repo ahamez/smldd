@@ -625,7 +625,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          while 'aAlpha' is the head of the remaining operands (thus we use a 
          foldl). 'bAlpha' is initialized by the alpha of the first operand.
       *)
-      fun union( xs, lookup ) =
+      fun union cacheLookup xs =
       let
 
         (* Check operands compatibility *)
@@ -728,7 +728,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           val (_,tmp) = foldl unionHelper ([],initial) operands
 
-          val flatSquareUnion' = flatSquareUnion lookup
+          val flatSquareUnion' = flatSquareUnion cacheLookup
           val alpha = flatSquareUnion' tmp
 
         in
@@ -744,7 +744,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* N-ary intersection of SDDs *)
-      fun intersection( xs, lookup ) =
+      fun intersection cacheLookup xs =
       let
 
         (* Test if there are any zero in operands *)
@@ -794,8 +794,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                                         []       => raise DoNotPanic
                                       | (y::ys)  => (y,ys)
 
-          val flatCommonApply' = flatCommonApply lookup intersectionCallback
-          val flatSquareUnion' = flatSquareUnion lookup
+          val flatCommonApply'
+            = flatCommonApply cacheLookup intersectionCallback
+
+          val flatSquareUnion' = flatSquareUnion cacheLookup
           
           (* Intersect two operands *)
           fun interHelper (xs,ys) = flatCommonApply'( xs, ys )
@@ -815,7 +817,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Compute the difference of two SDDs *)
-      fun difference( (l,r), lookup ) =
+      fun difference cacheLookup (l,r) =
 
         case !l of
 
@@ -854,10 +856,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                expects an n-ary operation *)
             fun callback( lookup, xs ) =
               case xs of
-                (x::y::[]) => differenceCallback( lookup, x, y )
+                (x::y::[]) => differenceCallback( cacheLookup, x, y )
               | _          => raise DoNotPanic
 
-            val flatCommonApply' = flatCommonApply lookup callback
+            val flatCommonApply' = flatCommonApply cacheLookup callback
           in
             flatCommonApply'( lalpha, ralpha )
           end
@@ -873,7 +875,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   lalpha
           end
 
-          val flatSquareUnion' = flatSquareUnion lookup
+          val flatSquareUnion' = flatSquareUnion cacheLookup
           val alpha = flatSquareUnion' ( diffPart @ commonPart )
         in
           flatNodeAlpha( lvr, alpha )
@@ -891,47 +893,47 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Apply an SDD operation. Called by CacheFun. *)
       fun apply x =
-        case x of
-          Union(xs,lookup)  => union( xs, lookup )
-        | Inter(xs,lookup)  => intersection( xs, lookup )
-        | Diff(x,y,lookup)  => difference( (x,y), lookup)
+      case x of
+        Union( xs, cacheLookup)  => union        cacheLookup xs
+      | Inter( xs, cacheLookup)  => intersection cacheLookup xs
+      | Diff( x,y, cacheLookup)  => difference   cacheLookup (x,y)
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
       (* Hash an SDD operation *)
       fun hash x =
-        let
-          fun hashOperands( h0, xs ) =
-            foldl (fn(x,h) => Word32.xorb( Definition.hash(!x), h)) h0 xs
-        in
-          case x of
-            Union(xs,_)  => hashOperands( Word32.fromInt 15411567, xs)
-          | Inter(xs,_ ) => hashOperands( Word32.fromInt 78995947, xs)
-          | Diff(l,r,_)  => Word32.xorb( Word32.fromInt 94169137
-                                       , Word32.xorb( Definition.hash(!l)
-                                                    , Definition.hash(!r) )
-                                       )
-        end
+      let
+        fun hashOperands( h0, xs ) =
+          foldl (fn(x,h) => Word32.xorb( Definition.hash(!x), h)) h0 xs
+      in
+        case x of
+          Union(xs,_)  => hashOperands( Word32.fromInt 15411567, xs)
+        | Inter(xs,_ ) => hashOperands( Word32.fromInt 78995947, xs)
+        | Diff(l,r,_)  => Word32.xorb( Word32.fromInt 94169137
+                                     , Word32.xorb( Definition.hash(!l)
+                                                  , Definition.hash(!r) )
+                                     )
+      end
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
       (* Compare two SDD operations *)
       fun eq (x,y) =
-        case x of
-          Union( xs, _ )    =>  (case y of
-                                  Union( ys, _ )  => xs = ys
-                                | _               => false
-                                )
-        | Inter( xs, _ )    =>  (case y of
-                                  Inter( ys, _ ) => xs = ys
-                                | _              => false
-                                )
-        | Diff( xl, xr, _ ) =>  (case y of
-                                  Diff( yl, yr, _ ) => xl = yl andalso xr = yr
-                                | _ => false
-                                )
+      case x of
+        Union( xs, _ )    =>  (case y of
+                                Union( ys, _ )  => xs = ys
+                              | _               => false
+                              )
+      | Inter( xs, _ )    =>  (case y of
+                                Inter( ys, _ ) => xs = ys
+                              | _              => false
+                              )
+      | Diff( xl, xr, _ ) =>  (case y of
+                                Diff( yl, yr, _ ) => xl = yl andalso xr = yr
+                              | _ => false
+                              )
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
