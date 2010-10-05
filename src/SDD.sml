@@ -530,8 +530,14 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
        (* Merge all valuations that lead to the same successor,
-          using an hash table. *)
-       fun flatSquareUnion lookup alpha =
+          using an hash table.
+          Returns an alpha suitable to build a new flat node with
+          flatNodeAlpha.
+
+          alpha : ( valuation ref * SDD ref list ) list
+            -> ( valuation ref * SDD ref ) Vector.vector
+       *)
+       fun flatSquareUnion cacheLookup alpha =
        let
          (* This table associates a list of valuations to a single
             SDD successor *)
@@ -543,7 +549,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* Fill the hash table *)
          val _ = app (fn ( vl, succs ) =>
                      let
-                       val u = unionCallback( lookup, succs )
+                       val u = unionCallback( cacheLookup, succs )
                      in
                        case HashTable.find tbl u of
                          NONE   => HashTable.insert tbl ( u, ref [vl] )
