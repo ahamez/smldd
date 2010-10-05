@@ -464,31 +464,28 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      (* Transform the alpha of a node into :
-         (valuation ref,SDD ref list) list *)
-      fun flatAlphaToList( alpha : (valuation ref * SDD ref) Vector.vector )
-        : ( valuation ref * SDD ref list ) list
-      = Vector.foldr (fn (x,acc) => let
-                                      val (vl,succ) = x
-                                    in
-                                      (vl,[succ])::acc
-                                    end
-                     )
-                     []
-                     alpha
+      (* Convert an alpha (a vector) into a more easy to manipulate type
+         (a list of valuations, each one leading to a list of successors).
+         Thus, it make usable by flatSquareUnion.
 
-      (* Transform the alpha of a node into :
-         (valuation ref,SDD ref list) list *)
-      fun flatAlphaNodeToList ( n : SDD ref )
-        : ( valuation ref * SDD ref list ) list
-      =
-      let
-        val alpha = case !n of
-                      SDD(Node{alpha=alpha,...},_) => alpha
-                    | _ => raise DoNotPanic
-      in
-        flatAlphaToList alpha
-      end
+         (valuation ref * SDD ref) Vector.vector
+           -> ( valuation ref * SDD ref list ) list
+      *)
+      fun flatAlphaToList( alpha ) =
+      Vector.foldr
+        (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
+        []
+        alpha
+
+      (* Apply flatAlphaToList to a node
+
+         SDD ref
+           -> ( valuation ref * SDD ref list ) list
+      *)
+      fun flatAlphaNodeToList n =
+      case !n of
+        SDD(Node{alpha=alpha,...},_) => flatAlphaToList alpha
+      | _ => raise DoNotPanic
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
