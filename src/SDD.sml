@@ -580,6 +580,9 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Used by the intersection and difference operations which need
+         to apply an operation ('cont') recursively on common parts.
+      *)
       fun flatCommonApply _ _         ( [], _ )    = []
       |   flatCommonApply lookup cont ( x::xs, ys) =
       let
@@ -611,7 +614,17 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      (* Do the union of a list of SDDs. *)
+      (* Do the n-ary union of a list of flat SDDs.
+         The general idea is to create a potential alpha
+         of type (valuation ref * SDD ref list ) list which stores all
+         successors for a given valuation, which is then given to
+         the square union function.
+
+         In fact, it's not a real n-ary union as we operate on two operands
+         at a time, the result becoming the 'bAlpha' operand on next iteration
+         while 'aAlpha' is the head of the remaining operands (thus we use a 
+         foldl). 'bAlpha' is initialized by the alpha of the first operand.
+      *)
       fun union( xs, lookup ) =
       let
 
@@ -625,7 +638,9 @@ functor SDDFun ( structure Variable  : VARIABLE
           (* All operands are |1| *)
           SDD(One,_)        => one
 
-          (* There shouldn't be any |0| *)
+          (* There shouldn't be any |0|, they should have been filtered
+             before querying the cache.
+          *)
         | SDD(Zero,_)       => raise DoNotPanic
 
           (* Flat node case *)
@@ -637,63 +652,74 @@ functor SDDFun ( structure Variable  : VARIABLE
                       SDD(Node{variable=v,...},_) => v
                     | _ => raise DoNotPanic
 
-          val ( initial  : (valuation ref * SDD ref list) list
-              , operands : (valuation ref * SDD ref list) list list
-              )
-          = case map flatAlphaNodeToList xs of
-              []       => raise DoNotPanic
-            |  (y::ys)  => (y,ys)
+          (* Transform the alpha of each node into :
+             (valuation ref,SDD ref list) list.
+             This type is also used as the accumulator for the foldl
+             on the list of operands, as it will be given to the
+             square union operation.
+
+             initial  : (valuation ref * SDD ref list) list
+             operands : (valuation ref * SDD ref list) list list
+          *)
+          val ( initial, operands ) = case map flatAlphaNodeToList xs of
+                                        []       => raise DoNotPanic
+                                      | (y::ys)  => (y,ys)
 
           (* Merge two operands *)
           fun unionHelper ( [], ( res, []) )
           = ( [], res )
 
           (* No more elements in alpha_a *)
-          |   unionHelper ( [], ( res, bxs ))
-          = ( [], bxs @ res )
+          |   unionHelper ( [], ( res, bAlpha ))
+          = ( [], bAlpha @ res )
 
           (* Empty intersection for a *)
-          |   unionHelper ( (a,a_succs)::axs, ( res, [] ))
-          = unionHelper ( axs, ( [], (a,a_succs)::res ) )
+          |   unionHelper ( (aVal,aSuccs)::aAlpha, ( res, [] ))
+          = unionHelper ( aAlpha, ( [], (aVal,aSuccs)::res ) )
 
           (* General case *)
-          |   unionHelper ( alpha_a as ((a,a_succs)::axs)
-                      , ( res, (b,b_succs)::bxs )
-                      )
+          |   unionHelper ( aWholeAlpha as ((aVal,aSuccs)::aAlpha)
+                          , ( res, (bArc as (bVal,bSuccs))::bAlpha ) )
           =
-          if a = b then
-            unionHelper ( axs
-                    , ( ( a, a_succs@b_succs )::res
-                      , bxs
-                      )
-                    )
+          (* Same valuation, we just need to merge the lists of successors. *)
+          if aVal = bVal then
+            unionHelper ( aAlpha
+                        , ( ( aVal, aSuccs@bSuccs )::res
+                          , bAlpha
+                          )
+                        )
           else
           let
-            val inter = valIntersection [a,b]
+            val inter = valIntersection [aVal,bVal]
           in
+            (* Is there any common part between the two current valuations?
+               If not, we just need to store the current b -> b_succs into res
+               as a potential element of the future alpha, and move on to the
+               next valuation of b's alpha ('bxs').
+            *)
             if Valuation.empty(!inter) then
-              unionHelper ( alpha_a
-                          , ( ( b, b_succs )::res
-                            , bxs
+              unionHelper ( aWholeAlpha
+                          , ( bArc::res
+                            , bAlpha
                             )
                           )
             else
             let
-              val diff  = valDifference( a, inter )
+              val diff  = valDifference( aVal, inter )
             in
-              if b = inter then (* No need to go further *)
-                unionHelper ( ( diff, a_succs )::axs
-                            , ( ( inter, a_succs@b_succs )::res
-                              , bxs
+              if bVal = inter then (* No need to go further *)
+                unionHelper ( ( diff, aSuccs )::aAlpha
+                            , ( ( inter, aSuccs@bSuccs )::res
+                              , bAlpha
                               )
                             )
                 else
                 let
-                  val diff2 = valDifference( b, inter )
+                  val diff2 = valDifference( bVal, inter )
                 in
-                  unionHelper ( (diff, a_succs )::axs
-                              , ( ( inter, a_succs@b_succs)::res
-                                , ( diff2, b_succs)::bxs
+                  unionHelper ( (diff, aSuccs )::aAlpha
+                              , ( ( inter, aSuccs@bSuccs)::res
+                                , ( diff2, bSuccs)::bAlpha
                                 )
                               )
                 end
@@ -721,18 +747,18 @@ functor SDDFun ( structure Variable  : VARIABLE
       let
 
         (* Test if there are any zero in operands *)
-        val has_zero = case List.find (fn x => case !x of
-                                                 SDD(Zero,_) => true
-                                               | _           => false
-                                      )
-                                      xs
+        val hasZero = case List.find (fn x => case !x of
+                                                SDD(Zero,_) => true
+                                              | _           => false
+                                     )
+                                     xs
                        of
-                          NONE    => false
-                        | SOME _  => true
+                         NONE    => false
+                       | SOME _  => true
       in
 
         (* Intersection of anything with |0| is always |0| *)
-        if has_zero then
+        if hasZero then
           zero
         else
           case !(hd xs) of
