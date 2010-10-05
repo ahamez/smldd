@@ -1,0 +1,13 @@
+local
+  ./sources.mlb
+in
+
+  (* The generic SDD package*)
+  functor SDDFun
+
+  (* Variable  : Int
+  ,  Valuation : IntVector.vector
+  *)
+  signature SDD
+
+end

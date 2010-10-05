@@ -1,40 +1,12 @@
-(*--------------------------------------------------------------------------*)
-
-(* SDD-ML *)
-
-(*--------------------------------------------------------------------------*)
-
-$(MLTON_ROOT)/basis/basis.mlb
-$(MLTON_ROOT)/basis/mlton.mlb
-$(SML_LIB)/smlnj-lib/smlnj-lib.mlb
-$(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
-
-(*--------------------------------------------------------------------------*)
-
 ann
 "allowFFI false"
 "redundantMatch error"
 in
-
-(*--------------------------------------------------------------------------*)
-
-../src/util.sml
-
-../src/parameters/signatures/VALUATION.sml
-../src/parameters/signatures/VARIABLE.sml
-../src/parameters/instances/DiscreteIntValuation.sml
-../src/parameters/instances/CharVariable.sml
-../src/parameters/instances/IntVariable.sml
-
-../src/storage/signatures/DATA.sml
-../src/storage/signatures/OPERATION.sml
-../src/storage/Cache.sml
-../src/storage/UnicityTable.sml
-
-../src/sdd.sml
-
-./main.sml
-
-(*--------------------------------------------------------------------------*)
-
+  local
+    ./SMLUnit/SMLUnit.mlb
+  in
+    ../src/sources.mlb
+    ./sdd.sml
+    ./main.sml
+  end
 end

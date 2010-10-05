@@ -1,0 +1,12 @@
+(*
+ * @author YAMATODANI Kiyoshi
+ * @copyright 2010, Tohoku University.
+ *)
+local
+  ./sources.mlb
+in
+  signature SMLUNIT
+  structure SMLUnit
+  signature ASSERT
+  signature TEST
+end
