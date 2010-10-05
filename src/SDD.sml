@@ -743,6 +743,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* N-ary intersection of SDDs *)
       fun intersection( xs, lookup ) =
       let
 
@@ -813,6 +814,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Compute the difference of two SDDs *)
       fun difference( (l,r), lookup ) =
 
         case !l of
@@ -897,6 +899,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Hash an SDD operation *)
       fun hash x =
         let
           fun hashOperands( h0, xs ) =
@@ -914,6 +917,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+      (* Compare two SDD operations *)
       fun eq (x,y) =
         case x of
           Union( xs, _ )    =>  (case y of
