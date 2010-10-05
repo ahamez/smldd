@@ -298,12 +298,12 @@ functor SDDFun ( structure Variable  : VARIABLE
           (* Valuation.hash(!x) -> problem: we have to compute again
              the hash value of the valuation... Maybe we should store
              this hash alongside the valuation? *)
-          fun hash_operands( h0, xs ) =
+          fun hashOperands( h0, xs ) =
             foldl (fn(x,h) => Word32.xorb( Valuation.hash(!x), h)) h0 xs
         in
           case x of
-            Union(xs) => hash_operands( Word32.fromInt 15411567, xs)
-          | Inter(xs) => hash_operands( Word32.fromInt 78995947, xs)
+            Union(xs) => hashOperands( Word32.fromInt 15411567, xs)
+          | Inter(xs) => hashOperands( Word32.fromInt 78995947, xs)
           | Diff(l,r) => Word32.xorb( Word32.fromInt 94165961
                                     , Word32.xorb( Valuation.hash(!l)
                                                  , Valuation.hash(!r))
@@ -392,11 +392,11 @@ functor SDDFun ( structure Variable  : VARIABLE
     fun qsort []       = []
     |   qsort (x::xs)  =
     let
-      fun h x = let val SDD(_,res) = !x in res end
+      fun hashOperand x = let val SDD(_,res) = !x in res end
     in
-        qsort (List.filter (fn y => (h y) < (h x) )  xs )
+        qsort (List.filter (fn y => (hashOperand y) < (hashOperand x) )  xs )
       @ [x]
-      @ qsort (List.filter (fn y => (h y) >= (h x) ) xs )
+      @ qsort (List.filter (fn y => (hashOperand y) >= (hashOperand x) ) xs )
     end
 
     (*--------------------------------------------------------------------*)
@@ -864,12 +864,12 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       fun hash x =
         let
-          fun hash_operands( h0, xs ) =
+          fun hashOperands( h0, xs ) =
             foldl (fn(x,h) => Word32.xorb( Definition.hash(!x), h)) h0 xs
         in
           case x of
-            Union(xs,_)  => hash_operands( Word32.fromInt 15411567, xs)
-          | Inter(xs,_ ) => hash_operands( Word32.fromInt 78995947, xs)
+            Union(xs,_)  => hashOperands( Word32.fromInt 15411567, xs)
+          | Inter(xs,_ ) => hashOperands( Word32.fromInt 78995947, xs)
           | Diff(l,r,_)  => Word32.xorb( Word32.fromInt 94169137
                                        , Word32.xorb( Definition.hash(!l)
                                                     , Definition.hash(!r) )
