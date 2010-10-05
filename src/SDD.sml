@@ -959,7 +959,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  (* Count the number of distinct paths in a SDD *)
+  (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
       val cache : (( SDD ref , int ) HashTable.hash_table) ref
