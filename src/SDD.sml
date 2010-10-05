@@ -591,15 +591,15 @@ functor SDDFun ( structure Variable  : VARIABLE
       let
 
         fun propagate _    ( _, [] )                       =  []
-        |   propagate cont ( (a,a_succs), (b,b_succs)::_ ) =
+        |   propagate cont ( (aVal,aSuccs), (bVal,bSuccs)::_ ) =
         let
-          val inter = valIntersection [a,b]
+          val inter = valIntersection [aVal,bVal]
         in
-          if Valuation.empty (!inter) then
+          if Valuation.empty(!inter) then
             []
           else
             let
-              val succ = cont( lookup, a_succs@b_succs )
+              val succ = cont( lookup, aSuccs@bSuccs )
             in
               if succ = zero then
                 []
