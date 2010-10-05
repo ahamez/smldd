@@ -6,7 +6,7 @@ in
     ./SMLUnit/SMLUnit.mlb
   in
     ../src/sources.mlb
-    ./sdd.sml
+    ./TestSDD.sml
     ./main.sml
   end
 end
