@@ -695,7 +695,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             (* Is there any common part between the two current valuations?
                If not, we just need to store the current b -> b_succs into res
                as a potential element of the future alpha, and move on to the
-               next valuation of b's alpha ('bxs').
+               next valuation of b's alpha.
             *)
             if Valuation.empty(!inter) then
               unionHelper ( aWholeAlpha
