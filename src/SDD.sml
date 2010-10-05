@@ -798,7 +798,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             = flatCommonApply cacheLookup intersectionCallback
 
           val flatSquareUnion' = flatSquareUnion cacheLookup
-          
+
           (* Intersect two operands *)
           fun interHelper (xs,ys) = flatCommonApply'( xs, ys )
 
@@ -818,73 +818,72 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Compute the difference of two SDDs *)
       fun difference cacheLookup (l,r) =
+      case !l of
 
-        case !l of
+        SDD(Zero,_) => (case !r of
+                          SDD(Zero,_) => zero
+                       | SDD(One,_)  => one
+                       | _           => raise IncompatibleSDD
+                       )
 
-          SDD(Zero,_) => (case !r of
-                            SDD(Zero,_) => zero
-                         | SDD(One,_)  => one
-                         | _           => raise IncompatibleSDD
-                         )
+      | SDD(One,_)  => (case !r of
+                          SDD(Zero,_) => one
+                       | SDD(One,_)  => zero
+                       | _           => raise IncompatibleSDD
+                       )
 
-        | SDD(One,_)  => (case !r of
-                            SDD(Zero,_) => one
-                         | SDD(One,_)  => zero
-                         | _           => raise IncompatibleSDD
-                         )
+      | SDD( Node{variable=lvr,alpha=la}, _ ) =>
 
-        | SDD( Node{variable=lvr,alpha=la}, _ ) =>
+      (case !r of
+        SDD(Zero,_)       => raise IncompatibleSDD
+      | SDD(One,_)        => raise IncompatibleSDD
+      | SDD(HNode{...},_) => raise IncompatibleSDD
 
-        (case !r of
-          SDD(Zero,_)       => raise IncompatibleSDD
-        | SDD(One,_)        => raise IncompatibleSDD
-        | SDD(HNode{...},_) => raise IncompatibleSDD
+      (* Difference of two flat nodes *)
+      | SDD( Node{variable=rvr,alpha=ra}, _ ) =>
+      if not( Variable.eq(lvr,rvr) ) then
+        raise IncompatibleSDD
+      else
+      let
 
-        (* Difference of two flat nodes *)
-        | SDD( Node{variable=rvr,alpha=ra}, _ ) =>
-        if not( Variable.eq(lvr,rvr) ) then
-          raise IncompatibleSDD
-        else
+        val lalpha = flatAlphaToList la
+        val ralpha = flatAlphaToList ra
+
+        val commonPart =
         let
+          (* Difference is a binary operation, while flatCommonApply
+             expects an n-ary operation *)
+          fun callback( lookup, xs ) =
+            case xs of
+              (x::y::[]) => differenceCallback( cacheLookup, x, y )
+            | _          => raise DoNotPanic
 
-          val lalpha = flatAlphaToList la
-          val ralpha = flatAlphaToList ra
-
-          val commonPart =
-          let
-            (* Difference is a binary operation, while flatCommonApply
-               expects an n-ary operation *)
-            fun callback( lookup, xs ) =
-              case xs of
-                (x::y::[]) => differenceCallback( cacheLookup, x, y )
-              | _          => raise DoNotPanic
-
-            val flatCommonApply' = flatCommonApply cacheLookup callback
-          in
-            flatCommonApply'( lalpha, ralpha )
-          end
-
-          val diffPart =
-          let
-            val bUnion = valUnion( map (fn (x,_)=>x) ralpha )
-          in
-            foldl (fn ((a,a_succs),acc) =>
-                    ( valDifference(a,bUnion), a_succs ) :: acc
-                  )
-                  []
-                  lalpha
-          end
-
-          val flatSquareUnion' = flatSquareUnion cacheLookup
-          val alpha = flatSquareUnion' ( diffPart @ commonPart )
+          val flatCommonApply' = flatCommonApply cacheLookup callback
         in
-          flatNodeAlpha( lvr, alpha )
+          flatCommonApply'( lalpha, ralpha )
         end
-        )
 
-        (* Difference of two hierarchical nodes *)
-        | SDD( HNode{variable=lvr,alpha=lalpha}, _ ) =>
-            raise NotYetImplemented
+        val diffPart =
+        let
+          val bUnion = valUnion( map (fn (x,_)=>x) ralpha )
+        in
+          foldl (fn ((a,a_succs),acc) =>
+                  ( valDifference(a,bUnion), a_succs ) :: acc
+                )
+                []
+                lalpha
+        end
+
+        val flatSquareUnion' = flatSquareUnion cacheLookup
+        val alpha = flatSquareUnion' ( diffPart @ commonPart )
+      in
+        flatNodeAlpha( lvr, alpha )
+      end
+      )
+
+      (* Difference of two hierarchical nodes *)
+      | SDD( HNode{variable=lvr,alpha=lalpha}, _ ) =>
+          raise NotYetImplemented
 
       (* end fun difference *)
 
@@ -956,30 +955,30 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (* Warning! Duplicate code with SDD.SDDOperations.union! *)
     fun union xs =
-      let
-        (* Remove all |0| *)
-        val xs' = List.filter (fn x => case !x of
-                                          SDD(Zero,_) => false
-                                        | _           => true
-                              )
-                              xs
-      in
-        case xs' of
-          []      => zero (* No need to cache *)
-        | (x::[]) => x    (* No need to cache *)
-        | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs
-                                                          , cacheLookup ))
-      end
+    let
+      (* Remove all |0| *)
+      val xs' = List.filter (fn x => case !x of
+                                       SDD(Zero,_) => false
+                                     | _           => true
+                            )
+                            xs
+    in
+      case xs' of
+        []      => zero (* No need to cache *)
+      | (x::[]) => x    (* No need to cache *)
+      | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs
+                                                        , cacheLookup ))
+    end
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
     (* Warning! Duplicate code with SDD.SDDOperations.intersection! *)
     fun intersection xs =
-      case xs of
-        []      => zero (* No need to cache *)
-      | (x::[]) => x    (* No need to cache *)
-      | _       => SDDOpCache.lookup(SDDOperations.Inter( qsort xs
+    case xs of
+      []      => zero (* No need to cache *)
+    | (x::[]) => x    (* No need to cache *)
+    | _       => SDDOpCache.lookup(SDDOperations.Inter( qsort xs
                                                         , cacheLookup ))
 
     (*------------------------------------------------------------------*)
@@ -987,10 +986,10 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (* Warning! Duplicate code with SDD.SDDOperations.difference! *)
     fun difference(x,y) =
-      if x = y then
-        zero (* No need to cache *)
-      else
-        SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
+    if x = y then
+      zero (* No need to cache *)
+    else
+      SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
