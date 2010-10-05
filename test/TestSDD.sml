@@ -211,7 +211,6 @@ struct
     val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
     val s1 = flatNode( 0, IntVector.fromList[0,3], one )
     val d0 = difference( s1, s0 )
-    val _ = print ((toString d0) ^ "\n")
   in
     assertTrue( d0 = zero )
   end
