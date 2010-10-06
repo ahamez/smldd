@@ -678,6 +678,26 @@ struct
     assertTrue( d0 = zero )
   end
 
+  fun testFlatDiff23 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
+    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
+    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
+    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
+    val u0 = union [s2,s3]
+
+    val s7  = flatNode( 0, IntVector.fromList[0], one )
+    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
+    val s11 = flatNode( 0, IntVector.fromList[3], one )
+    val s12 = flatNode( 1, IntVector.fromList[3], s11 )
+
+    val d0 = difference ( u0, s9  )
+    val d1 = difference ( u0, s12 )
+    val u1 = union [d0,d1]
+  in
+    assertTrue( u0 = u1 )
+  end
+
   fun testFlatDiff24 () =
   let
     val s0 = flatNode( 0, IntVector.fromList[0,1], one )
@@ -782,6 +802,7 @@ struct
       , ("testFlatDiff19"    , testFlatDiff19      )
       , ("testFlatDiff20"    , testFlatDiff20      )
       , ("testFlatDiff21"    , testFlatDiff21      )
+      , ("testFlatDiff23"    , testFlatDiff23      )
       , ("testFlatDiff24"    , testFlatDiff24      )
       , ("testMkNode00"      , testMkNode00        )
       , ("testMkNode01"      , testMkNode01        )
