@@ -724,16 +724,16 @@ functor SDDFun ( structure Variable  : VARIABLE
                               , bAlpha
                               )
                             )
-                else
-                let
-                  val diff2 = valDifference( bVal, inter )
-                in
-                  unionHelper ( (diff, aSuccs )::aAlpha
-                              , ( ( inter, aSuccs@bSuccs)::res
-                                , ( diff2, bSuccs)::bAlpha
-                                )
+              else
+              let
+                val diff2 = valDifference( bVal, inter )
+              in
+                unionHelper ( (diff, aSuccs )::aAlpha
+                            , ( ( inter, aSuccs@bSuccs)::res
+                              , ( diff2, bSuccs)::bAlpha
                               )
-                end
+                            )
+              end
             end
           end
 
