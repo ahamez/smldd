@@ -32,7 +32,7 @@ struct
   fun toString vec =
   let
     val l = map (fn x => Int32.toString x ) (IntVectorToList vec)
-    val s = String.concatWith "|" l
+    val s = String.concatWith "," l
   in
     "{" ^ s ^ "}"
   end
