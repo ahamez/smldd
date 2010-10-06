@@ -524,8 +524,12 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
       fun differenceCallback( lookup, x, y ) =
-        if x = y then
-          zero (* No need to cache *)
+        if x = y then          (* No need to cache *)
+          zero
+        else if x = zero then  (* No need to cache *)
+          zero
+        else if y = zero then  (* No need to cache *)
+          x
         else
           lookup(Diff( x, y, lookup ))
 
@@ -995,8 +999,12 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (* Warning! Duplicate code with SDD.SDDOperations.difference! *)
     fun difference(x,y) =
-    if x = y then
-      zero (* No need to cache *)
+    if x = y then          (* No need to cache *)
+      zero
+    else if x = zero then  (* No need to cache *)
+      zero
+    else if y = zero then  (* No need to cache *)
+      x
     else
       SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
 
