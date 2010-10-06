@@ -386,12 +386,29 @@ struct
     assertTrue( d0 = o0 )
   end
 
+  fun testMkNode00 () =
+    assertTrue( node( 0, zero , one  ) = zero )
+
+  fun testMkNode01 () =
+    assertTrue( node( 0, one, zero ) = zero )
+
+  fun testMkNode02 () =
+    assertTrue( node( 0, node( 1, zero, one ), one ) = zero )
+
+  fun testMkNode03 () =
+    assertTrue( node( 0, node( 1, zero, one ), zero ) = zero )
+
+  fun testMkNode04 () =
+    assertTrue( node( 0, flatNode(1,IntVector.fromList [1],zero), one) = zero)
+
+  fun testMkNode05 () =
+    assertTrue( node( 0, flatNode(1,IntVector.fromList [],one), one) = zero)
+
   (* ---------------------------------------------------------------- *)
 
   fun suite () =
       Test.labelTests
-      [
-        ("Terminals00"       , testTerminal00      )
+      [ ("Terminals00"       , testTerminal00      )
       , ("MakeFlatNode00"    , testMkFlatNode00    )
       , ("MakeFlatNode01"    , testMkFlatNode01    )
       , ("MakeFlatNode02"    , testMkFlatNode02    )
@@ -425,6 +442,12 @@ struct
       , ("testFlatDiff03"    , testFlatDiff03      )
       , ("testFlatDiff04"    , testFlatDiff04      )
       , ("testFlatDiff05"    , testFlatDiff05      )
+      , ("testMkNode00"      , testMkNode00        )
+      , ("testMkNode01"      , testMkNode01        )
+      , ("testMkNode02"      , testMkNode02        )
+      , ("testMkNode03"      , testMkNode03        )
+      , ("testMkNode04"      , testMkNode04        )
+      , ("testMkNode05"      , testMkNode05        )
       ]
 
   (* ---------------------------------------------------------------- *)
