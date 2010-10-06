@@ -409,6 +409,56 @@ struct
     assertTrue( d0 = s2 )
   end
 
+  fun testFlatDiff08 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s1 = flatNode( 1, IntVector.fromList[0], one )
+  in
+    ( difference( s1, s0 ) ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testFlatDiff09 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s1 = flatNode( 1, IntVector.fromList[0], one )
+  in
+    ( difference( s0, s1 ) ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testFlatDiff10 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+  in
+    ( difference( s0, one ) ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testFlatDiff11 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+  in
+    ( difference( one, s0 ) ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testFlatDiff12 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val d0 = difference( s0, zero )
+  in
+    assertTrue( d0 = s0 )
+  end
+
+  fun testFlatDiff13 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val d0 = difference( zero, s0 )
+  in
+    assertTrue( d0 = zero )
+  end
+
   fun testMkNode00 () =
     assertTrue( node( 0, zero , one  ) = zero )
 
@@ -467,6 +517,12 @@ struct
       , ("testFlatDiff05"    , testFlatDiff05      )
       , ("testFlatDiff06"    , testFlatDiff06      )
       , ("testFlatDiff07"    , testFlatDiff07      )
+      , ("testFlatDiff08"    , testFlatDiff08      )
+      , ("testFlatDiff09"    , testFlatDiff09      )
+      , ("testFlatDiff10"    , testFlatDiff10      )
+      , ("testFlatDiff11"    , testFlatDiff11      )
+      , ("testFlatDiff12"    , testFlatDiff12      )
+      , ("testFlatDiff13"    , testFlatDiff13      )
       , ("testMkNode00"      , testMkNode00        )
       , ("testMkNode01"      , testMkNode01        )
       , ("testMkNode02"      , testMkNode02        )
