@@ -520,10 +520,10 @@ struct
   fun testFlatDiff16 () =
   let
     val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
     val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
     val s4 = flatNode( 2, IntVector.fromList[0,1], s2  )
+    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
+    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
     val s5 = flatNode( 2, IntVector.fromList[2,3], s3  )
     val u0 = union [s4,s5]
 
