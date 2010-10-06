@@ -52,9 +52,8 @@ struct
   let
     val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
     val u0 = union [s0,zero]
-    val o0 = flatNode( 0, IntVector.fromList[1,2,3], one)
   in
-    assertTrue( u0 = o0 )
+    assertTrue( u0 = s0 )
   end
 
   fun testFlatUnion04 () =
