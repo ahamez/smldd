@@ -131,14 +131,14 @@ functor SDDFun ( structure Variable  : VARIABLE
   fun toString x =
     let
       val SDD(sdd,_) = !x
+      (*val SDD(_,h) = !x*)
     in
       case sdd of
         Zero  => "|0|"
       | One   => "|1|"
       | Node{ variable=vr, alpha=alpha} =>
-          "("
-        ^ (Variable.toString vr)
-        ^ ")"
+          "(" ^ (Variable.toString vr) ^ ")"
+        (*^ " #" ^ (Word32.toString h) ^ "#"*)
         ^ " [ "
         ^ String.concatWith " + "
                             (VectorToList
