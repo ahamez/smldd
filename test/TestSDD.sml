@@ -283,6 +283,33 @@ struct
     assertTrue( i0 = o0 )
   end
 
+  fun testFlatInter14 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
+    val s1 = flatNode( 0, IntVector.fromList[0,2], one )
+    val s2 = flatNode( 1, IntVector.fromList[0,3], s0 )
+    val s3 = flatNode( 1, IntVector.fromList[0,4], s1 )
+    val s4 = flatNode( 2, IntVector.fromList[0], s2 )
+    val s5 = flatNode( 2, IntVector.fromList[1], s3 )
+    val u0 = union [ s4, s5 ]
+
+    val s6 = flatNode( 0, IntVector.fromList[0,3], one )
+    val s7 = flatNode( 0, IntVector.fromList[0,4], one )
+    val s8 = flatNode( 1, IntVector.fromList[0,5], s6 )
+    val s9 = flatNode( 1, IntVector.fromList[0,6], s7 )
+    val s10 = flatNode( 2, IntVector.fromList[0], s8 )
+    val s11 = flatNode( 2, IntVector.fromList[1], s9 )
+    val u1 = union [ s10, s11 ]
+
+    val i0 = intersection [u1,u0]
+    val o0 = flatNode( 2, IntVector.fromList [0,1]
+               , flatNode( 1, IntVector.fromList [0]
+                 ,  flatNode( 0, IntVector.fromList [0], one )))
+
+  in
+    assertTrue( i0 = o0 )
+  end
+
   fun testFlatDiff00 () =
   let
     val d0 = difference( one, one )
@@ -368,6 +395,7 @@ struct
       , ("FlatInter11"       , testFlatInter11     )
       , ("FlatInter12"       , testFlatInter12     )
       , ("FlatInter13"       , testFlatInter13     )
+      , ("FlatInter14"       , testFlatInter14     )
       , ("testFlatDiff00"    , testFlatDiff00      )
       , ("testFlatDiff01"    , testFlatDiff01      )
       , ("testFlatDiff02"    , testFlatDiff02      )
