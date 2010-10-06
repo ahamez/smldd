@@ -826,14 +826,10 @@ functor SDDFun ( structure Variable  : VARIABLE
       fun difference cacheLookup (l,r) =
       case !l of
 
-        SDD(Zero,_) => (case !r of
-                         SDD(Zero,_) => zero
-                       | SDD(One,_)  => one
-                       | _           => raise IncompatibleSDD
-                       )
+        SDD(Zero,_) => raise DoNotPanic
 
       | SDD(One,_)  => (case !r of
-                          SDD(Zero,_) => one
+                         SDD(Zero,_) => raise DoNotPanic
                        | SDD(One,_)  => zero
                        | _           => raise IncompatibleSDD
                        )
@@ -841,7 +837,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       | SDD( Node{variable=lvr,alpha=la}, _ ) =>
 
       (case !r of
-        SDD(Zero,_)       => raise IncompatibleSDD
+        SDD(Zero,_)       => raise DoNotPanic
       | SDD(One,_)        => raise IncompatibleSDD
       | SDD(HNode{...},_) => raise IncompatibleSDD
 
