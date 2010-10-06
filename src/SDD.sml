@@ -136,7 +136,9 @@ functor SDDFun ( structure Variable  : VARIABLE
         Zero  => "|0|"
       | One   => "|1|"
       | Node{ variable=vr, alpha=alpha} =>
-        (Variable.toString vr)
+          "("
+        ^ (Variable.toString vr)
+        ^ ")"
         ^ " [ "
         ^ String.concatWith " + "
                             (VectorToList
