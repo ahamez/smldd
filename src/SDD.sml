@@ -823,7 +823,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       case !l of
 
         SDD(Zero,_) => (case !r of
-                          SDD(Zero,_) => zero
+                         SDD(Zero,_) => zero
                        | SDD(One,_)  => one
                        | _           => raise IncompatibleSDD
                        )
