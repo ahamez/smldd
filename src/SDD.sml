@@ -560,10 +560,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                      let
                        val u = unionCallback( cacheLookup, succs )
                      in
-                       case HashTable.find tbl u of
-                         NONE   => HashTable.insert tbl ( u, ref [vl] )
-                         (* update list of valuations *)
-                       | SOME x => x := vl::(!x)
+                       if Valuation.empty(!vl) then
+                        ()
+                       else
+                         case HashTable.find tbl u of
+                           NONE   => HashTable.insert tbl ( u, ref [vl] )
+                           (* update list of valuations *)
+                         | SOME x => x := vl::(!x)
                      end
                      )
                      alpha
