@@ -1074,7 +1074,27 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Export an SDD to a DOT representation *)
-  fun toDot _         = raise NotYetImplemented
+  fun toDot x         =
+  let
+
+    fun terminal value =
+      "terminal"
+    ^ (Int.toString value)
+    ^ " [shape=rectangle,regular=true,label=\""
+    ^ (Int.toString value)
+    ^ "\"]\n;"
+
+    fun dotHelper x =
+    case !x of
+      SDD( Zero, _ ) => terminal 0
+    | SDD( One, _ )  => terminal 1
+    | SDD( Node{...}, _ )  => raise NotYetImplemented
+    | SDD( HNode{...}, _ ) => raise NotYetImplemented
+  in
+      "digraph sdd {\n"
+    ^ (dotHelper x)
+    ^ "\n}\n"
+  end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
