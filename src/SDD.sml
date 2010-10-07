@@ -1012,14 +1012,14 @@ functor SDDFun ( structure Variable  : VARIABLE
         else
           case !(hd xs) of
 
-            (* All operands are |1| *)
-            SDD(One,_)        => check xs
+        (* All operands are |1| *)
+          SDD(One,_)        => check xs
 
-            (* There shouldn't be any |0| *)
-          | SDD(Zero,_)       => raise DoNotPanic
+        (* There shouldn't be any |0| *)
+        | SDD(Zero,_)       => raise DoNotPanic
 
-            (* Flat node case *)
-          | SDD(Node{...},_)  =>
+        (* Flat node case *)
+        | SDD(Node{...},_)  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
