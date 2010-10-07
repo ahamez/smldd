@@ -19,5 +19,6 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./storage/UnicityTable.sml
 
 ./SDD.sml
+./Hom.sml
 
 (*--------------------------------------------------------------------------*)
