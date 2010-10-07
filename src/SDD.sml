@@ -1054,7 +1054,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         in
           flatNodeAlpha( var, alpha )
-        end
+        end (* Flat node case *)
 
         (* Hierachical node case *)
         | SDD(HNode{...},_)  => raise NotYetImplemented
