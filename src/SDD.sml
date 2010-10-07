@@ -1168,8 +1168,61 @@ functor SDDFun ( structure Variable  : VARIABLE
       )
 
       (* Difference of two hierarchical nodes *)
-      | SDD( HNode{variable=lvr,alpha=lalpha}, _ ) =>
-          raise NotYetImplemented
+      | SDD( HNode{variable=lvr,alpha=la}, _ ) =>
+
+      (case !r of
+        SDD(Zero,_)       => raise DoNotPanic
+      | SDD(One,_)        => raise IncompatibleSDD
+      | SDD(Node{...},_)  => raise IncompatibleSDD
+
+      (* Difference of two hiearchical nodes *)
+      | SDD( HNode{variable=rvr,alpha=ra}, _ ) =>
+      if not( Variable.eq(lvr,rvr) ) then
+        raise IncompatibleSDD
+      else
+      let
+
+        val lalpha = alphaToList la
+        val ralpha = alphaToList ra
+
+        val commonPart =
+        let
+          (* Difference is a binary operation, while flatCommonApply
+             expects an n-ary operation *)
+          fun callback( lookup, xs ) =
+            case xs of
+              (x::y::[]) => differenceCallback( cacheLookup, x, y )
+            | _          => raise DoNotPanic
+
+          val commonApply' = commonApply cacheLookup callback
+        in
+          commonApply'( lalpha, ralpha )
+        end
+
+        val diffPart =
+        let
+          val bUnion = unionCallback( cacheLookup, map (fn (x,_)=>x) ralpha )
+        in
+          foldl (fn ((aVal,aSuccs),acc) =>
+                  let
+                    val diff = differenceCallback(cacheLookup,aVal,bUnion)
+                  in
+                    if diff = zero then
+                      acc
+                    else
+                      ( diff, aSuccs)::acc
+                  end
+                )
+                []
+                lalpha
+        end
+
+        val squareUnion' = squareUnion cacheLookup
+        val alpha = squareUnion' ( diffPart @ commonPart )
+      in
+        nodeAlpha( lvr, alpha )
+      end
+      )
 
       (* end fun difference *)
 
