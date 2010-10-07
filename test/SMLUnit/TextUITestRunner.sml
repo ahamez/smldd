@@ -99,17 +99,27 @@ struct
             ("errors = " ^ (Int.toString (List.length errors)))
       in
         print ("\n" ^ message ^ "\n");
-        print "Failures:\n";
-        app
-        (fn (path, message) =>
-            (print path; print  ": "; print message; print "\n"))
-        failures;
-        print  "Errors:\n";
-        app
-        (fn (path, exn) =>
-            (print
-             (path ^ ": " ^ (exnName exn) ^ ": " ^ (exnMessage exn) ^ "\n")))
-        errors
+        if List.length failures > 0 then
+        (
+          print "Failures:\n";
+          app
+          (fn (path, message) =>
+              (print path; print  ": "; print message; print "\n"))
+          failures
+        )
+        else
+          ();
+        if List.length errors > 0 then
+        (
+          print  "Errors:\n";
+          app
+          (fn (path, exn) =>
+              (print
+               (path ^ ": " ^ (exnName exn) ^ ": " ^ (exnMessage exn) ^ "\n")))
+          errors
+        )
+        else
+          ()
       end
 
   (***************************************************************************)
