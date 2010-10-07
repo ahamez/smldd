@@ -55,47 +55,43 @@ functor SDDFun ( structure Variable  : VARIABLE
                              }
 
     (* Compare two SDDs *)
-    fun eq (l,r) =
-    let
-      val SDD(lsdd,lh) = l
-      val SDD(rsdd,rh) = r
-    in
-      if lh <> rh then
-        false
-      else
-        case lsdd of
+    fun eq ( SDD(lsdd,lh), SDD(rsdd,rh) ) =
+    if lh <> rh then
+      false
+    else
+      case lsdd of
 
-          Zero => (case rsdd of
-                    Zero  => true
-                  | _     => false
-                  )
+        Zero => (case rsdd of
+                  Zero  => true
+                | _     => false
+                )
 
-        | One  => (case rsdd of
-                    One   => true
-                  | _     => false
-                  )
+      | One  => (case rsdd of
+                  One   => true
+                | _     => false
+                )
 
-        | Node{ variable=lvr, alpha=lalpha } =>
-            (case rsdd of
-              Node{ variable=rvr, alpha=ralpha } =>
-                if not( Variable.eq(lvr,rvr) ) then
-                  false
-                else
-                  lalpha = ralpha
-            | _ => false
-            )
+      | Node{ variable=lvr, alpha=lalpha } =>
+          (case rsdd of
+            Node{ variable=rvr, alpha=ralpha } =>
+              if not( Variable.eq(lvr,rvr) ) then
+                false
+              else
+                lalpha = ralpha
+          | _ => false
+          )
 
-        | HNode{ variable=lvr, alpha=lalpha } =>
-            (case rsdd of
-              HNode{ variable=rvr, alpha=ralpha } =>
-                if not( Variable.eq(lvr,rvr) ) then
-                  false
-                else
-                  lalpha = ralpha
-            | _ => false
-            )
+      | HNode{ variable=lvr, alpha=lalpha } =>
+          (case rsdd of
+            HNode{ variable=rvr, alpha=ralpha } =>
+              if not( Variable.eq(lvr,rvr) ) then
+                false
+              else
+                lalpha = ralpha
+          | _ => false
+          )
 
-    end (* fun eq *)
+    (* end fun eq *)
 
     (* The hash value of a node is stored with it, because we can't
        use the address of the reference (like in C). Thus, it has to
