@@ -645,11 +645,10 @@ functor SDDFun ( structure Variable  : VARIABLE
 
        (* Merge all valuations that lead to the same successor,
           using an hash table.
-          Returns an alpha suitable to build a new flat node with
-          flatNodeAlpha.
+          Returns an alpha suitable to build a new node with nodeAlpha.
 
-          alpha : ( valuation ref * SDD ref list ) list
-            -> ( valuation ref * SDD ref ) Vector.vector
+          alpha : ( SDD ref * SDD ref list ) list
+            -> ( SDD ref * SDD ref ) Vector.vector
 
           Warning! Duplicate logic with flatSquareUnion!
        *)
@@ -904,13 +903,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                                    | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (valuation ref,SDD ref list) list.
+             (SDD ref,SDD ref list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (valuation ref * SDD ref list) list
-             operands : (valuation ref * SDD ref list) list list
+             initial  : (SDD ref * SDD ref list) list
+             operands : (SDD ref * SDD ref list) list list
           *)
           val ( initial, operands ) = case map alphaNodeToList xs of
                                         []       => raise DoNotPanic
