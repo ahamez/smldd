@@ -17,6 +17,8 @@ sig
   val intersection  : SDD list -> SDD
   val difference    : SDD * SDD -> SDD
 
+  val hash          : SDD -> Word32.word
+
   val paths         : SDD -> int
 
   val toString      : SDD -> string
@@ -1342,11 +1344,17 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  (* Return the hash value of an SDD. Needed by HomFun*)
+  fun hash x = Definition.hash (!x)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
   (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
       val cache : (( SDD, int ) HashTable.hash_table) ref
-          = ref (HashTable.mkTable( fn x => hash(!x) , op = )
+          = ref (HashTable.mkTable( fn x => hash x , op = )
                                   ( 10000, DoNotPanic ))
       fun pathsHelper x =
         let
