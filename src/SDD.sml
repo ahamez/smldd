@@ -258,7 +258,22 @@ functor SDDFun ( structure Variable  : VARIABLE
      For internal use only! *)
   fun nodeAlpha ( var   : Variable.t
                 , alpha : (SDD ref * SDD ref ) Vector.vector )
-  = raise NotYetImplemented
+  = if Vector.length alpha = 0 then
+    zero
+  else
+  let
+    val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
+                                    Word32.xorb( hash (!vl)
+                                               , Word32.xorb( hash(!succ), h )
+                                               )
+                                  )
+                     (Word32.fromInt 0)
+                     alpha
+
+    val h = Word32.xorb( Variable.hash var, hashAlpha )
+  in
+    SDDUT.unify( SDD( HNode{variable=var,alpha=alpha}, h) )
+  end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
