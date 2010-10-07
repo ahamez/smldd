@@ -614,26 +614,26 @@ functor SDDFun ( structure Variable  : VARIABLE
       |   flatCommonApply lookup cont ( aArc::aAlpha, bAlpha ) =
       let
 
-        fun propagate _    ( _, [] ) =  []
-        |   propagate cont ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
+        fun propagate ( _, [] ) =  []
+        |   propagate ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
         let
           val inter = valIntersection [aVal,bVal]
         in
           if Valuation.empty(!inter) then
-            propagate cont ( aArc, bAlpha)
+            propagate ( aArc, bAlpha)
           else
             let
               val succ = cont( lookup, aSuccs@bSuccs )
             in
               if succ = zero then
-                propagate cont ( aArc, bAlpha )
+                propagate ( aArc, bAlpha )
               else
-                ( inter, [succ] ) :: propagate cont ( aArc, bAlpha)
+                ( inter, [succ] ) :: propagate ( aArc, bAlpha)
             end
         end
 
       in
-          propagate cont ( aArc, bAlpha  )
+          propagate ( aArc, bAlpha  )
         @ flatCommonApply lookup cont ( aAlpha, bAlpha )
       end
 
