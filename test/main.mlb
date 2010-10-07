@@ -5,7 +5,7 @@ in
   local
     ./SMLUnit/SMLUnit.mlb
   in
-    ../src/sources.mlb
+    ../smldd/sources.mlb
     ./TestSDD.sml
     ./main.sml
   end
