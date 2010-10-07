@@ -490,6 +490,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
          (valuation ref * SDD ref) Vector.vector
            -> ( valuation ref * SDD ref list ) list
+
+         Warning! Duplicate logic with alphaToList!
       *)
       fun flatAlphaToList( alpha ) =
       Vector.foldr
@@ -501,10 +503,42 @@ functor SDDFun ( structure Variable  : VARIABLE
 
          SDD ref
            -> ( valuation ref * SDD ref list ) list
+
+         Warning! Duplicate logic with alphaNodeToList!
       *)
       fun flatAlphaNodeToList n =
       case !n of
         SDD(Node{alpha=alpha,...},_) => flatAlphaToList alpha
+      | _ => raise DoNotPanic
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
+      (* Convert an alpha (a vector) into a more easy to manipulate type
+         (a list of valuations, each one leading to a list of successors).
+         Thus, it make usable by squareUnion.
+
+         (SDD ref * SDD ref) Vector.vector
+           -> ( SDD ref * SDD ref list ) list
+
+         Warning! Duplicate logic with flatAlphaToList!
+      *)
+      fun alphaToList( alpha ) =
+      Vector.foldr
+        (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
+        []
+        alpha
+
+      (* Apply alphaToList to a node
+
+         SDD ref
+           -> ( SDD ref * SDD ref list ) list
+
+         Warning! Duplicate logic with flatAlphaNodeToList!
+      *)
+      fun alphaNodeToList n =
+      case !n of
+        SDD(HNode{alpha=alpha,...},_) => alphaToList alpha
       | _ => raise DoNotPanic
 
       (*------------------------------------------------------------------*)
@@ -560,6 +594,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           alpha : ( valuation ref * SDD ref list ) list
             -> ( valuation ref * SDD ref ) Vector.vector
+
+          Warning! Duplicate logic with squareUnion!
        *)
        fun flatSquareUnion cacheLookup alpha =
        let
@@ -607,8 +643,69 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+       (* Merge all valuations that lead to the same successor,
+          using an hash table.
+          Returns an alpha suitable to build a new flat node with
+          flatNodeAlpha.
+
+          alpha : ( valuation ref * SDD ref list ) list
+            -> ( valuation ref * SDD ref ) Vector.vector
+
+          Warning! Duplicate logic with flatSquareUnion!
+       *)
+       fun squareUnion cacheLookup alpha =
+       let
+         (* This table associates a list of valuations to a single
+            SDD successor *)
+         val tbl :
+           ( ( SDD ref , SDD ref list ref) HashTable.hash_table )
+           = (HashTable.mkTable( fn x => hash(!x) , op = )
+             ( 10000, DoNotPanic ))
+
+         (* Fill the hash table *)
+         val _ = app (fn ( vl, succs ) =>
+                     let
+                       val u = unionCallback( cacheLookup, succs )
+                     in
+                       if vl = zero then
+                        ()
+                       else
+                         case HashTable.find tbl u of
+                           NONE   => HashTable.insert tbl ( u, ref [vl] )
+                           (* update list of valuations *)
+                         | SOME x => x := vl::(!x)
+                     end
+                     )
+                     alpha
+       in
+         HashTable.foldi (fn ( succ, vls, acc) =>
+                          let
+                            val vl =
+                              (case !vls of
+                                []      => raise DoNotPanic
+                              | (x::[]) => x
+                              | (x::xs) =>
+                                foldl (fn (y,acc) =>
+                                       unionCallback( cacheLookup,[y,acc])
+                                      )
+                                      x
+                                      xs
+                              )
+                         in
+                           Vector.concat[acc,Vector.fromList[(vl,succ)]]
+                         end
+                         )
+                         (Vector.fromList [])
+                         tbl
+       end
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
       (* Used by the intersection and difference operations which need
          to apply an operation ('cont') recursively on common parts.
+
+          Warning! Duplicate logic with commonApply!
       *)
       fun flatCommonApply _ _         ( [], _ )                = []
       |   flatCommonApply lookup cont ( aArc::aAlpha, bAlpha ) =
@@ -635,6 +732,41 @@ functor SDDFun ( structure Variable  : VARIABLE
       in
           propagate ( aArc, bAlpha  )
         @ flatCommonApply lookup cont ( aAlpha, bAlpha )
+      end
+
+      (*------------------------------------------------------------------*)
+      (*------------------------------------------------------------------*)
+
+      (* Used by the intersection and difference operations which need
+         to apply an operation ('cont') recursively on common parts.
+
+          Warning! Duplicate logic with flatCommonApply!
+      *)
+      fun commonApply _ _         ( [], _ )                = []
+      |   commonApply lookup cont ( aArc::aAlpha, bAlpha ) =
+      let
+
+        fun propagate ( _, [] ) =  []
+        |   propagate ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
+        let
+          val inter = intersectionCallback (lookup, [aVal,bVal])
+        in
+          if inter = zero then
+            propagate ( aArc, bAlpha)
+          else
+            let
+              val succ = cont( lookup, aSuccs@bSuccs )
+            in
+              if succ = zero then
+                propagate ( aArc, bAlpha )
+              else
+                ( inter, [succ] ) :: propagate ( aArc, bAlpha)
+            end
+        end
+
+      in
+          propagate ( aArc, bAlpha  )
+        @ commonApply lookup cont ( aAlpha, bAlpha )
       end
 
       (*------------------------------------------------------------------*)
@@ -761,8 +893,99 @@ functor SDDFun ( structure Variable  : VARIABLE
           flatNodeAlpha( var, alpha )
         end (* Flat node case *)
 
-          (* Hierachical node case *)
-        | SDD(HNode{...},_) => raise NotYetImplemented
+        (* Hierachical node case
+           Warning! Duplicate logic with the SDD(Node{...},_) case above!
+        *)
+        | SDD(HNode{...},_) =>
+        let
+
+          (* The variable of the current level *)
+          val var = case !(hd xs) of SDD(HNode{variable=v,...},_) => v
+                                   | _ => raise DoNotPanic
+
+          (* Transform the alpha of each node into :
+             (valuation ref,SDD ref list) list.
+             This type is also used as the accumulator for the foldl
+             on the list of operands, as it will be given to the
+             square union operation.
+
+             initial  : (valuation ref * SDD ref list) list
+             operands : (valuation ref * SDD ref list) list list
+          *)
+          val ( initial, operands ) = case map alphaNodeToList xs of
+                                        []       => raise DoNotPanic
+                                      | (y::ys)  => (y,ys)
+
+          (* Perform the union of the alpha of two operands *)
+          (* Both aAlpha and bAlpha are empty, everything is in res *)
+          fun unionHelper ( [], ( res, []) )
+          = ( [], res )
+
+          (* No more elements in aAlpha *)
+          |   unionHelper ( [], ( res, bAlpha ))
+          = ( [], bAlpha @ res )
+
+          (* Empty intersection for a *)
+          |   unionHelper ( (aVal,aSuccs)::aAlpha, ( res, [] ))
+          = unionHelper ( aAlpha, ( [], (aVal,aSuccs)::res ) )
+
+          (* General case *)
+          |   unionHelper ( aWholeAlpha as ((aVal,aSuccs)::aAlpha)
+                          , ( res, (bArc as (bVal,bSuccs))::bAlpha ) )
+          =
+          (* Same valuation, we just need to merge the lists of successors. *)
+          if aVal = bVal then
+            unionHelper ( aAlpha
+                        , ( ( aVal, aSuccs@bSuccs )::res
+                          , bAlpha
+                          )
+                        )
+          else
+          let
+            val inter = intersectionCallback( cacheLookup, [aVal,bVal] )
+          in
+            (* Is there any common part between the two current valuations?
+               If not, we just need to store the current b -> b_succs into res
+               as a potential element of the future alpha, and move on to the
+               next valuation of b's alpha.
+            *)
+            if inter = zero then
+              unionHelper ( aWholeAlpha
+                          , ( bArc::res
+                            , bAlpha
+                            )
+                          )
+            else
+            let
+              val diff  = differenceCallback( cacheLookup, aVal, inter )
+            in
+              if bVal = inter then (* No need to go further *)
+                unionHelper ( ( diff, aSuccs )::aAlpha
+                            , ( ( inter, aSuccs@bSuccs )::res
+                              , bAlpha
+                              )
+                            )
+              else
+              let
+                val diff2 = differenceCallback( cacheLookup, bVal, inter )
+              in
+                unionHelper ( (diff, aSuccs )::aAlpha
+                            , ( ( inter, aSuccs@bSuccs)::res
+                              , ( diff2, bSuccs)::bAlpha
+                              )
+                            )
+              end
+            end
+          end
+
+          val (_,tmp) = foldl unionHelper ([],initial) operands
+
+          val squareUnion' = squareUnion cacheLookup
+          val alpha = squareUnion' tmp
+
+        in
+          nodeAlpha( var, alpha )
+        end (* Hierarchical node case *)
 
       end (* end fun union *)
 
