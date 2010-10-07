@@ -151,10 +151,32 @@ functor HomFun ( structure SDD : SDD
     fun hash (Op(h,s,_)) =
       Word32.xorb( Definition.hash(!h), SDD.hash s )
 
-    fun apply (Op(h,s,cacheLookup)) =
+    (* Evaluate an homomorphism on an SDD
+       Warning! Duplicate logic with Hom.eval!
+    *)
+    fun evalCallback lookup ( hom, sdd ) =
+    case !hom of
+      Hom( Id, _ )       => sdd
+    | Hom( Const(c), _ ) => c
+    | _                  => lookup( Op( hom, sdd, lookup ) )
+
+    fun cons lookup (var, nested, next) sdd =
+      SDD.node( var, nested, evalCallback lookup (next, sdd ) )
+
+    fun flatCons lookup (var, vl, next) sdd =
+      SDD.flatNode( var, vl, evalCallback lookup (next, sdd ) )
+
+    fun apply ( Op( h, sdd, lookup) ) =
     case !h of
       Hom( Id, _ )    => raise DoNotPanic
     | Hom(Const(_),_) => raise DoNotPanic
+
+    | Hom(Cons(var,nested,next),_)
+      => cons lookup (var, nested, next) sdd
+
+    | Hom(FlatCons(var,vl,next),_)
+      => flatCons lookup (var, vl, next) sdd
+
     | _               => raise NotYetImplemented
 
   end (* structure Evaluation *)
