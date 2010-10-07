@@ -151,6 +151,14 @@ struct
     assertTrue( u0 = u2 )
   end
 
+  fun testFlatUnion10 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val u0 = union [s0,s0,s0,s0,s0,s0,s0]
+  in
+    assertTrue( u0 = s0 )
+  end
+
   fun testFlatInter00 () =
   let
     val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
@@ -764,6 +772,7 @@ struct
       , ("FlatUnion07"       , testFlatUnion07     )
       , ("FlatUnion08"       , testFlatUnion08     )
       , ("FlatUnion09"       , testFlatUnion09     )
+      , ("FlatUnion10"       , testFlatUnion10     )
       , ("FlatInter00"       , testFlatInter00     )
       , ("FlatInter01"       , testFlatInter01     )
       , ("FlatInter02"       , testFlatInter02     )
