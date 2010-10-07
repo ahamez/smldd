@@ -754,6 +754,78 @@ struct
   fun testMkNode05 () =
     assertTrue( node( 0, flatNode(1,IntVector.fromList [],one), one) = zero)
 
+  fun testUnion00 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val x1 = node( 0, s1, one )
+    val u0 = union [x1,x0]
+    val o0 = flatNode( 0, IntVector.fromList[0,1,2,3], one)
+    val y0 = node( 0, o0, one )
+  in
+    assertTrue( u0 = y0 )
+  end
+
+  fun testUnion01 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+    val u0 = union [x0,zero]
+  in
+    assertTrue( u0 = x0 )
+  end
+
+  fun testUnion02 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+    val u0 = union [x0,x0,x0,x0,x0]
+  in
+    assertTrue( u0 = x0 )
+  end
+
+  fun testUnion03 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+    val s1 = flatNode( 1, IntVector.fromList[0,2,3], one )
+    val x1 = node( 0, s1, one )
+  in
+    ( union [x0,x1] ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testUnion04 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val x1 = node( 1, s1, one )
+  in
+    ( union [x0,x1] ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testUnion05 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+  in
+    ( union [x0,one] ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
+  fun testUnion06 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, s0, one )
+    val x1 = node( 1, one, one )
+  in
+    ( union [x0,x1] ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+  end
+
   (* ---------------------------------------------------------------- *)
 
   fun suite () =
@@ -819,6 +891,12 @@ struct
       , ("testMkNode03"      , testMkNode03        )
       , ("testMkNode04"      , testMkNode04        )
       , ("testMkNode05"      , testMkNode05        )
+      , ("testUnion00"       , testUnion00         )
+      , ("testUnion01"       , testUnion01         )
+      , ("testUnion02"       , testUnion02         )
+      , ("testUnion03"       , testUnion03         )
+      , ("testUnion04"       , testUnion04         )
+      , ("testUnion05"       , testUnion05         )
       ]
 
   (* ---------------------------------------------------------------- *)
