@@ -166,9 +166,14 @@ functor HomFun ( structure SDD : SDD
     fun flatCons lookup (var, vl, next) sdd =
       SDD.flatNode( var, vl, evalCallback lookup (next, sdd ) )
 
+    (* Dispatch the evaluation of an homomorphism to the corresponding
+       function. Used by CacheFun.
+    *)
     fun apply ( Op( h, sdd, lookup) ) =
     case !h of
+
       Hom( Id, _ )    => raise DoNotPanic
+
     | Hom(Const(_),_) => raise DoNotPanic
 
     | Hom(Cons(var,nested,next),_)
