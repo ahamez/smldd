@@ -163,7 +163,7 @@ functor HomFun ( structure SDD : SDD
 
   val cacheLookup = cache.lookup
 
-  in
+  in (* local Homomorphisms evaluation *)
 
   (* Evaluate an homomorphism on an SDD *)
   fun eval h sdd =
