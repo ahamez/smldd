@@ -187,7 +187,9 @@ functor HomFun ( structure SDD : SDD
 
   in (* local Homomorphisms evaluation *)
 
-  (* Evaluate an homomorphism on an SDD *)
+  (* Evaluate an homomorphism on an SDD
+     Warning! Duplicate logic with Evaluation.evalCallback!
+  *)
   fun eval h sdd =
   case !h of
     Hom( Id, _ )       => sdd
