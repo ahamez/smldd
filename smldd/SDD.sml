@@ -167,23 +167,19 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return the |0| ("zero") terminal *)
-  val zero : SDD
-    = SDDUT.unify( SDD( Zero , MLton.hash 0 ) )
+  val zero = SDDUT.unify( SDD( Zero , MLton.hash 0 ) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Return the |1| ("one") terminal *)
-  val one : SDD
-    = SDDUT.unify( SDD( One  , MLton.hash 1 ) )
+  val one = SDDUT.unify( SDD( One  , MLton.hash 1 ) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a set of discrete values on arc *)
   fun flatNode ( var : Variable.t , values : Valuation.t , next : SDD )
-               : SDD
-
     = case !next of
       SDD(Zero,_) => zero
     | _           =>
@@ -230,32 +226,29 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a nested node on arc *)
-  fun node ( vr : Variable.t, nested : SDD , next : SDD )
-           : SDD
-
-    = case !next of
+  fun node ( vr : Variable.t, nested : SDD , next : SDD ) =
+  case !next of
+    SDD(Zero,_) => zero
+  | _           =>
+    case !nested of
       SDD(Zero,_) => zero
     | _           =>
-      case !nested of
-        SDD(Zero,_) => zero
-      | _           =>
-        let
-          val SDD(_,hash_next)    = !next
-          val SDD(_,hash_nested)  = !nested
-          val h = Word32.xorb( Variable.hash vr
-                             , Word32.xorb( hash_next, hash_nested ) )
-          val alpha = Vector.fromList [( nested, next )]
-        in
-          SDDUT.unify( SDD(HNode{ variable=vr, alpha=alpha}, h) )
-        end
+      let
+        val SDD(_,hash_next)    = !next
+        val SDD(_,hash_nested)  = !nested
+        val h = Word32.xorb( Variable.hash vr
+                           , Word32.xorb( hash_next, hash_nested ) )
+        val alpha = Vector.fromList [( nested, next )]
+      in
+        SDDUT.unify( SDD(HNode{ variable=vr, alpha=alpha}, h) )
+      end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Construct a node with an already computed alpha.
      For internal use only! *)
-  fun nodeAlpha ( var   : Variable.t
-                , alpha : (SDD * SDD) Vector.vector )
+  fun nodeAlpha ( var   : Variable.t , alpha : (SDD * SDD) Vector.vector )
   = if Vector.length alpha = 0 then
     zero
   else
