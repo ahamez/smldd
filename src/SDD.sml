@@ -739,7 +739,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* Used by the intersection and difference operations which need
          to apply an operation ('cont') recursively on common parts.
 
-          Warning! Duplicate logic with flatCommonApply!
+         Warning! Duplicate logic with flatCommonApply!
       *)
       fun commonApply _ _         ( [], _ )                = []
       |   commonApply lookup cont ( aArc::aAlpha, bAlpha ) =
