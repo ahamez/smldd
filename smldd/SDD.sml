@@ -8,19 +8,19 @@ sig
   type variable
   type valuation
 
-  val zero          : SDD ref
-  val one           : SDD ref
-  val flatNode      : variable * valuation * SDD ref -> SDD ref
-  val node          : variable * SDD ref * SDD ref -> SDD ref
+  val zero          : SDD
+  val one           : SDD
+  val flatNode      : variable * valuation * SDD -> SDD
+  val node          : variable * SDD * SDD -> SDD
 
-  val union         : SDD ref list -> SDD ref
-  val intersection  : SDD ref list -> SDD ref
-  val difference    : SDD ref * SDD ref -> SDD ref
+  val union         : SDD list -> SDD
+  val intersection  : SDD list -> SDD
+  val difference    : SDD * SDD -> SDD
 
-  val paths         : SDD ref -> int
+  val paths         : SDD -> int
 
-  val toString      : SDD ref -> string
-  val toDot         : SDD ref -> string
+  val toString      : SDD -> string
+  val toDot         : SDD -> string
 
   exception IncompatibleSDD
   exception NotYetImplemented
@@ -106,7 +106,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  type SDD        = Definition.t
+  type SDD        = Definition.t ref
   type variable   = Variable.t
   type valuation  = Valuation.t
 
@@ -169,22 +169,22 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return the |0| ("zero") terminal *)
-  val zero : SDD ref
+  val zero : SDD
     = SDDUT.unify( SDD( Zero , MLton.hash 0 ) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Return the |1| ("one") terminal *)
-  val one : SDD ref
+  val one : SDD
     = SDDUT.unify( SDD( One  , MLton.hash 1 ) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a set of discrete values on arc *)
-  fun flatNode ( var : Variable.t , values : Valuation.t , next : SDD ref )
-               : SDD ref
+  fun flatNode ( var : Variable.t , values : Valuation.t , next : SDD )
+               : SDD
 
     = case !next of
       SDD(Zero,_) => zero
@@ -209,7 +209,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Construct a flat node with an already computed alpha.
      For internal use only! *)
   fun flatNodeAlpha ( var   : Variable.t
-                    , alpha : (valuation ref * SDD ref ) Vector.vector )
+                    , alpha : (valuation ref * SDD ) Vector.vector )
   =
   if Vector.length alpha = 0 then
     zero
@@ -232,8 +232,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a nested node on arc *)
-  fun node ( vr : Variable.t, nested : SDD ref , next : SDD ref )
-           : SDD ref
+  fun node ( vr : Variable.t, nested : SDD , next : SDD )
+           : SDD
 
     = case !next of
       SDD(Zero,_) => zero
@@ -257,7 +257,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Construct a node with an already computed alpha.
      For internal use only! *)
   fun nodeAlpha ( var   : Variable.t
-                , alpha : (SDD ref * SDD ref ) Vector.vector )
+                , alpha : (SDD * SDD) Vector.vector )
   = if Vector.length alpha = 0 then
     zero
   else
@@ -430,13 +430,13 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      type result        = SDD ref
+      type result        = SDD
       datatype operation = Union of
-                              ( SDD ref list * (operation -> result) )
+                              ( SDD list * (operation -> result) )
                          | Inter of
-                              ( SDD ref list * (operation -> result) )
+                              ( SDD list * (operation -> result) )
                          | Diff  of
-                              ( SDD ref * SDD ref * (operation -> result) )
+                              ( SDD * SDD * (operation -> result) )
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -488,8 +488,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (a list of valuations, each one leading to a list of successors).
          Thus, it make usable by flatSquareUnion.
 
-         (valuation ref * SDD ref) Vector.vector
-           -> ( valuation ref * SDD ref list ) list
+         (valuation ref * SDD) Vector.vector
+           -> ( valuation ref * SDD list ) list
 
          Warning! Duplicate logic with alphaToList!
       *)
@@ -501,8 +501,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Apply flatAlphaToList to a node
 
-         SDD ref
-           -> ( valuation ref * SDD ref list ) list
+         SDD
+           -> ( valuation ref * SDD list ) list
 
          Warning! Duplicate logic with alphaNodeToList!
       *)
@@ -518,8 +518,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (a list of valuations, each one leading to a list of successors).
          Thus, it make usable by squareUnion.
 
-         (SDD ref * SDD ref) Vector.vector
-           -> ( SDD ref * SDD ref list ) list
+         (SDD * SDD) Vector.vector
+           -> ( SDD * SDD list ) list
 
          Warning! Duplicate logic with flatAlphaToList!
       *)
@@ -531,8 +531,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Apply alphaToList to a node
 
-         SDD ref
-           -> ( SDD ref * SDD ref list ) list
+         SDD
+           -> ( SDD * SDD list ) list
 
          Warning! Duplicate logic with flatAlphaNodeToList!
       *)
@@ -592,8 +592,8 @@ functor SDDFun ( structure Variable  : VARIABLE
           Returns an alpha suitable to build a new flat node with
           flatNodeAlpha.
 
-          alpha : ( valuation ref * SDD ref list ) list
-            -> ( valuation ref * SDD ref ) Vector.vector
+          alpha : ( valuation ref * SDD list ) list
+            -> ( valuation ref * SDD ) Vector.vector
 
           Warning! Duplicate logic with squareUnion!
        *)
@@ -602,7 +602,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* This table associates a list of valuations to a single
             SDD successor *)
          val tbl :
-           ( ( SDD ref , valuation ref list ref) HashTable.hash_table )
+           ( ( SDD , valuation ref list ref) HashTable.hash_table )
            = (HashTable.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
@@ -647,8 +647,8 @@ functor SDDFun ( structure Variable  : VARIABLE
           using an hash table.
           Returns an alpha suitable to build a new node with nodeAlpha.
 
-          alpha : ( SDD ref * SDD ref list ) list
-            -> ( SDD ref * SDD ref ) Vector.vector
+          alpha : ( SDD * SDD list ) list
+            -> ( SDD * SDD ) Vector.vector
 
           Warning! Duplicate logic with flatSquareUnion!
        *)
@@ -657,7 +657,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* This table associates a list of valuations to a single
             SDD successor *)
          val tbl :
-           ( ( SDD ref , SDD ref list ref) HashTable.hash_table )
+           ( ( SDD , SDD list ref) HashTable.hash_table )
            = (HashTable.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
@@ -773,7 +773,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Do the n-ary union of a list of flat SDDs.
          The general idea is to create a potential alpha
-         of type (valuation ref * SDD ref list ) list which stores all
+         of type (valuation ref * SDD list ) list which stores all
          successors for a given valuation, which is then given to
          the square union function.
 
@@ -809,13 +809,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                                    | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (valuation ref,SDD ref list) list.
+             (valuation ref,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (valuation ref * SDD ref list) list
-             operands : (valuation ref * SDD ref list) list list
+             initial  : (valuation ref * SDD list) list
+             operands : (valuation ref * SDD list) list list
           *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -903,13 +903,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                                    | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (SDD ref,SDD ref list) list.
+             (SDD ,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (SDD ref * SDD ref list) list
-             operands : (SDD ref * SDD ref list) list list
+             initial  : (SDD * SDD list) list
+             operands : (SDD * SDD list) list list
           *)
           val ( initial, operands ) = case map alphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -1030,13 +1030,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                     | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (valuation ref,SDD ref list) list.
+             (valuation ref,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (valuation ref * SDD ref list) list
-             operands : (valuation ref * SDD ref list) list list
+             initial  : (valuation ref * SDD list) list
+             operands : (valuation ref * SDD list) list list
           *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -1068,13 +1068,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                     | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (SDD ref,SDD ref list) list.
+             (SDD,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (SDD ref * SDD ref list) list
-             operands : (SDD ref * SDD ref list) list list
+             initial  : (SDD * SDD list) list
+             operands : (SDD * SDD list) list list
           *)
           val ( initial, operands ) = case map alphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -1345,7 +1345,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
-      val cache : (( SDD ref , int ) HashTable.hash_table) ref
+      val cache : (( SDD, int ) HashTable.hash_table) ref
           = ref (HashTable.mkTable( fn x => hash(!x) , op = )
                                   ( 10000, DoNotPanic ))
       fun pathsHelper x =
