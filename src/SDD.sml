@@ -676,11 +676,12 @@ functor SDDFun ( structure Variable  : VARIABLE
                                         []       => raise DoNotPanic
                                       | (y::ys)  => (y,ys)
 
-          (* Merge two operands *)
+          (* Perform the union of the alpha of two operands *)
+          (* Both aAlpha and bAlpha are empty, everything is in res *)
           fun unionHelper ( [], ( res, []) )
           = ( [], res )
 
-          (* No more elements in alpha_a *)
+          (* No more elements in aAlpha *)
           |   unionHelper ( [], ( res, bAlpha ))
           = ( [], bAlpha @ res )
 
