@@ -545,7 +545,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Warning: duplicate code with SDD.union! Keep in sync! *)
-      fun unionCallback ( lookup, xs ) =
+      fun unionCallback lookup xs =
       let
         (* Remove all |0| *)
         val xs' = List.filter (fn x => case !x of
@@ -564,7 +564,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
-      fun intersectionCallback ( lookup, xs ) =
+      fun intersectionCallback lookup xs =
         case xs of
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
@@ -574,7 +574,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
-      fun differenceCallback( lookup, x, y ) =
+      fun differenceCallback lookup ( x, y ) =
         if x = y then          (* No need to cache *)
           zero
         else if x = zero then  (* No need to cache *)
@@ -609,7 +609,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* Fill the hash table *)
          val _ = app (fn ( vl, succs ) =>
                      let
-                       val u = unionCallback( cacheLookup, succs )
+                       val u = unionCallback cacheLookup succs
                      in
                        if Valuation.empty(!vl) then
                         ()
@@ -664,7 +664,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* Fill the hash table *)
          val _ = app (fn ( vl, succs ) =>
                      let
-                       val u = unionCallback( cacheLookup, succs )
+                       val u = unionCallback cacheLookup succs
                      in
                        if vl = zero then
                         ()
@@ -685,7 +685,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                               | (x::[]) => x
                               | (x::xs) =>
                                 foldl (fn (y,acc) =>
-                                       unionCallback( cacheLookup,[y,acc])
+                                       unionCallback cacheLookup [y,acc]
                                       )
                                       x
                                       xs
@@ -719,7 +719,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             propagate ( aArc, bAlpha)
           else
             let
-              val succ = cont( lookup, aSuccs@bSuccs )
+              val succ = cont lookup (aSuccs@bSuccs)
             in
               if succ = zero then
                 propagate ( aArc, bAlpha )
@@ -748,13 +748,13 @@ functor SDDFun ( structure Variable  : VARIABLE
         fun propagate ( _, [] ) =  []
         |   propagate ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
         let
-          val inter = intersectionCallback (lookup, [aVal,bVal])
+          val inter = intersectionCallback lookup [aVal,bVal]
         in
           if inter = zero then
             propagate ( aArc, bAlpha)
           else
             let
-              val succ = cont( lookup, aSuccs@bSuccs )
+              val succ = cont lookup (aSuccs@bSuccs)
             in
               if succ = zero then
                 propagate ( aArc, bAlpha )
@@ -941,7 +941,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                         )
           else
           let
-            val inter = intersectionCallback( cacheLookup, [aVal,bVal] )
+            val inter = intersectionCallback cacheLookup [aVal,bVal]
           in
             (* Is there any common part between the two current valuations?
                If not, we just need to store the current b -> b_succs into res
@@ -956,7 +956,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                           )
             else
             let
-              val diff  = differenceCallback( cacheLookup, aVal, inter )
+              val diff  = differenceCallback cacheLookup (aVal, inter)
             in
               if bVal = inter then (* No need to go further *)
                 unionHelper ( ( diff, aSuccs )::aAlpha
@@ -966,7 +966,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                             )
               else
               let
-                val diff2 = differenceCallback( cacheLookup, bVal, inter )
+                val diff2 = differenceCallback cacheLookup (bVal, inter)
               in
                 unionHelper ( (diff, aSuccs )::aAlpha
                             , ( ( inter, aSuccs@bSuccs)::res
@@ -1132,9 +1132,9 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           (* Difference is a binary operation, while flatCommonApply
              expects an n-ary operation *)
-          fun callback( lookup, xs ) =
+          fun callback lookup xs =
             case xs of
-              (x::y::[]) => differenceCallback( cacheLookup, x, y )
+              (x::y::[]) => differenceCallback cacheLookup (x, y)
             | _          => raise DoNotPanic
 
           val flatCommonApply' = flatCommonApply cacheLookup callback
@@ -1189,9 +1189,9 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           (* Difference is a binary operation, while flatCommonApply
              expects an n-ary operation *)
-          fun callback( lookup, xs ) =
+          fun callback lookup xs =
             case xs of
-              (x::y::[]) => differenceCallback( cacheLookup, x, y )
+              (x::y::[]) => differenceCallback cacheLookup (x, y)
             | _          => raise DoNotPanic
 
           val commonApply' = commonApply cacheLookup callback
@@ -1201,11 +1201,11 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         val diffPart =
         let
-          val bUnion = unionCallback( cacheLookup, map (fn (x,_)=>x) ralpha )
+          val bUnion = unionCallback cacheLookup  (map (fn (x,_)=>x) ralpha)
         in
           foldl (fn ((aVal,aSuccs),acc) =>
                   let
-                    val diff = differenceCallback(cacheLookup,aVal,bUnion)
+                    val diff = differenceCallback cacheLookup (aVal,bUnion)
                   in
                     if diff = zero then
                       acc
