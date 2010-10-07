@@ -674,9 +674,8 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
 
           (* The variable of the current level *)
-          val var = case !(hd xs) of
-                      SDD(Node{variable=v,...},_) => v
-                    | _ => raise DoNotPanic
+          val var = case !(hd xs) of SDD(Node{variable=v,...},_) => v
+                                   | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
              (valuation ref,SDD ref list) list.
