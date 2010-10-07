@@ -4,7 +4,7 @@
 signature SDD =
 sig
 
-  type SDD
+  eqtype SDD
   type variable
   type valuation
 
