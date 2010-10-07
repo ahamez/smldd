@@ -1057,7 +1057,42 @@ functor SDDFun ( structure Variable  : VARIABLE
         end (* Flat node case *)
 
         (* Hierachical node case *)
-        | SDD(HNode{...},_)  => raise NotYetImplemented
+        | SDD(HNode{...},_)  =>
+        let
+          (* Check operands compatibility *)
+          val _ = check xs
+
+          (* The variable of the current level *)
+          val var = case !(hd xs) of
+                      SDD(HNode{variable=v,...},_) => v
+                    | _ => raise DoNotPanic
+
+          (* Transform the alpha of each node into :
+             (SDD ref,SDD ref list) list.
+             This type is also used as the accumulator for the foldl
+             on the list of operands, as it will be given to the
+             square union operation.
+
+             initial  : (SDD ref * SDD ref list) list
+             operands : (SDD ref * SDD ref list) list list
+          *)
+          val ( initial, operands ) = case map alphaNodeToList xs of
+                                        []       => raise DoNotPanic
+                                      | (y::ys)  => (y,ys)
+
+          val commonApply'
+            = commonApply cacheLookup intersectionCallback
+
+          val squareUnion' = squareUnion cacheLookup
+
+          (* Intersect two operands *)
+          fun interHelper (xs,ys) = commonApply'( xs, ys )
+
+          val alpha = squareUnion' ( foldl interHelper initial operands )
+
+        in
+          nodeAlpha( var, alpha )
+        end (* Hierachical node case *)
 
       end (* end fun intersection *)
 
