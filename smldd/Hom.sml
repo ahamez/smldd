@@ -33,9 +33,10 @@ end
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
 
-functor HomFun ( structure Variable  : VARIABLE
-               ; structure Valuation : VALUATION 
-               ; structure SDD       : SDD )
+functor HomFun ( structure SDD : SDD
+                 and Variable  : VARIABLE  where type t = SDD.variable
+                 and Valuation : VALUATION where type t = SDD.valuation
+               )
   : Hom
 = struct
 
@@ -181,9 +182,10 @@ end (* functor HomFun *)
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
 
-structure Hom = HomFun( structure Variable  = IntVariable
+structure Hom = HomFun( structure SDD       = SDD
+                      ; structure Variable  = IntVariable
                       ; structure Valuation = DiscreteIntValuation
-                      ; structure SDD       = SDD )
+                      )
 
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
