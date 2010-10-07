@@ -193,12 +193,12 @@ functor SDDFun ( structure Variable  : VARIABLE
         zero
       else
         let
-          val SDD(_,hash_next)    = !next
-          val hash_values         = Valuation.hash values
+          val SDD(_,hashNext)    = !next
+          val hashValues         = Valuation.hash values
           val h = Word32.xorb( Variable.hash var
-                             , Word32.xorb( hash_next, hash_values ))
-          val unik_values = ValUT.unify values
-          val alpha = Vector.fromList [( unik_values, next )]
+                             , Word32.xorb( hashNext, hashValues ))
+          val unikValues = ValUT.unify values
+          val alpha = Vector.fromList [( unikValues, next )]
         in
           SDDUT.unify( SDD( Node{ variable=var, alpha=alpha}, h) )
         end
@@ -215,7 +215,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     zero
   else
   let
-    val hash_alpha = Vector.foldl (fn ((vl,succ),h) =>
+    val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
                                     Word32.xorb( Valuation.hash(!vl)
                                                , Word32.xorb( hash(!succ), h )
                                                )
@@ -223,7 +223,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                      (Word32.fromInt 0)
                      alpha
 
-    val h = Word32.xorb( Variable.hash var, hash_alpha )
+    val h = Word32.xorb( Variable.hash var, hashAlpha )
   in
     SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
   end
