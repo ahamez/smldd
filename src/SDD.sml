@@ -302,7 +302,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           (* Valuation.hash(!x) -> problem: we have to compute again
              the hash value of the valuation... Maybe we should store
-             this hash alongside the valuation? *)
+             this hash alongside of the valuation? *)
           fun hashOperands( h0, xs ) =
             foldl (fn(x,h) => Word32.xorb( Valuation.hash(!x), h)) h0 xs
         in
