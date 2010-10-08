@@ -17,6 +17,7 @@ sig
   val intersection  : SDD list -> SDD
   val difference    : SDD * SDD -> SDD
 
+  val variable      : SDD -> variable
   val hash          : SDD -> Word32.word
 
   val paths         : SDD -> int
@@ -26,6 +27,7 @@ sig
 
   exception IncompatibleSDD
   exception NotYetImplemented
+  exception IsNotANode
 
 end
 
@@ -121,6 +123,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   exception IncompatibleSDD
   exception NotYetImplemented
   exception DoNotPanic
+  exception IsNotANode
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -1329,6 +1332,19 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
 
   end (* local SDD manipulations *)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  (* Return the variable of an SDD. Needed by HomFun*)
+  fun variable x =
+  let
+    val var = case !x of SDD(Node{variable=var,...},_)  => var
+                       | SDD(HNode{variable=var,...},_) => var
+                       | _ => raise IsNotANode
+  in
+    var
+  end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
