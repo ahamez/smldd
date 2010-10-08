@@ -178,7 +178,62 @@ functor HomFun ( structure SDD : SDD
   else if y = id then
     x
   else
-    raise NotYetImplemented
+  let
+
+    fun compHelper h =
+      case !h of
+        Hom( Compo(a,b), _ ) => (compHelper a) @ (compHelper y)
+      | _                    => [h]
+
+    val operands = (compHelper x) @ (compHelper y)
+
+    val (nesteds,others)
+      = List.partition (fn x => case !x of Hom(Nested(_,_),_) => true
+                                         | _ => false
+                       )
+                       operands
+
+    val table : (( variable, hom list ref ) H.hash_table)
+      = (H.mkTable( fn x => Variable.hash x , Variable.eq )
+                  ( 10000, DoNotPanic ) )
+
+    val _ = app (fn x => let
+                           val (h,var) = case !x of
+                                           Hom(Nested(h,v),_) => (h,v)
+                                         | _ => raise DoNotPanic
+                         in
+                           case H.find table var of
+                             NONE => H.insert table ( var, ref [h] )
+                           | SOME hList => hList := (!hList) @ [h]
+                         end
+                )
+                nesteds
+
+    fun mapNested ( var, xs ) =
+    let
+      val (h,hs) = case !xs of []      => raise DoNotPanic
+                             | (h::hs) => (h,hs)
+      val c = foldl (fn (h,comp) => composition comp h) h hs
+    in
+      nested c var
+    end
+
+    val nesteds' = map mapNested (H.listItemsi table)
+    val (h,hs) = case nesteds' @ others of []      => raise DoNotPanic
+                                         | (_::[]) => raise DoNotPanic
+                                         | (h::hs) => (h,hs)
+  in
+    foldl (fn (h,comp) =>
+          let
+            val hsh = Word32.xorb( Word32.fromInt 539351353
+                            , Word32.xorb( hash (!h), hash (!comp)))
+          in
+            UT.unify( Hom(Compo(comp,h), hsh) )
+          end
+          )
+          h
+          hs
+  end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
