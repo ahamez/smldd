@@ -184,12 +184,6 @@ functor HomFun ( structure SDD : SDD
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
-
-(*    fun flatCons lookup (var, vl, next) sdd =
-      SDD.flatNode( var, vl, evalCallback lookup (next, sdd ) )*)
-
-    (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
     (* Dispatch the evaluation of an homomorphism to the corresponding
        function. Used by CacheFun.
     *)
