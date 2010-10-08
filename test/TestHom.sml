@@ -27,10 +27,10 @@ struct
   fun testCons00 () =
   let
     val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val x1 = node( 0, s0, one )
-    val h0 = cons 1 s0 id
+    val x1 = node( 0, Nested s0, one )
+    val h0 = cons 1 (Nested s0) id
     val c0 = eval h0 x1
-    val y0 = node( 1, s0, x1 )
+    val y0 = node( 1, Nested s0, x1 )
   in
     assertTrue( c0 = y0 )
   end
@@ -40,24 +40,12 @@ struct
   fun testCons01 () =
   let
     val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val x1 = node( 0, s0, one )
-    val h0 = cons 1 s0 id
+    val x1 = node( 0, Nested s0, one )
+    val h0 = cons 1 (Nested s0) id
     val c0 = eval h0 x1
     val c1 = eval h0 x1
   in
     assertTrue( c0 = c1 )
-  end
-
-  (* ---------------------------------------------------------------- *)
-
-  fun testFlatCons00 () =
-  let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val h0 = flatCons 1 (IntVector.fromList[0]) id
-    val c0 = eval h0 s0
-    val o0 = flatNode( 1, IntVector.fromList[0], s0 )
-  in
-    assertTrue( c0 = o0 )
   end
 
   (* ---------------------------------------------------------------- *)
@@ -68,7 +56,6 @@ struct
       , ("testId01"          , testId01        )
       , ("testCons00"        , testCons00      )
       , ("testCons01"        , testCons01      )
-      , ("testFlatCons00"    , testFlatCons00  )
       ]
 
   (* ---------------------------------------------------------------- *)

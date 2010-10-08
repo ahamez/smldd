@@ -8,10 +8,12 @@ sig
   type variable
   type values
 
+  datatype valuation = Nested of SDD | Values of values
+
   val zero          : SDD
   val one           : SDD
-  val flatNode      : variable * values * SDD -> SDD
-  val node          : variable * SDD * SDD -> SDD
+  val flatNode      : variable * values    * SDD -> SDD
+  val node          : variable * valuation * SDD -> SDD
 
   val union         : SDD list -> SDD
   val intersection  : SDD list -> SDD
@@ -19,6 +21,8 @@ sig
 
   val variable      : SDD -> variable
   val hash          : SDD -> Word32.word
+  val hashValuation : valuation -> Word32.word
+  val eqValuation   : (valuation * valuation) -> bool
 
   val paths         : SDD -> int
 
@@ -109,6 +113,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   type SDD        = Definition.t ref
   type variable   = Variable.t
   type values     = Values.t
+
+  datatype valuation = Nested of SDD | Values of values
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -228,12 +234,12 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  (* Return a node with a nested node on arc *)
-  fun node ( vr : Variable.t, nested : SDD , next : SDD ) =
+  (* Return an hierarchical  node *)
+  fun hierNode ( vr : Variable.t, nested : SDD , next : SDD ) =
   case !next of
     SDD(Zero,_) => zero
   | _           =>
-    case !nested of
+  ( case !nested of
       SDD(Zero,_) => zero
     | _           =>
       let
@@ -245,6 +251,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       in
         SDDUT.unify( SDD(HNode{ variable=vr, alpha=alpha}, h) )
       end
+  )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -268,6 +275,15 @@ functor SDDFun ( structure Variable  : VARIABLE
   in
     SDDUT.unify( SDD( HNode{variable=var,alpha=alpha}, h) )
   end
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  (* Return a node *)
+  fun node ( vr : Variable.t, vl : valuation , next : SDD ) =
+  case vl of
+    Values(values) => flatNode( vr, values, next )
+  | Nested(nested) => hierNode( vr, nested, next )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -1346,6 +1362,30 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (* Return the hash value of an SDD. Needed by HomFun*)
   fun hash x = Definition.hash (!x)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  (* Return the hash value of a valuation. Needed by HomFun*)
+  fun hashValuation x =
+  case x of
+    Nested(nested) => Definition.hash (!nested)
+  | Values(values) => Values.hash(values)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  (* Compare two valuations. Needed by HomFun*)
+  fun eqValuation (x,y) =
+  case x of
+    Nested(nestedx) => (case y of
+                         Nested(nestedy) => nestedx = nestedy
+                       | _               => false
+                       )
+  | Values(valuesx) => (case y of
+                         Values(valuesy) => Values.eq( valuesx, valuesy )
+                       | _               => false
+                       )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)

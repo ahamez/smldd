@@ -8,6 +8,7 @@ sig
   type SDD
   type variable
   type values
+  type valuation
 
   (*datatype userFunction = Func of { apply : valuation -> valuation
                       , eq    : userFunction * userFunction -> bool 
@@ -15,8 +16,7 @@ sig
                       }*)
 
   val id            : hom
-  val cons          : variable -> SDD -> hom -> hom
-  val flatCons      : variable -> values -> hom -> hom
+  val cons          : variable -> valuation -> hom -> hom
   val const         : SDD -> hom
   val union         : hom list -> hom
   val composition   : hom -> hom -> hom
@@ -52,6 +52,7 @@ functor HomFun ( structure SDD : SDD
   type SDD       = SDD.SDD
   type variable  = Variable.t
   type values    = Values.t
+  type valuation = SDD.valuation
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -61,8 +62,7 @@ functor HomFun ( structure SDD : SDD
 
     datatype t = Hom of ( hom * Word32.word )
     and hom    = Id
-               | Cons     of ( variable * SDD * t ref )
-               | FlatCons of ( variable * values * t ref )
+               | Cons     of ( variable * valuation * t ref )
                | Const    of SDD
                | Union    of t ref list
                | Compo    of ( t ref * t ref )
@@ -72,21 +72,19 @@ functor HomFun ( structure SDD : SDD
 
     fun eq (Hom(x,_),Hom(y,_)) =
     case x of
-      Id => (case y of Id => true | _ => false ) 
-    | Cons(v,s,h) => (case y of 
-                        Cons(w,t,i) => Variable.eq(v,w) andalso s=t andalso h=i
-                     | _ => false )
-    | FlatCons(v,s,h) => (case y of
-                            FlatCons(w,t,i) => Variable.eq(v,w)
-                              andalso Values.eq(s,t) andalso h=i
-                         | _ => false )
-    | Const(s) => (case y of Const(t) => s = t | _ => false)
-    | Union(xs) => (case y of Union(ys) => xs = ys | _ =>false)
-    | Compo(a,b) => (case y of Compo(c,d) => a=c andalso b=d | _ => false)
+      Id          => (case y of Id => true | _ => false )
+    | Cons(v,s,h) => (case y of
+                        Cons(w,t,i) => Variable.eq(v,w)
+                                       andalso SDD.eqValuation(s,t)
+                                       andalso h=i
+                      | _ => false)
+    | Const(s)    => (case y of Const(t) => s = t | _ => false)
+    | Union(xs)   => (case y of Union(ys) => xs = ys | _ =>false)
+    | Compo(a,b)  => (case y of Compo(c,d) => a=c andalso b=d | _ => false)
     | Fixpoint(h) => (case y of Fixpoint(i) => h=i | _ => false)
     | Nested(h,v) => (case y of Nested(i,w) => h=i andalso Variable.eq(v,w)
                                 | _ => false)
-    
+
     fun hash (Hom(_,h)) = h
 
   end (* structure Definition *)
@@ -95,7 +93,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  type hom = Definition.t ref
+  type hom     = Definition.t ref
   structure UT = UnicityTableFun( structure Data = Definition )
 
   (*----------------------------------------------------------------------*)
@@ -103,20 +101,12 @@ functor HomFun ( structure SDD : SDD
 
   val id = UT.unify( Hom(Id,MLton.hash 1) )
 
-  fun cons var nested next =
+  fun cons var vl next =
   let
     val hash = Word32.xorb( Variable.hash var
-                 , Word32.xorb( SDD.hash nested, hash (!next) ) )
+                 , Word32.xorb( SDD.hashValuation vl, hash (!next) ) )
   in
-    UT.unify( Hom( Cons(var,nested,next), hash ))
-  end
-
-  fun flatCons var vl next =
-  let
-    val hash = Word32.xorb( Variable.hash var
-                 , Word32.xorb( Values.hash vl, hash (!next) ) )
-  in
-    UT.unify( Hom( FlatCons(var,vl,next), hash ))
+    UT.unify( Hom( Cons(var,vl,next), hash ))
   end
 
   fun const sdd =
@@ -168,7 +158,6 @@ functor HomFun ( structure SDD : SDD
       Hom( Id, _ )               => raise DoNotPanic
     | Hom( Const(_), _ )         => raise DoNotPanic
     | Hom( Cons(_,_,_), _ )      => false
-    | Hom( FlatCons(_,_,_), _ )  => false
     | _ => raise NotYetImplemented
 
     (*--------------------------------------------------------------------*)
@@ -181,27 +170,23 @@ functor HomFun ( structure SDD : SDD
     case !h of
       Hom( Id, _ )       => sdd
     | Hom( Const(c), _ ) => c
-    | Hom( Cons(var,nested,next), _) => if next = id then
-                                          SDD.node( var, nested, sdd )
-                                        else
-                                          lookup( Op( h, sdd, lookup ) )
-    | Hom( FlatCons(var,vl,next), _) => if next = id then
-                                          SDD.flatNode( var, vl, sdd )
-                                        else
-                                          lookup( Op( h, sdd, lookup ) )
+    | Hom( Cons(var,vl,next), _) => if next = id then
+                                        SDD.node( var, vl, sdd )
+                                      else
+                                        lookup( Op( h, sdd, lookup ) )
     | _ => lookup( Op( h, sdd, lookup ) )
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
-    fun cons lookup (var, nested, next) sdd =
-      SDD.node( var, nested, evalCallback lookup (next, sdd ) )
+    fun cons lookup (var, vl, next) sdd =
+      SDD.node( var, vl, evalCallback lookup (next, sdd ) )
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
-    fun flatCons lookup (var, vl, next) sdd =
-      SDD.flatNode( var, vl, evalCallback lookup (next, sdd ) )
+(*    fun flatCons lookup (var, vl, next) sdd =
+      SDD.flatNode( var, vl, evalCallback lookup (next, sdd ) )*)
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -229,9 +214,6 @@ functor HomFun ( structure SDD : SDD
         | Hom(Cons(var,nested,next),_)
           => cons lookup (var, nested, next) sdd
 
-        | Hom(FlatCons(var,vl,next),_)
-          => flatCons lookup (var, vl, next) sdd
-
         | _               => raise NotYetImplemented
     end
 
@@ -246,13 +228,18 @@ functor HomFun ( structure SDD : SDD
 
   in (* local Homomorphisms evaluation *)
 
-  (* Evaluate an homomorphism on an SDD
+  (* Evaluate an homomorphism on an SDD.
      Warning! Duplicate logic with Evaluation.evalCallback!
   *)
   fun eval h sdd =
   case !h of
     Hom( Id, _ )       => sdd
   | Hom( Const(c), _ ) => c
+  | Hom( Cons(var,vl,next), _) =>
+    if next = id then
+      SDD.node( var, vl, sdd )
+    else
+      cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
   | _                  => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
     
   end (* local Homomorphisms evaluation *)
