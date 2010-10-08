@@ -1336,13 +1336,10 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (* Return the variable of an SDD. Needed by HomFun*)
   fun variable x =
-  let
-    val var = case !x of SDD(Node{variable=var,...},_)  => var
-                       | SDD(HNode{variable=var,...},_) => var
-                       | _ => raise IsNotANode
-  in
-    var
-  end
+  case !x of
+    SDD(Node{variable=var,...},_)  => var
+  | SDD(HNode{variable=var,...},_) => var
+  | _                              => raise IsNotANode
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
