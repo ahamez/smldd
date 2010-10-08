@@ -1404,7 +1404,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             Zero  =>  0
           | One   =>  1
           | Node{alpha=(arcs),...} =>
-              (case (HashTable.find (!cache) x) of
+              (case HashTable.find (!cache) x of
                 SOME r => r
               | NONE   =>
                 let
@@ -1422,7 +1422,7 @@ functor SDDFun ( structure Variable  : VARIABLE
               )
 
           | HNode{alpha=(arcs),...} =>
-              (case (HashTable.find (!cache) x) of
+              (case HashTable.find (!cache) x of
                 SOME r => r
               | NONE   =>
                 let
