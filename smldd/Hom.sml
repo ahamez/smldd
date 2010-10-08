@@ -113,6 +113,9 @@ functor HomFun ( structure SDD : SDD
     UT.unify( Hom( Cons(var,vl,next), hash ))
   end
 
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
   fun const sdd =
   let
     val hash = Word32.xorb( SDD.hash sdd, Word32.fromInt 149199441 )
@@ -120,13 +123,67 @@ functor HomFun ( structure SDD : SDD
     UT.unify( Hom( Const(sdd), hash ))
   end
 
-  fun union xs = raise NotYetImplemented
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  fun nested h vr =
+  if h = id then
+    id
+  else
+    UT.unify( Hom( Nested(h,vr), Word32.xorb(hash (!h), Variable.hash vr ) ) )
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  fun union xs =
+  case xs of
+    []    => const SDD.zero
+  | x::[] => x
+  | _     =>
+    let
+
+       val locals : (( variable, hom list ref ) H.hash_table) ref
+          = ref (H.mkTable( fn x => Variable.hash x , Variable.eq )
+                          ( 10000, DoNotPanic ))
+
+      fun unionHelper ( h, operands ) =
+      case !h of
+        Hom( Union(ys), _ )     => (foldl unionHelper [] ys) @ operands
+      | Hom( Nested(h,var), _ ) =>
+        (case H.find (!locals) var of
+          NONE       => H.insert (!locals) ( var, ref [h] )
+        | SOME hList => hList := h::(!hList);
+        operands
+        )
+      | _                       => h::operands
+
+      val unionLocals = map (fn (var,xs) => nested (union (!xs)) var)
+                            (H.listItemsi(!locals))
+
+      val operands = (foldl unionHelper [] xs) @ unionLocals
+
+      val unionHash = foldl (fn (x,acc) => Word32.xorb(hash (!x), acc))
+                            (Word32.fromInt 16564717)
+                            operands
+    in
+      UT.unify( Hom( Union(operands), unionHash ) )
+    end
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
   
-  fun composition x y = raise NotYetImplemented
+  fun composition x y =
+  if x = id then
+    y
+  else if y = id then
+    x
+  else
+    raise NotYetImplemented
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
   fun fixpoint x = raise NotYetImplemented
-
-  fun nested h vr = raise NotYetImplemented
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
