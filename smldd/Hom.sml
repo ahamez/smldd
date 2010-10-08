@@ -95,11 +95,15 @@ functor HomFun ( structure SDD : SDD
 
   type hom     = Definition.t ref
   structure UT = UnicityTableFun( structure Data = Definition )
+  structure H  = HashTable
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   val id = UT.unify( Hom(Id,MLton.hash 1) )
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
   fun cons var vl next =
   let
