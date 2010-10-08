@@ -6,11 +6,11 @@ sig
 
   eqtype SDD
   type variable
-  type valuation
+  type values
 
   val zero          : SDD
   val one           : SDD
-  val flatNode      : variable * valuation * SDD -> SDD
+  val flatNode      : variable * values * SDD -> SDD
   val node          : variable * SDD * SDD -> SDD
 
   val union         : SDD list -> SDD
@@ -35,7 +35,7 @@ end
 (*--------------------------------------------------------------------------*)
 
 functor SDDFun ( structure Variable  : VARIABLE
-               ; structure Valuation : VALUATION )
+               ; structure Values    : VALUES )
   : SDD
 = struct
 
@@ -50,7 +50,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     and sdd       = Zero
                   | One
                   | Node of  { variable : Variable.t
-                             , alpha : (Valuation.t ref * t ref) Vector.vector
+                             , alpha : (Values.t ref * t ref) Vector.vector
                              }
                   | HNode of { variable : Variable.t
                              , alpha : ( t ref * t ref ) Vector.vector
@@ -108,13 +108,13 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   type SDD        = Definition.t ref
   type variable   = Variable.t
-  type valuation  = Valuation.t
+  type values     = Values.t
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Unicity *)
-  structure ValUT = UnicityTableFun( structure Data = Valuation )
+  structure ValUT = UnicityTableFun( structure Data = Values )
   structure SDDUT = UnicityTableFun( structure Data = Definition )
 
   (*----------------------------------------------------------------------*)
@@ -144,7 +144,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         ^ String.concatWith " + "
                             (VectorToList
                             (Vector.map (fn (values,succ) =>
-                                          Valuation.toString(!values)
+                                          Values.toString(!values)
                                         ^ " --> "
                                         ^ (toString succ)
                                         )
@@ -182,16 +182,16 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return a node with a set of discrete values on arc *)
-  fun flatNode ( var : Variable.t , values : Valuation.t , next : SDD )
+  fun flatNode ( var : Variable.t , values : Values.t , next : SDD )
     = case !next of
       SDD(Zero,_) => zero
     | _           =>
-      if Valuation.empty values then
+      if Values.empty values then
         zero
       else
         let
           val SDD(_,hashNext)    = !next
-          val hashValues         = Valuation.hash values
+          val hashValues         = Values.hash values
           val h = Word32.xorb( Variable.hash var
                              , Word32.xorb( hashNext, hashValues ))
           val unikValues = ValUT.unify values
@@ -206,14 +206,14 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Construct a flat node with an already computed alpha.
      For internal use only! *)
   fun flatNodeAlpha ( var   : Variable.t
-                    , alpha : (valuation ref * SDD ) Vector.vector )
+                    , alpha : (values ref * SDD ) Vector.vector )
   =
   if Vector.length alpha = 0 then
     zero
   else
   let
     val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
-                                    Word32.xorb( Valuation.hash(!vl)
+                                    Word32.xorb( Values.hash(!vl)
                                                , Word32.xorb( hash(!succ), h )
                                                )
                                   )
@@ -272,19 +272,19 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  local (* Valuations manipulations *)
+  local (* Values manipulations *)
 
-    (* Operations to manipulate valuations. Used by the cache. *)
-    structure ValuationOperations (* : OPERATION *) =
+    (* Operations to manipulate values. Used by the cache. *)
+    structure ValuesOperations (* : OPERATION *) =
     struct
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-      type result        = valuation ref
-      datatype operation = Union of valuation ref list
-                         | Inter of valuation ref list
-                         | Diff  of valuation ref * valuation ref
+      type result        = values ref
+      datatype operation = Union of values ref list
+                         | Inter of values ref list
+                         | Diff  of values ref * values ref
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -309,18 +309,18 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       fun hash x =
         let
-          (* Valuation.hash(!x) -> problem: we have to compute again
+          (* Values.hash(!x) -> problem: we have to compute again
              the hash value of the valuation... Maybe we should store
              this hash alongside of the valuation? *)
           fun hashOperands( h0, xs ) =
-            foldl (fn(x,h) => Word32.xorb( Valuation.hash(!x), h)) h0 xs
+            foldl (fn(x,h) => Word32.xorb( Values.hash(!x), h)) h0 xs
         in
           case x of
             Union(xs) => hashOperands( Word32.fromInt 15411567, xs)
           | Inter(xs) => hashOperands( Word32.fromInt 78995947, xs)
           | Diff(l,r) => Word32.xorb( Word32.fromInt 94165961
-                                    , Word32.xorb( Valuation.hash(!l)
-                                                 , Valuation.hash(!r))
+                                    , Word32.xorb( Values.hash(!l)
+                                                 , Values.hash(!r))
                                     )
         end
 
@@ -334,32 +334,32 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           Union []     => raise DoNotPanic
         | Union(x::xs) =>
-            ValUT.unify(foldl ( fn (x,res) => Valuation.union(!x,res) )
+            ValUT.unify(foldl ( fn (x,res) => Values.union(!x,res) )
                               (!x)
                               xs
                         )
 
         | Inter []     => raise DoNotPanic
         | Inter(x::xs) =>
-            ValUT.unify(foldl ( fn (x,res) => Valuation.intersection(!x,res) )
+            ValUT.unify(foldl ( fn (x,res) => Values.intersection(!x,res) )
                               (!x)
                               xs
                         )
 
-        | Diff(x,y)    => ValUT.unify( Valuation.difference( !x, !y) )
+        | Diff(x,y)    => ValUT.unify( Values.difference( !x, !y) )
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-    end (* end structure ValuationOperations *)
+    end (* end structure ValuesOperations *)
 
     (*----------------------------------------------------------------------*)
     (*----------------------------------------------------------------------*)
 
-    (* Cache of operations on valuations *)
-    structure ValOpCache = CacheFun(structure Operation = ValuationOperations)
+    (* Cache of operations on valuess *)
+    structure ValOpCache = CacheFun(structure Operation = ValuesOperations)
 
-  in (* local valuations manipulations *)
+  in (* local values manipulations *)
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
@@ -368,7 +368,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       case xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
-      | _       => ValOpCache.lookup( ValuationOperations.Union(xs) )
+      | _       => ValOpCache.lookup( ValuesOperations.Union(xs) )
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
@@ -377,25 +377,25 @@ functor SDDFun ( structure Variable  : VARIABLE
       case xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
-      | _       => ValOpCache.lookup( ValuationOperations.Inter(xs) )
+      | _       => ValOpCache.lookup( ValuesOperations.Inter(xs) )
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
     fun valDifference(x,y) =
       let
-        val empty = ValUT.unify( Valuation.mkEmpty() )
+        val empty = ValUT.unify( Values.mkEmpty() )
       in
         if x = y then
           empty
         else
-          ValOpCache.lookup( ValuationOperations.Diff(x,y) )
+          ValOpCache.lookup( ValuesOperations.Diff(x,y) )
       end
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-  end (* local valuations manipulations *)
+  end (* local valuess manipulations *)
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -479,11 +479,11 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Convert an alpha (a vector) into a more easy to manipulate type
-         (a list of valuations, each one leading to a list of successors).
+         (a list of values, each one leading to a list of successors).
          Thus, it make usable by flatSquareUnion.
 
-         (valuation ref * SDD) Vector.vector
-           -> ( valuation ref * SDD list ) list
+         (values ref * SDD) Vector.vector
+           -> ( values ref * SDD list ) list
 
          Warning! Duplicate logic with alphaToList!
       *)
@@ -496,7 +496,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* Apply flatAlphaToList to a node
 
          SDD
-           -> ( valuation ref * SDD list ) list
+           -> ( values ref * SDD list ) list
 
          Warning! Duplicate logic with alphaNodeToList!
       *)
@@ -509,7 +509,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Convert an alpha (a vector) into a more easy to manipulate type
-         (a list of valuations, each one leading to a list of successors).
+         (a list of values, each one leading to a list of successors).
          Thus, it make usable by squareUnion.
 
          (SDD * SDD) Vector.vector
@@ -581,22 +581,22 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-       (* Merge all valuations that lead to the same successor,
+       (* Merge all values that lead to the same successor,
           using an hash table.
           Returns an alpha suitable to build a new flat node with
           flatNodeAlpha.
 
-          alpha : ( valuation ref * SDD list ) list
-            -> ( valuation ref * SDD ) Vector.vector
+          alpha : ( values ref * SDD list ) list
+            -> ( values ref * SDD ) Vector.vector
 
           Warning! Duplicate logic with squareUnion!
        *)
        fun flatSquareUnion cacheLookup alpha =
        let
-         (* This table associates a list of valuations to a single
+         (* This table associates a list of values sets to a single
             SDD successor *)
          val tbl :
-           ( ( SDD , valuation ref list ref) HashTable.hash_table )
+           ( ( SDD , values ref list ref) HashTable.hash_table )
            = (HashTable.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
@@ -605,12 +605,12 @@ functor SDDFun ( structure Variable  : VARIABLE
                      let
                        val u = unionCallback cacheLookup succs
                      in
-                       if Valuation.empty(!vl) then
+                       if Values.empty(!vl) then
                         ()
                        else
                          case HashTable.find tbl u of
                            NONE   => HashTable.insert tbl ( u, ref [vl] )
-                           (* update list of valuations *)
+                           (* update list of values set *)
                          | SOME x => x := vl::(!x)
                      end
                      )
@@ -709,7 +709,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           val inter = valIntersection [aVal,bVal]
         in
-          if Valuation.empty(!inter) then
+          if Values.empty(!inter) then
             propagate ( aArc, bAlpha)
           else
             let
@@ -767,8 +767,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (* Do the n-ary union of a list of flat SDDs.
          The general idea is to create a potential alpha
-         of type (valuation ref * SDD list ) list which stores all
-         successors for a given valuation, which is then given to
+         of type (values ref * SDD list ) list which stores all
+         successors for a given values set, which is then given to
          the square union function.
 
          In fact, it's not a real n-ary union as we operate on two operands
@@ -803,13 +803,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                                    | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (valuation ref,SDD list) list.
+             (values ref,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (valuation ref * SDD list) list
-             operands : (valuation ref * SDD list) list list
+             initial  : (values ref * SDD list) list
+             operands : (values ref * SDD list) list list
           *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -832,7 +832,9 @@ functor SDDFun ( structure Variable  : VARIABLE
           |   unionHelper ( aWholeAlpha as ((aVal,aSuccs)::aAlpha)
                           , ( res, (bArc as (bVal,bSuccs))::bAlpha ) )
           =
-          (* Same valuation, we just need to merge the lists of successors. *)
+          (* Same values sets, we just need to merge the lists 
+             of successors.
+          *)
           if aVal = bVal then
             unionHelper ( aAlpha
                         , ( ( aVal, aSuccs@bSuccs )::res
@@ -843,12 +845,12 @@ functor SDDFun ( structure Variable  : VARIABLE
           let
             val inter = valIntersection [aVal,bVal]
           in
-            (* Is there any common part between the two current valuations?
+            (* Is there any common part between the two current values sets?
                If not, we just need to store the current b -> b_succs into res
                as a potential element of the future alpha, and move on to the
-               next valuation of b's alpha.
+               next values set of b's alpha.
             *)
-            if Valuation.empty(!inter) then
+            if Values.empty(!inter) then
               unionHelper ( aWholeAlpha
                           , ( bArc::res
                             , bAlpha
@@ -1024,13 +1026,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                     | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
-             (valuation ref,SDD list) list.
+             (values ref,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (valuation ref * SDD list) list
-             operands : (valuation ref * SDD list) list list
+             initial  : (values ref * SDD list) list
+             operands : (values ref * SDD list) list list
           *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -1144,7 +1146,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                   let
                     val diff = valDifference(aVal,bUnion)
                   in
-                    if Valuation.empty(!diff) then
+                    if Values.empty(!diff) then
                       acc
                     else
                       ( diff, aSuccs)::acc
@@ -1375,7 +1377,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                 let
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
-                                      ( n + Valuation.length(!v) )
+                                      ( n + Values.length(!v) )
                                       * (pathsHelper succ )
                                     )
                                     0
@@ -1443,7 +1445,7 @@ end (* end functor SDDFun *)
 (*--------------------------------------------------------------------------*)
 
 structure SDD = SDDFun( structure Variable  = IntVariable
-                      ; structure Valuation = DiscreteIntValuation )
+                      ; structure Values    = DiscreteIntValues )
 
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)

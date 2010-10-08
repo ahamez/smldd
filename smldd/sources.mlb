@@ -7,9 +7,9 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
 ./util.sml
 
-./parameters/signatures/VALUATION.sml
+./parameters/signatures/VALUES.sml
 ./parameters/signatures/VARIABLE.sml
-./parameters/instances/DiscreteIntValuation.sml
+./parameters/instances/DiscreteIntValues.sml
 ./parameters/instances/CharVariable.sml
 ./parameters/instances/IntVariable.sml
 

@@ -7,7 +7,7 @@ sig
   eqtype hom
   type SDD
   type variable
-  type valuation
+  type values
 
   (*datatype userFunction = Func of { apply : valuation -> valuation
                       , eq    : userFunction * userFunction -> bool 
@@ -16,7 +16,7 @@ sig
 
   val id            : hom
   val cons          : variable -> SDD -> hom -> hom
-  val flatCons      : variable -> valuation -> hom -> hom
+  val flatCons      : variable -> values -> hom -> hom
   val const         : SDD -> hom
   val union         : hom list -> hom
   val composition   : hom -> hom -> hom
@@ -34,8 +34,8 @@ end
 (*--------------------------------------------------------------------------*)
 
 functor HomFun ( structure SDD : SDD
-                 and Variable  : VARIABLE  where type t = SDD.variable
-                 and Valuation : VALUATION where type t = SDD.valuation
+                 and Variable  : VARIABLE where type t = SDD.variable
+                 and Values    : VALUES   where type t = SDD.values
                )
   : Hom
 = struct
@@ -51,7 +51,7 @@ functor HomFun ( structure SDD : SDD
 
   type SDD       = SDD.SDD
   type variable  = Variable.t
-  type valuation = Valuation.t
+  type values    = Values.t
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -62,7 +62,7 @@ functor HomFun ( structure SDD : SDD
     datatype t = Hom of ( hom * Word32.word )
     and hom    = Id
                | Cons     of ( variable * SDD * t ref )
-               | FlatCons of ( variable * valuation * t ref )
+               | FlatCons of ( variable * values * t ref )
                | Const    of SDD
                | Union    of t ref list
                | Compo    of ( t ref * t ref )
@@ -77,8 +77,8 @@ functor HomFun ( structure SDD : SDD
                         Cons(w,t,i) => Variable.eq(v,w) andalso s=t andalso h=i
                      | _ => false )
     | FlatCons(v,s,h) => (case y of
-                            FlatCons(w,t,i) => Variable.eq(v,w) 
-                              andalso Valuation.eq(s,t) andalso h=i
+                            FlatCons(w,t,i) => Variable.eq(v,w)
+                              andalso Values.eq(s,t) andalso h=i
                          | _ => false )
     | Const(s) => (case y of Const(t) => s = t | _ => false)
     | Union(xs) => (case y of Union(ys) => xs = ys | _ =>false)
@@ -114,7 +114,7 @@ functor HomFun ( structure SDD : SDD
   fun flatCons var vl next =
   let
     val hash = Word32.xorb( Variable.hash var
-                 , Word32.xorb( Valuation.hash vl, hash (!next) ) )
+                 , Word32.xorb( Values.hash vl, hash (!next) ) )
   in
     UT.unify( Hom( FlatCons(var,vl,next), hash ))
   end
@@ -265,9 +265,9 @@ end (* functor HomFun *)
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
 
-structure Hom = HomFun( structure SDD       = SDD
-                      ; structure Variable  = IntVariable
-                      ; structure Valuation = DiscreteIntValuation
+structure Hom = HomFun( structure SDD      = SDD
+                      ; structure Variable = IntVariable
+                      ; structure Values   = DiscreteIntValues
                       )
 
 (*--------------------------------------------------------------------------*)
