@@ -78,12 +78,12 @@ functor HomFun ( structure SDD : SDD
                                        andalso SDD.eqValuation(s,t)
                                        andalso h=i
                       | _ => false)
-    | Const(s)    => (case y of Const(t) => s = t | _ => false)
-    | Union(xs)   => (case y of Union(ys) => xs = ys | _ =>false)
-    | Compo(a,b)  => (case y of Compo(c,d) => a=c andalso b=d | _ => false)
+    | Const(s)    => (case y of Const(t)    => s = t | _ => false)
+    | Union(xs)   => (case y of Union(ys)   => xs = ys | _ =>false)
+    | Compo(a,b)  => (case y of Compo(c,d)  => a=c andalso b=d | _ => false)
     | Fixpoint(h) => (case y of Fixpoint(i) => h=i | _ => false)
     | Nested(h,v) => (case y of Nested(i,w) => h=i andalso Variable.eq(v,w)
-                                | _ => false)
+                              | _ => false)
 
     fun hash (Hom(_,h)) = h
 
