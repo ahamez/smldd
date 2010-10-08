@@ -1,4 +1,4 @@
-signature VALUATION =
+signature VALUES =
 sig
 
   type t

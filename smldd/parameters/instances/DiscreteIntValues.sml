@@ -1,4 +1,4 @@
-structure DiscreteIntValuation : VALUATION =
+structure DiscreteIntValues : VALUES =
 struct
 
   (*----------------------------------------------------------------------*)
@@ -144,4 +144,4 @@ struct
 
   (*----------------------------------------------------------------------*)
 
-end (* DiscreteIntValuation *)
+end (* DiscreteIntValues *)
