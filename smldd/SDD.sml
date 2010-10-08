@@ -1407,7 +1407,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Export an SDD to a DOT representation *)
-  fun toDot x         =
+  fun toDot x =
   let
 
     fun terminal value =
