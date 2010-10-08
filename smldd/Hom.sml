@@ -142,7 +142,7 @@ functor HomFun ( structure SDD : SDD
   | _     =>
     let
 
-       val locals : (( variable, hom list ref ) H.hash_table) ref
+      val locals : (( variable, hom list ref ) H.hash_table) ref
           = ref (H.mkTable( fn x => Variable.hash x , Variable.eq )
                           ( 10000, DoNotPanic ))
 
