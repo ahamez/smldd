@@ -142,16 +142,24 @@ functor HomFun ( structure SDD : SDD
   structure Evaluation (* : OPERATION *) =
   struct
 
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
     type result        = SDD
     datatype operation = Op of hom * SDD * (operation -> result)
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
 
     fun eq ( Op(xh,xsdd,_), Op(yh,ysdd,_) ) =
       xh = yh andalso xsdd = ysdd
 
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
     fun hash (Op(h,s,_)) =
       Word32.xorb( Definition.hash(!h), SDD.hash s )
 
-    (* Evaluate an homomorphism on an SDD
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
@@ -162,37 +170,73 @@ functor HomFun ( structure SDD : SDD
     | Hom( Cons(_,_,_), _ )      => false
     | Hom( FlatCons(_,_,_), _ )  => false
     | _ => raise NotYetImplemented
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    (* Evaluate an homomorphism on an SDD.
        Warning! Duplicate logic with Hom.eval!
     *)
-    fun evalCallback lookup ( hom, sdd ) =
-    case !hom of
+    fun evalCallback lookup ( h, sdd ) =
+    case !h of
       Hom( Id, _ )       => sdd
     | Hom( Const(c), _ ) => c
-    | _                  => lookup( Op( hom, sdd, lookup ) )
+    | Hom( Cons(var,nested,next), _) => if next = id then
+                                          SDD.node( var, nested, sdd )
+                                        else
+                                          lookup( Op( h, sdd, lookup ) )
+    | Hom( FlatCons(var,vl,next), _) => if next = id then
+                                          SDD.flatNode( var, vl, sdd )
+                                        else
+                                          lookup( Op( h, sdd, lookup ) )
+    | _ => lookup( Op( h, sdd, lookup ) )
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
 
     fun cons lookup (var, nested, next) sdd =
       SDD.node( var, nested, evalCallback lookup (next, sdd ) )
 
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
     fun flatCons lookup (var, vl, next) sdd =
       SDD.flatNode( var, vl, evalCallback lookup (next, sdd ) )
 
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
     (* Dispatch the evaluation of an homomorphism to the corresponding
        function. Used by CacheFun.
     *)
     fun apply ( Op( h, sdd, lookup) ) =
-    case !h of
+    let
+      val skip = let val v = SDD.variable sdd in skipVariable (v,h) end
+                 handle SDD.IsNotANode => false
+    in
+      if skip then
+      let
+        val var = SDD.variable sdd
+      in
+        raise NotYetImplemented
+      end
+      else
+        case !h of
 
-      Hom( Id, _ )    => raise DoNotPanic
+          Hom( Id, _ )    => raise DoNotPanic
 
-    | Hom(Const(_),_) => raise DoNotPanic
+        | Hom(Const(_),_) => raise DoNotPanic
 
-    | Hom(Cons(var,nested,next),_)
-      => cons lookup (var, nested, next) sdd
+        | Hom(Cons(var,nested,next),_)
+          => cons lookup (var, nested, next) sdd
 
-    | Hom(FlatCons(var,vl,next),_)
-      => flatCons lookup (var, vl, next) sdd
+        | Hom(FlatCons(var,vl,next),_)
+          => flatCons lookup (var, vl, next) sdd
 
-    | _               => raise NotYetImplemented
+        | _               => raise NotYetImplemented
+    end
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
 
   end (* structure Evaluation *)
 
