@@ -123,6 +123,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   structure ValUT = UnicityTableFun( structure Data = Values )
   structure SDDUT = UnicityTableFun( structure Data = Definition )
 
+  structure H = HashTable
+
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
@@ -608,8 +610,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* This table associates a list of values sets to a single
             SDD successor *)
          val tbl :
-           ( ( SDD , values ref list ref) HashTable.hash_table )
-           = (HashTable.mkTable( fn x => hash(!x) , op = )
+           ( ( SDD , values ref list ref) H.hash_table )
+           = (H.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
          (* Fill the hash table *)
@@ -620,15 +622,15 @@ functor SDDFun ( structure Variable  : VARIABLE
                        if Values.empty(!vl) then
                         ()
                        else
-                         case HashTable.find tbl u of
-                           NONE   => HashTable.insert tbl ( u, ref [vl] )
+                         case H.find tbl u of
+                           NONE   => H.insert tbl ( u, ref [vl] )
                            (* update list of values set *)
                          | SOME x => x := vl::(!x)
                      end
                      )
                      alpha
        in
-         HashTable.foldi (fn ( succ, vls, acc) =>
+         H.foldi (fn ( succ, vls, acc) =>
                           let
                             val vl = (case !vls of
                                        []      => raise DoNotPanic
@@ -663,8 +665,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* This table associates a list of valuations to a single
             SDD successor *)
          val tbl :
-           ( ( SDD , SDD list ref) HashTable.hash_table )
-           = (HashTable.mkTable( fn x => hash(!x) , op = )
+           ( ( SDD , SDD list ref) H.hash_table )
+           = (H.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
          (* Fill the hash table *)
@@ -675,15 +677,15 @@ functor SDDFun ( structure Variable  : VARIABLE
                        if vl = zero then
                         ()
                        else
-                         case HashTable.find tbl u of
-                           NONE   => HashTable.insert tbl ( u, ref [vl] )
+                         case H.find tbl u of
+                           NONE   => H.insert tbl ( u, ref [vl] )
                            (* update list of valuations *)
                          | SOME x => x := vl::(!x)
                      end
                      )
                      alpha
        in
-         HashTable.foldi (fn ( succ, vls, acc) =>
+         H.foldi (fn ( succ, vls, acc) =>
                           let
                             val vl =
                               (case !vls of
@@ -1393,9 +1395,9 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
-      val cache : (( SDD, int ) HashTable.hash_table) ref
-          = ref (HashTable.mkTable( fn x => hash x , op = )
-                                  ( 10000, DoNotPanic ))
+      val cache : (( SDD, int ) H.hash_table) ref
+          = ref ( H.mkTable( fn x => hash x , op = )
+                           ( 10000, DoNotPanic ) )
       fun pathsHelper x =
         let
           val SDD(sdd,_) = !x
@@ -1404,7 +1406,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             Zero  =>  0
           | One   =>  1
           | Node{alpha=(arcs),...} =>
-              (case HashTable.find (!cache) x of
+              (case H.find (!cache) x of
                 SOME r => r
               | NONE   =>
                 let
@@ -1415,14 +1417,14 @@ functor SDDFun ( structure Variable  : VARIABLE
                                     )
                                     0
                                     arcs
-                  val _     = HashTable.insert (!cache) ( x, value )
+                  val _     = H.insert (!cache) ( x, value )
                 in
                   value
                 end
               )
 
           | HNode{alpha=(arcs),...} =>
-              (case HashTable.find (!cache) x of
+              (case H.find (!cache) x of
                 SOME r => r
               | NONE   =>
                 let
@@ -1433,7 +1435,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                                     )
                                     0
                                     arcs
-                  val _     = HashTable.insert (!cache) ( x, value )
+                  val _     = H.insert (!cache) ( x, value )
                 in
                   value
                 end
