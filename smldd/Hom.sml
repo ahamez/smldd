@@ -152,6 +152,16 @@ functor HomFun ( structure SDD : SDD
       Word32.xorb( Definition.hash(!h), SDD.hash s )
 
     (* Evaluate an homomorphism on an SDD
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    fun skipVariable (var, hom) =
+    case !hom of
+      Hom( Id, _ )               => raise DoNotPanic
+    | Hom( Const(_), _ )         => raise DoNotPanic
+    | Hom( Cons(_,_,_), _ )      => false
+    | Hom( FlatCons(_,_,_), _ )  => false
+    | _ => raise NotYetImplemented
        Warning! Duplicate logic with Hom.eval!
     *)
     fun evalCallback lookup ( hom, sdd ) =
