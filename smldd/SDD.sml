@@ -1116,8 +1116,8 @@ functor SDDFun ( structure Variable  : VARIABLE
       else
       let
 
-        val lalpha = flatAlphaToList la
-        val ralpha = flatAlphaToList ra
+        val lalpha = alphaToList la
+        val ralpha = alphaToList ra
 
         val commonPart =
         let
