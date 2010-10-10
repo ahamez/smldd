@@ -281,6 +281,7 @@ functor HomFun ( structure SDD : SDD
 
     fun fixpoint lookup h sdd =
     let
+      (* Should we avoid caching inner evaluations? *)
       val res = evalCallback lookup h sdd
     in
       if res = sdd then
