@@ -237,7 +237,7 @@ functor HomFun ( structure SDD : SDD
     (* Evaluate an homomorphism on an SDD.
        Warning! Duplicate logic with Hom.eval!
     *)
-    fun evalCallback lookup ( h, sdd ) =
+    fun evalCallback lookup h sdd =
     case !h of
       Hom( Id, _ )       => sdd
     | Hom( Const(c), _ ) => c
@@ -251,7 +251,38 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
 
     fun cons lookup (var, vl, next) sdd =
-      SDD.node( var, vl, evalCallback lookup (next, sdd ) )
+      SDD.node( var, vl, evalCallback lookup next sdd )
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    fun union lookup xs sdd =
+      raise NotYetImplemented
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    fun composition lookup a b sdd =
+      evalCallback lookup a (evalCallback lookup b sdd)
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    fun fixpoint lookup h sdd =
+    let
+      val res = evalCallback lookup h sdd
+    in
+      if res = sdd then
+        res
+      else
+        fixpoint lookup h res
+    end
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    fun nested lookup g sdd =
+      raise NotYetImplemented
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -273,13 +304,23 @@ functor HomFun ( structure SDD : SDD
         case !h of
 
           Hom( Id, _ )    => raise DoNotPanic
-
         | Hom(Const(_),_) => raise DoNotPanic
 
         | Hom(Cons(var,nested,next),_)
           => cons lookup (var, nested, next) sdd
 
-        | _               => raise NotYetImplemented
+        | Hom( Union(xs),_ )
+          => union lookup xs sdd
+
+        | Hom( Compo( a, b ), _ )
+          => composition lookup a b sdd
+
+        | Hom( Fixpoint(g), _ )
+          => fixpoint lookup g sdd
+
+        | Hom( Nested( g, var ), _ )
+          => nested lookup g var sdd
+
     end
 
     (*--------------------------------------------------------------------*)
