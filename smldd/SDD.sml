@@ -499,15 +499,14 @@ functor SDDFun ( structure Variable  : VARIABLE
          (values ref * SDD) Vector.vector
            -> ( values ref * SDD list ) list
 
-         Warning! Duplicate logic with alphaToList!
       *)
-      fun flatAlphaToList( alpha ) =
+      fun alphaToList( alpha ) =
       Vector.foldr
         (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
         []
         alpha
 
-      (* Apply flatAlphaToList to a node
+      (* Apply alphaToList to a node
 
          SDD
            -> ( values ref * SDD list ) list
@@ -516,26 +515,8 @@ functor SDDFun ( structure Variable  : VARIABLE
       *)
       fun flatAlphaNodeToList n =
       case !n of
-        SDD(Node{alpha=alpha,...},_) => flatAlphaToList alpha
+        SDD(Node{alpha=alpha,...},_) => alphaToList alpha
       | _ => raise DoNotPanic
-
-      (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
-
-      (* Convert an alpha (a vector) into a more easy to manipulate type
-         (a list of values, each one leading to a list of successors).
-         Thus, it make usable by squareUnion.
-
-         (SDD * SDD) Vector.vector
-           -> ( SDD * SDD list ) list
-
-         Warning! Duplicate logic with flatAlphaToList!
-      *)
-      fun alphaToList( alpha ) =
-      Vector.foldr
-        (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
-        []
-        alpha
 
       (* Apply alphaToList to a node
 
