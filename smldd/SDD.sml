@@ -20,6 +20,7 @@ sig
   val difference    : SDD * SDD -> SDD
 
   val variable      : SDD -> variable
+  val alpha         : SDD -> (valuation * SDD) list
   val hash          : SDD -> Word32.word
   val hashValuation : valuation -> Word32.word
   val eqValuation   : (valuation * valuation) -> bool
@@ -1339,6 +1340,23 @@ functor SDDFun ( structure Variable  : VARIABLE
     SDD(Node{variable=var,...},_)  => var
   | SDD(HNode{variable=var,...},_) => var
   | _                              => raise IsNotANode
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  fun alpha x =
+  let
+    fun alphaHelper a f =
+        Vector.foldr
+        (fn (x,acc) => let val (vl,succ) = x in (f vl,succ)::acc end )
+        []
+        a
+  in
+    case !x of
+      SDD(Node{alpha=a,...},_)  => alphaHelper a (fn x => Values (!x))
+    | SDD(HNode{alpha=a,...},_) => alphaHelper a (fn x => Nested x)
+    | _                         => raise IsNotANode
+  end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
