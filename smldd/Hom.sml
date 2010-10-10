@@ -264,7 +264,11 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
 
     fun union lookup xs sdd =
-      raise NotYetImplemented
+    let
+      val res = map (fn x => evalCallback lookup x sdd ) xs
+    in
+      SDD.union res
+    end
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
