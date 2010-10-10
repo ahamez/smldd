@@ -293,8 +293,33 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
-    fun nested lookup g sdd =
-      raise NotYetImplemented
+    fun nested lookup h var sdd =
+    if sdd = SDD.one then
+      SDD.one
+    else if sdd = SDD.zero then
+      SDD.zero
+    else (* skipVariable made nested propagated to the correct variable *)
+    let
+      (* TODO: avoid costly mapPartial *)
+      val res = List.mapPartial
+                (fn (vl,succ) =>
+                  (*evaluation lookup x sdd*)
+                  case vl of
+                    SDD.Values(_)   => raise NestedOnValues
+                  | SDD.Nested(nvl) =>
+                    let
+                      val nvl' = evalCallback lookup h nvl
+                    in
+                      if nvl' = SDD.zero then
+                        NONE
+                      else
+                        SOME (SDD.node( var, SDD.Nested nvl', succ))
+                    end
+                )
+                (SDD.alpha sdd)
+    in
+      SDD.union res
+    end
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
