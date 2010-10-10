@@ -331,11 +331,25 @@ functor HomFun ( structure SDD : SDD
                  handle SDD.IsNotANode => false
     in
       if skip then
-      let
-        val var = SDD.variable sdd
-      in
-        raise NotYetImplemented
-      end
+        let
+          val var = SDD.variable sdd
+          val res =
+            (* TODO: avoid costly mapPartial *)
+            List.mapPartial
+            (fn (vl, succ) =>
+            let
+              val succ' = evalCallback lookup h succ
+            in
+              if succ' = SDD.zero then
+                NONE
+              else
+                SOME (SDD.node( var, vl, succ'))
+            end
+            )
+            (SDD.alpha sdd)
+        in
+          SDD.union res
+        end
       else
         case !h of
 
