@@ -303,7 +303,6 @@ functor HomFun ( structure SDD : SDD
       (* TODO: avoid costly mapPartial *)
       val res = List.mapPartial
                 (fn (vl,succ) =>
-                  (*evaluation lookup x sdd*)
                   case vl of
                     SDD.Values(_)   => raise NestedOnValues
                   | SDD.Nested(nvl) =>
