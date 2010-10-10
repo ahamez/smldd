@@ -23,6 +23,13 @@ sig
   val fixpoint      : hom -> hom
   val nested        : hom -> variable -> hom
   (*val function      : userFunction -> hom*)
+  val id              : hom
+  val mkCons          : variable -> valuation -> hom -> hom
+  val mkConst         : SDD -> hom
+  val mkUnion         : hom list -> hom
+  val mkComposition   : hom -> hom -> hom
+  val mkFixpoint      : hom -> hom
+  val mkNested        : hom -> variable -> hom
 
   val eval          : hom -> SDD -> SDD
 
@@ -105,7 +112,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun cons var vl next =
+  fun mkCons var vl next =
   let
     val hash = Word32.xorb( Variable.hash var
                  , Word32.xorb( SDD.hashValuation vl, hash (!next) ) )
@@ -116,7 +123,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun const sdd =
+  fun mkConst sdd =
   let
     val hash = Word32.xorb( SDD.hash sdd, Word32.fromInt 149199441 )
   in
@@ -126,7 +133,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun nested h vr =
+  fun mkNested h vr =
   if h = id then
     id
   else
@@ -135,9 +142,9 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun union xs =
+  fun mkUnion xs =
   case xs of
-    []    => const SDD.zero
+    []    => mkConst SDD.zero
   | x::[] => x
   | _     =>
     let
@@ -157,7 +164,7 @@ functor HomFun ( structure SDD : SDD
         )
       | _                       => h::operands
 
-      val unionLocals = map (fn (var,xs) => nested (union (!xs)) var)
+      val unionLocals = map (fn (var,xs) => mkNested (mkUnion (!xs)) var)
                             (H.listItemsi(!locals))
 
       val operands = (foldl unionHelper [] xs) @ unionLocals
@@ -172,7 +179,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   
-  fun composition x y =
+  fun mkComposition x y =
   if x = id then
     y
   else if y = id then
@@ -188,7 +195,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun fixpoint x =
+  fun mkFixpoint x =
   case !x of
     Hom( Id, _ )          => x
   | Hom( Fixpoint(_), _ ) => x

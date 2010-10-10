@@ -28,7 +28,7 @@ struct
   let
     val s0 = flatNode( 0, IntVector.fromList[0], one )
     val x1 = node( 0, Nested s0, one )
-    val h0 = cons 1 (Nested s0) id
+    val h0 = mkCons 1 (Nested s0) id
     val c0 = eval h0 x1
     val y0 = node( 1, Nested s0, x1 )
   in
@@ -41,7 +41,7 @@ struct
   let
     val s0 = flatNode( 0, IntVector.fromList[0], one )
     val x1 = node( 0, Nested s0, one )
-    val h0 = cons 1 (Nested s0) id
+    val h0 = mkCons 1 (Nested s0) id
     val c0 = eval h0 x1
     val c1 = eval h0 x1
   in
