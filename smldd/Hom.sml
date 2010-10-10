@@ -233,10 +233,13 @@ functor HomFun ( structure SDD : SDD
 
     fun skipVariable (var, hom) =
     case !hom of
-      Hom( Id, _ )               => raise DoNotPanic
-    | Hom( Const(_), _ )         => raise DoNotPanic
-    | Hom( Cons(_,_,_), _ )      => false
-    | _ => raise NotYetImplemented
+      Hom( Id, _ )          => raise DoNotPanic
+    | Hom( Const(_), _ )    => raise DoNotPanic
+    | Hom( Cons(_,_,_), _ ) => false
+    | Hom( Nested(_,v),_)   => Variable.eq (var,v)
+    | Hom( Union(xs),_)     => List.all (fn x => skipVariable(var,x)) xs
+    | Hom( Compo(a,b),_)    => skipVariable(var,a) andalso skipVariable(var,b)
+    | Hom( Fixpoint(f),_)   => skipVariable(var,f)
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
