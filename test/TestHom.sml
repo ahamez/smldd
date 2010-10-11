@@ -236,6 +236,42 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testNested02 () =
+  let
+    val f0 = IntVector.map (fn x => x+1)
+    val h0 = mkFunction (ref f0) 0
+    val h1 = mkNested h0 0
+    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
+    val x0 = node( 0, Nested s0, one )
+    val x1 = eval h1 x0
+    val o0 = node( 0, Values (IntVector.fromList [1,2,3]), one )
+    val y0 = node( 0, Nested o0, one )
+
+  in
+    assertTrue( y0 = x1 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testNested03 () =
+  let
+    val f0 = IntVector.map (fn x => x+1)
+    val h0 = mkFunction (ref f0) 0
+    val h1 = mkNested h0 0
+    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
+    val x0 = node( 0, Nested s0, one )
+    val x1 = node( 1, Nested s0, x0 )
+    val x2 = eval h1 x1
+    val o0 = node( 0, Values (IntVector.fromList [1,2,3]), one )
+    val o1 = node( 0, Values (IntVector.fromList [0,1,2]), one )
+    val y0 = node( 0, Nested o0, one )
+    val y1 = node( 1, Nested o1, y0 )
+  in
+    assertTrue( y1 = x2 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
   fun suite () =
       Test.labelTests
       [ ("testId00"          , testId00        )
@@ -256,6 +292,8 @@ struct
       , ("testFunction10"    , testFunction10  )
       , ("testNested00"      , testNested00    )
       , ("testNested01"      , testNested01    )
+      , ("testNested02"      , testNested02    )
+      , ("testNested03"      , testNested03    )
       ]
 
   (* ---------------------------------------------------------------- *)
