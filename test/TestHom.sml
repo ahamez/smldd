@@ -50,6 +50,17 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testCons02 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val h0 = mkCons 0 (Values (IntVector.fromList [0])) id
+    val c0 = eval h0 one
+  in
+    assertTrue( c0 = s0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
   fun testFunction00 () =
   let
     val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
@@ -191,6 +202,19 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testFunction10 () =
+  let
+    fun f0 _ = IntVector.fromList []
+    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
+    val s1 = node( 1, Values (IntVector.fromList[0,1,2,3]), s0 )
+    val h0 = mkFunction (ref f0) 1
+    val s2 = eval h0 s1
+  in
+    assertTrue( s2 = zero )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
   fun testNested00 () =
   let
     val s0 = node( 0, Values (IntVector.fromList[0]), one)
@@ -218,6 +242,7 @@ struct
       , ("testId01"          , testId01        )
       , ("testCons00"        , testCons00      )
       , ("testCons01"        , testCons01      )
+      , ("testCons02"        , testCons02      )
       , ("testFunction00"    , testFunction00  )
       , ("testFunction01"    , testFunction01  )
       , ("testFunction02"    , testFunction02  )
@@ -228,6 +253,7 @@ struct
       , ("testFunction07"    , testFunction07  )
       , ("testFunction08"    , testFunction08  )
       , ("testFunction09"    , testFunction09  )
+      , ("testFunction10"    , testFunction10  )
       , ("testNested00"      , testNested00    )
       , ("testNested01"      , testNested01    )
       ]
