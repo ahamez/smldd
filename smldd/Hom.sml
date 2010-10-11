@@ -254,14 +254,17 @@ functor HomFun ( structure SDD : SDD
        Warning! Duplicate logic with Hom.eval!
     *)
     fun evalCallback lookup h sdd =
-    case !h of
-      Hom( Id, _ )       => sdd
-    | Hom( Const(c), _ ) => c
-    | Hom( Cons(var,vl,next), _) => if next = id then
+    if sdd = SDD.zero then
+      SDD.zero
+    else
+      case !h of
+        Hom( Id, _ )       => sdd
+      | Hom( Const(c), _ ) => c
+      | Hom( Cons(var,vl,next), _) => if next = id then
                                         SDD.node( var, vl, sdd )
                                       else
                                         lookup( Op( h, sdd, lookup ) )
-    | _ => lookup( Op( h, sdd, lookup ) )
+      | _ => lookup( Op( h, sdd, lookup ) )
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -427,16 +430,19 @@ functor HomFun ( structure SDD : SDD
      Warning! Duplicate logic with Evaluation.evalCallback!
   *)
   fun eval h sdd =
-  case !h of
-    Hom( Id, _ )       => sdd
-  | Hom( Const(c), _ ) => c
-  | Hom( Cons(var,vl,next), _) =>
-    if next = id then
-      SDD.node( var, vl, sdd )
-    else
-      cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
-  | _                  => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
-    
+  if sdd = SDD.zero then
+    SDD.zero
+  else
+    case !h of
+      Hom( Id, _ )       => sdd
+    | Hom( Const(c), _ ) => c
+    | Hom( Cons(var,vl,next), _) =>
+      if next = id then
+        SDD.node( var, vl, sdd )
+      else
+        cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
+    | _ => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
+
   end (* local Homomorphisms evaluation *)
 
   (*----------------------------------------------------------------------*)
