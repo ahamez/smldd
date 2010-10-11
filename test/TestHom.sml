@@ -138,6 +138,59 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testFunction06 () =
+  let
+    val f0 = IntVector.map (fn x => x+1)
+    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
+    val s1 = node( 1, Values (IntVector.fromList[0,1,2,3]), s0 )
+    val h0 = mkFunction (ref f0) 0
+    val s2 = eval h0 s1
+    val o0 = node( 0, Values (IntVector.fromList[1,2,3,4]), one )
+    val o1 = node( 1, Values (IntVector.fromList[0,1,2,3]), o0 )
+  in
+    assertTrue( s2 = o1 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFunction07 () =
+  let
+    fun f0 _ = IntVector.fromList []
+    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
+    val s1 = node( 1, Values (IntVector.fromList[0,1,2,3]), s0 )
+    val h0 = mkFunction (ref f0) 0
+    val s2 = eval h0 s1
+  in
+    assertTrue( s2 = zero )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFunction08 () =
+  let
+    fun f0 x = x
+    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
+    val x0 = node( 0, Nested s0, one )
+    val h0 = mkFunction (ref f0) 0
+  in
+    ( eval h0 x0 ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x FunctionHomOnNested
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFunction09 () =
+  let
+    fun f0 x = x
+    val x0 = node( 0, Nested one, one )
+    val h0 = mkFunction (ref f0) 0
+  in
+    ( eval h0 x0 ; fail "Must fail" )
+    handle x as _ => assertEqualExceptionName x FunctionHomOnNested
+  end
+
+  (* ---------------------------------------------------------------- *)
+
   fun testNested00 () =
   let
     val s0 = node( 0, Values (IntVector.fromList[0]), one)
@@ -171,6 +224,10 @@ struct
       , ("testFunction03"    , testFunction03  )
       , ("testFunction04"    , testFunction04  )
       , ("testFunction05"    , testFunction05  )
+      , ("testFunction06"    , testFunction06  )
+      , ("testFunction07"    , testFunction07  )
+      , ("testFunction08"    , testFunction08  )
+      , ("testFunction09"    , testFunction09  )
       , ("testNested00"      , testNested00    )
       , ("testNested01"      , testNested01    )
       ]
