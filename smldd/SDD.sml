@@ -1284,7 +1284,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    (* Warning! Duplicate code with SDD.SDDOperations.union! *)
+    (* Warning! Duplicate code with SDD.SDDOperations.unionCallback! *)
     fun union xs =
     let
       (* Remove all |0| *)
@@ -1304,7 +1304,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    (* Warning! Duplicate code with SDD.SDDOperations.intersection! *)
+    (* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback! *)
     fun intersection xs =
     case xs of
       []      => zero (* No need to cache *)
@@ -1315,7 +1315,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
-    (* Warning! Duplicate code with SDD.SDDOperations.difference! *)
+    (* Warning! Duplicate code with SDD.SDDOperations.differenceCallback! *)
     fun difference(x,y) =
     if x = y then          (* No need to cache *)
       zero
