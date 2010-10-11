@@ -471,11 +471,15 @@ struct
 
     val t1pre  = mkFunction (ref (pre 1 )) 0
     val t1post = mkFunction (ref (post 1)) 1
-    val t1 = mkComposition t1post t1pre
+    val t1     = mkComposition
+                  (mkComposition t1post id)
+                  (mkComposition t1pre id )
 
     val t2pre  = mkFunction (ref (pre 1 )) 1
     val t2post = mkFunction (ref (post 1)) 0
-    val t2 = mkComposition t2post t2pre
+    val t2     = mkComposition
+                  (mkComposition t2post id)
+                  (mkComposition t2pre id )
 
     val h = mkFixpoint (mkUnion [id,t1,t2])
     val s = eval h s0
