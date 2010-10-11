@@ -10,19 +10,6 @@ sig
   type values
   type valuation
 
-  (*datatype userFunction = Func of { apply : valuation -> valuation
-                      , eq    : userFunction * userFunction -> bool 
-                      , hash  : userFunction -> Word32.word
-                      }*)
-
-  val id            : hom
-  val cons          : variable -> valuation -> hom -> hom
-  val const         : SDD -> hom
-  val union         : hom list -> hom
-  val composition   : hom -> hom -> hom
-  val fixpoint      : hom -> hom
-  val nested        : hom -> variable -> hom
-  (*val function      : userFunction -> hom*)
   val id              : hom
   val mkCons          : variable -> valuation -> hom -> hom
   val mkConst         : SDD -> hom
@@ -30,10 +17,13 @@ sig
   val mkComposition   : hom -> hom -> hom
   val mkFixpoint      : hom -> hom
   val mkNested        : hom -> variable -> hom
+  val mkFunction      : (values -> values) ref -> variable -> hom
 
   val eval            : hom -> SDD -> SDD
 
   exception NotYetImplemented
+  exception NestedHomOnValues
+  exception FunctionHomOnNested
 
 end
 
@@ -51,6 +41,8 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
 
   exception NotYetImplemented
+  exception NestedHomOnValues
+  exception FunctionHomOnNested
   exception DoNotPanic
 
   (*----------------------------------------------------------------------*)
@@ -75,7 +67,7 @@ functor HomFun ( structure SDD : SDD
                | Compo    of ( t ref * t ref )
                | Fixpoint of ( t ref )
                | Nested   of ( t ref * variable )
-               (*| Function of ( )*)
+               | Func     of ( (values -> values) ref * variable )
 
     fun eq (Hom(x,_),Hom(y,_)) =
     case x of
@@ -91,6 +83,9 @@ functor HomFun ( structure SDD : SDD
     | Fixpoint(h) => (case y of Fixpoint(i) => h=i | _ => false)
     | Nested(h,v) => (case y of Nested(i,w) => h=i andalso Variable.eq(v,w)
                               | _ => false)
+    | Func(f,v)   => (case y of Func(g,w) => Variable.eq(v,w) andalso f = g
+                                | _ => false
+                     )
 
     fun hash (Hom(_,h)) = h
 
@@ -205,6 +200,16 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  fun mkFunction f var =
+  let
+    val hsh = Word32.xorb( Word32.fromInt 7837892, Variable.hash var )
+  in
+    UT.unify( Hom( Func(f,var), hsh ) )
+  end
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
   local (* Homomorphisms evaluation *)
 
   structure Evaluation (* : OPERATION *) =
@@ -240,6 +245,7 @@ functor HomFun ( structure SDD : SDD
     | Hom( Union(xs),_)     => List.all (fn x => skipVariable(var,x)) xs
     | Hom( Compo(a,b),_)    => skipVariable(var,a) andalso skipVariable(var,b)
     | Hom( Fixpoint(f),_)   => skipVariable(var,f)
+    | Hom( Func(_,v),_)     => not (Variable.eq (var,v))
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -306,7 +312,7 @@ functor HomFun ( structure SDD : SDD
       val res = List.mapPartial
                 (fn (vl,succ) =>
                   case vl of
-                    SDD.Values(_)   => raise NestedOnValues
+                    SDD.Values(_)   => raise NestedHomOnValues
                   | SDD.Nested(nvl) =>
                     let
                       val nvl' = evalCallback lookup h nvl
@@ -316,6 +322,35 @@ functor HomFun ( structure SDD : SDD
                       else
                         SOME (SDD.node( var, SDD.Nested nvl', succ))
                     end
+                )
+                (SDD.alpha sdd)
+    in
+      SDD.union res
+    end
+
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+
+    fun function lookup f var sdd =
+    if sdd = SDD.one then
+      SDD.one
+    else if sdd = SDD.zero then
+      SDD.zero
+    else
+    let
+      val res = List.mapPartial
+                (fn (vl,succ) =>
+                case vl of
+                  SDD.Nested(_)      => raise FunctionHomOnNested
+                | SDD.Values(values) =>
+                let
+                  val values' = !f values
+                in
+                  if Values.empty values' then
+                    NONE
+                  else
+                    SOME (SDD.node( var, SDD.Values values', succ))
+                end
                 )
                 (SDD.alpha sdd)
     in
@@ -371,6 +406,9 @@ functor HomFun ( structure SDD : SDD
 
         | Hom( Nested( g, var ), _ )
           => nested lookup g var sdd
+
+        | Hom( Func( f, var ), _ )
+          => function lookup f var sdd
 
     end
 
