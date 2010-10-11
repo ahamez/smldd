@@ -830,6 +830,15 @@ struct
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
   end
 
+  fun testUnion07 () =
+  let
+    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val x0 = node( 0, Nested s0, one )
+    val u0 = union [zero,x0,zero,x0,zero,x0,zero,x0,zero,x0,zero]
+  in
+    assertTrue( u0 = x0 )
+  end
+
   (* ---------------------------------------------------------------- *)
 
   fun suite () =
@@ -901,6 +910,8 @@ struct
       , ("testUnion03"       , testUnion03         )
       , ("testUnion04"       , testUnion04         )
       , ("testUnion05"       , testUnion05         )
+      , ("testUnion06"       , testUnion06         )
+      , ("testUnion07"       , testUnion07         )
       ]
 
   (* ---------------------------------------------------------------- *)
