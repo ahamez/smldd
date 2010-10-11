@@ -365,6 +365,57 @@ struct
     assertTrue( s1 = o0 )
   end
 
+  (* ---------------------------------------------------------------- *)
+
+  fun testUnion04 () =
+  let
+    val f0 = IntVector.map (fn x => x+1)
+    val h0 = mkUnion [ mkFunction (ref f0) 0, mkFunction (ref f0) 0 ]
+    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s1 = eval h0 s0
+    val o0 = node( 0, Values (IntVector.fromList [1,2]), one )
+  in
+    assertTrue( s1 = o0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testUnion05 () =
+  let
+    val r0 = ref (IntVector.map (fn x => x+1))
+    val h0 = mkUnion [ mkFunction r0 0, mkFunction r0 0 ]
+    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s1 = eval h0 s0
+    val o0 = node( 0, Values (IntVector.fromList [1,2]), one )
+  in
+    assertTrue( s1 = o0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFixpoint00 () =
+  let
+    val h0 = mkFixpoint id
+    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s1 = eval h0 s0
+  in
+    assertTrue( s0 = s1 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFixpoint01 () =
+  let
+    val f0 = IntVector.map (fn x => if x < 4 then x + 1 else x)
+    val h0 = mkFunction (ref f0) 0
+    val h1 = mkUnion [h0,id]
+    val h2 = mkFixpoint h1
+    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s1 = eval h2 s0
+    val o0 = node( 0, Values (IntVector.fromList [0,1,2,3,4]), one )
+  in
+    assertTrue( o0 = s1 )
+  end
 
   (* ---------------------------------------------------------------- *)
 
@@ -397,6 +448,10 @@ struct
       , ("testUnion01"       , testUnion01     )
       , ("testUnion02"       , testUnion02     )
       , ("testUnion03"       , testUnion03     )
+      , ("testUnion04"       , testUnion04     )
+      , ("testUnion05"       , testUnion05     )
+      , ("testFixpoint00"    , testFixpoint00  )
+      , ("testFixpoint01"    , testFixpoint01  )
       ]
 
   (* ---------------------------------------------------------------- *)
