@@ -50,12 +50,35 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testNested00 () =
+  let
+    val s0 = node( 0, Values (IntVector.fromList[0]), one)
+    val x0 = node( 0, Nested s0, one )
+    val h0 = mkNested id 0
+    val r0 = eval h0 x0
+  in
+    assertTrue( r0 = x0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testNested01 () =
+  let
+    val h0 = mkNested id 0
+  in
+    assertTrue( h0 = id )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
   fun suite () =
       Test.labelTests
       [ ("testId00"          , testId00        )
       , ("testId01"          , testId01        )
       , ("testCons00"        , testCons00      )
       , ("testCons01"        , testCons01      )
+      , ("testNested00"      , testNested00    )
+      , ("testNested01"      , testNested01    )
       ]
 
   (* ---------------------------------------------------------------- *)
