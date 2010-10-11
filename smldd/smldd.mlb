@@ -2,6 +2,7 @@ local
   ./sources.mlb
 in
 
+  ./util.sml
   (* The generic SDD package*)
   functor SDDFun
 
@@ -9,5 +10,6 @@ in
   ,  Valuation : IntVector.vector
   *)
   structure SDD
+  structure Hom
 
 end
