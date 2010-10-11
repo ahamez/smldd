@@ -303,7 +303,6 @@ functor HomFun ( structure SDD : SDD
       SDD.zero
     else (* skipVariable made nested propagated to the correct variable *)
     let
-      (* TODO: avoid costly mapPartial *)
       val res = List.mapPartial
                 (fn (vl,succ) =>
                   case vl of
@@ -337,7 +336,6 @@ functor HomFun ( structure SDD : SDD
         let
           val var = SDD.variable sdd
           val res =
-            (* TODO: avoid costly mapPartial *)
             List.mapPartial
             (fn (vl, succ) =>
             let
