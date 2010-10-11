@@ -312,7 +312,7 @@ functor HomFun ( structure SDD : SDD
       SDD.zero
     else (* skipVariable made nested propagated to the correct variable *)
     let
-      val res = List.mapPartial
+      val res = map
                 (fn (vl,succ) =>
                   case vl of
                     SDD.Values(_)   => raise NestedHomOnValues
@@ -320,10 +320,7 @@ functor HomFun ( structure SDD : SDD
                     let
                       val nvl' = evalCallback lookup h nvl
                     in
-                      if nvl' = SDD.zero then
-                        NONE
-                      else
-                        SOME (SDD.node( var, SDD.Nested nvl', succ))
+                      SDD.node( var, SDD.Nested nvl', succ)
                     end
                 )
                 (SDD.alpha sdd)
@@ -341,7 +338,7 @@ functor HomFun ( structure SDD : SDD
       SDD.zero
     else
     let
-      val res = List.mapPartial
+      val res = map
                 (fn (vl,succ) =>
                 case vl of
                   SDD.Nested(_)      => raise FunctionHomOnNested
@@ -349,10 +346,7 @@ functor HomFun ( structure SDD : SDD
                 let
                   val values' = !f values
                 in
-                  if Values.empty values' then
-                    NONE
-                  else
-                    SOME (SDD.node( var, SDD.Values values', succ))
+                  SDD.node( var, SDD.Values values', succ)
                 end
                 )
                 (SDD.alpha sdd)
@@ -374,15 +368,12 @@ functor HomFun ( structure SDD : SDD
         let
           val var = SDD.variable sdd
           val res =
-            List.mapPartial
+            map
             (fn (vl, succ) =>
             let
               val succ' = evalCallback lookup h succ
             in
-              if succ' = SDD.zero then
-                NONE
-              else
-                SOME (SDD.node( var, vl, succ'))
+              SDD.node( var, vl, succ')
             end
             )
             (SDD.alpha sdd)
