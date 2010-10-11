@@ -9,34 +9,34 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
-  val values = IntVector.fromList
+  val values = Values o IntVector.fromList
 
   fun testTerminal00 () =
     assertTrue( zero <> one )
 
-  fun testMkFlatNode00 () =
-    assertTrue( flatNode( 0, IntVector.fromList [] , one  ) = zero )
+  fun testMknode00 () =
+    assertTrue( node( 0, values [] , one  ) = zero )
 
-  fun testMkFlatNode01 () =
-    assertTrue( flatNode( 0, IntVector.fromList [0], zero ) = zero )
+  fun testMknode01 () =
+    assertTrue( node( 0, values [0], zero ) = zero )
 
-  fun testMkFlatNode02 () =
-    assertTrue( flatNode( 0, IntVector.fromList [] , zero ) = zero )
+  fun testMknode02 () =
+    assertTrue( node( 0, values [] , zero ) = zero )
 
   fun testFlatUnion00 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
     val u0 = union [s0,s1]
-    val o0 = flatNode( 0, IntVector.fromList[0,1,2,3], one)
+    val o0 = node( 0, values [0,1,2,3], one)
   in
     assertTrue( u0 = o0 )
   end
 
   fun testFlatUnion01 () =
   let
-    val s0 = flatNode( 1, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val s0 = node( 1, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
   in
     ( union [s0,s1] ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -44,7 +44,7 @@ struct
 
   fun testFlatUnion02 () =
   let
-    val s0 = flatNode( 1, IntVector.fromList[1,2,3], one )
+    val s0 = node( 1, values [1,2,3], one )
   in
     ( union [s0,one] ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -52,7 +52,7 @@ struct
 
   fun testFlatUnion03 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val u0 = union [s0,zero]
   in
     assertTrue( u0 = s0 )
@@ -60,15 +60,15 @@ struct
 
   fun testFlatUnion04 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
-    val s2 = flatNode( 0, IntVector.fromList[0,666], one )
-    val s3 = flatNode( 0, IntVector.fromList[42,43,44], one )
-    val s4 = flatNode( 0, IntVector.fromList[0], one )
-    val s5 = flatNode( 0, IntVector.fromList[~273,17,33], one )
+    val s0 = node( 0, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
+    val s2 = node( 0, values [0,666], one )
+    val s3 = node( 0, values [42,43,44], one )
+    val s4 = node( 0, values [0], one )
+    val s5 = node( 0, values [~273,17,33], one )
     val u0 = union [s0,s1,s2,s3,s4,s5]
-    val o0 = flatNode( 0
-                     , IntVector.fromList[~273,0,1,2,3,17,33,42,43,44,666]
+    val o0 = node( 0
+                     , values [~273,0,1,2,3,17,33,42,43,44,666]
                      , one)
   in
     assertTrue( u0 = o0 )
@@ -76,12 +76,12 @@ struct
 
   fun testFlatUnion05 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
-    val s2 = flatNode( 0, IntVector.fromList[0,666], one )
-    val s3 = flatNode( 0, IntVector.fromList[42,43,44], one )
-    val s4 = flatNode( 0, IntVector.fromList[0], one )
-    val s5 = flatNode( 0, IntVector.fromList[~273,17,33], one )
+    val s0 = node( 0, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
+    val s2 = node( 0, values [0,666], one )
+    val s3 = node( 0, values [42,43,44], one )
+    val s4 = node( 0, values [0], one )
+    val s5 = node( 0, values [~273,17,33], one )
   in
     ( union [s0,s1,s2,s3,s4,s5,one] ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -89,13 +89,13 @@ struct
 
   fun testFlatUnion06 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
-    val s2 = flatNode( 1, IntVector.fromList[0], s0)
-    val s3 = flatNode( 1, IntVector.fromList[0], s1)
+    val s0 = node( 0, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
+    val s2 = node( 1, values [0], s0)
+    val s3 = node( 1, values [0], s1)
     val u0 = union [s2,s3]
-    val o0 = flatNode( 1, IntVector.fromList[0]
-                     , flatNode( 0, IntVector.fromList[0,1,2,3], one )
+    val o0 = node( 1, values [0]
+                     , node( 0, values [0,1,2,3], one )
                      )
   in
     assertTrue( u0 = o0 )
@@ -103,7 +103,7 @@ struct
 
   fun testFlatUnion07 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val u0 = union [s0,s0]
   in
     assertTrue( u0 = s0 )
@@ -111,26 +111,26 @@ struct
 
   fun testFlatUnion08 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
+    val s0 = node( 0, values [0,1], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s1 = node( 0, values [2,3], one )
+    val s3 = node( 1, values [2,3], s1  )
     val u0 = union [s2,s3]
 
-    val s4 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s5 = flatNode( 1, IntVector.fromList[0],   s4  )
-    val s6 = flatNode( 0, IntVector.fromList[1],   one )
-    val s7 = flatNode( 1, IntVector.fromList[0],   s6  )
-    val s8 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s9 = flatNode( 1, IntVector.fromList[2,3], s8  )
+    val s4 = node( 0, values [0,1], one )
+    val s5 = node( 1, values [0],   s4  )
+    val s6 = node( 0, values [1],   one )
+    val s7 = node( 1, values [0],   s6  )
+    val s8 = node( 0, values [2,3], one )
+    val s9 = node( 1, values [2,3], s8  )
     val u1 = union [s5,s7,s9]
 
-    val s10 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s11 = flatNode( 1, IntVector.fromList[0,1], s10 )
-    val s12 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s13 = flatNode( 1, IntVector.fromList[2],   s12 )
-    val s14 = flatNode( 0, IntVector.fromList[2],   one )
-    val s15 = flatNode( 1, IntVector.fromList[3],   s14 )
+    val s10 = node( 0, values [0,1], one )
+    val s11 = node( 1, values [0,1], s10 )
+    val s12 = node( 0, values [2,3], one )
+    val s13 = node( 1, values [2],   s12 )
+    val s14 = node( 0, values [2],   one )
+    val s15 = node( 1, values [3],   s14 )
     val u2 = union [s11,s13,s15]
 
     val u3 = union [u1,u2]
@@ -140,14 +140,14 @@ struct
 
   fun testFlatUnion09 () =
   let
-    val s0 = flatNode( 1, IntVector.fromList[0,1],
-               flatNode( 0, IntVector.fromList[0,1], one))
-    val s1 = flatNode( 1, IntVector.fromList[2,3],
-               flatNode( 0, IntVector.fromList[2,3], one))
+    val s0 = node( 1, values [0,1],
+               node( 0, values [0,1], one))
+    val s1 = node( 1, values [2,3],
+               node( 0, values [2,3], one))
     val u0 = union [s0,s1]
 
-    val s2 = flatNode( 1, IntVector.fromList[0],
-               flatNode( 0, IntVector.fromList[1], one))
+    val s2 = node( 1, values [0],
+               node( 0, values [1], one))
     val u2 = union [u0,s2]
   in
     assertTrue( u0 = u2 )
@@ -155,7 +155,7 @@ struct
 
   fun testFlatUnion10 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val u0 = union [s0,s0,s0,s0,s0,s0,s0]
   in
     assertTrue( u0 = s0 )
@@ -163,17 +163,17 @@ struct
 
   fun testFlatInter00 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
     val i1 = intersection [s0,s1]
-    val o0 = flatNode( 0, IntVector.fromList[2,3], one )
+    val o0 = node( 0, values [2,3], one )
   in
     assertTrue( i1 = o0 )
   end
 
   fun testFlatInter01 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val i1 = intersection [s0,zero]
   in
     assertTrue( i1 = zero )
@@ -181,7 +181,7 @@ struct
 
   fun testFlatInter02 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val i1 = intersection [s0,s0]
   in
     assertTrue( i1 = s0 )
@@ -189,8 +189,8 @@ struct
 
   fun testFlatInter03 () =
   let
-    val s0 = flatNode( 1, IntVector.fromList[1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val s0 = node( 1, values [1,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
   in
     ( intersection [s0,s1] ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -198,7 +198,7 @@ struct
 
   fun testFlatInter04 () =
   let
-    val s0 = flatNode( 42, IntVector.fromList[1,2,4], one )
+    val s0 = node( 42, values [1,2,4], one )
   in
     ( intersection [one,s0] ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -206,8 +206,8 @@ struct
 
   fun testFlatInter05 () =
   let
-    val s0 = flatNode( 42, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 42, IntVector.fromList[4,5,6,7], one )
+    val s0 = node( 42, values [0,1,2,3], one )
+    val s1 = node( 42, values [4,5,6,7], one )
     val i0 = intersection [s0, s1]
   in
     assertTrue( i0 = zero )
@@ -215,10 +215,10 @@ struct
 
   fun testFlatInter06 () =
   let
-    val s0 = flatNode( 42, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 42, IntVector.fromList[4,5,6,7], one )
-    val s2 = flatNode( 0, IntVector.fromList [0], s0 )
-    val s3 = flatNode( 0, IntVector.fromList [0], s1 )
+    val s0 = node( 42, values [0,1,2,3], one )
+    val s1 = node( 42, values [4,5,6,7], one )
+    val s2 = node( 0, values [0], s0 )
+    val s3 = node( 0, values [0], s1 )
     val i0 = intersection [s2, s3]
   in
     assertTrue( i0 = zero )
@@ -226,16 +226,16 @@ struct
 
   fun testFlatInter07 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[4,5,6,7], one )
-    val s2 = flatNode( 1, IntVector.fromList [1], s0 )
-    val s3 = flatNode( 1, IntVector.fromList [0], s1 )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [4,5,6,7], one )
+    val s2 = node( 1, values [1], s0 )
+    val s3 = node( 1, values [0], s1 )
     val u0 = union [s2, s3]
 
-    val s4 = flatNode( 0, IntVector.fromList[17,23], one )
-    val s5 = flatNode( 0, IntVector.fromList[42,66], one )
-    val s6 = flatNode( 1, IntVector.fromList [1], s4 )
-    val s7 = flatNode( 1, IntVector.fromList [0], s5 )
+    val s4 = node( 0, values [17,23], one )
+    val s5 = node( 0, values [42,66], one )
+    val s6 = node( 1, values [1], s4 )
+    val s7 = node( 1, values [0], s5 )
     val u1 = union [s6, s7]
 
     val i0 = intersection [u0,u1]
@@ -245,18 +245,18 @@ struct
 
   fun testFlatInter08 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[4,5,6,7], one )
-    val s2 = flatNode( 1, IntVector.fromList [1], s0 )
-    val s3 = flatNode( 1, IntVector.fromList [0], s1 )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [4,5,6,7], one )
+    val s2 = node( 1, values [1], s0 )
+    val s3 = node( 1, values [0], s1 )
     val u0 = union [s2, s3]
 
-    val s4 = flatNode( 0, IntVector.fromList[0,17,23], one )
-    val s5 = flatNode( 1, IntVector.fromList [1], s4 )
+    val s4 = node( 0, values [0,17,23], one )
+    val s5 = node( 1, values [1], s4 )
 
     val i0 = intersection [s5,u0]
-    val o0 = flatNode( 1, IntVector.fromList [1]
-                     , flatNode( 0, IntVector.fromList [0], one ) )
+    val o0 = node( 1, values [1]
+                     , node( 0, values [0], one ) )
 
   in
     assertTrue( i0 = o0 )
@@ -264,39 +264,39 @@ struct
 
   fun testFlatInter09 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val s2 = flatNode( 1, IntVector.fromList [1], s0 )
+    val s0 = node( 0, values [0], one )
+    val s2 = node( 1, values [1], s0 )
 
-    val s4 = flatNode( 0, IntVector.fromList[0], one )
-    val s5 = flatNode( 0, IntVector.fromList[2], one )
-    val s6 = flatNode( 1, IntVector.fromList [1], s4 )
-    val s7 = flatNode( 1, IntVector.fromList [0], s5 )
+    val s4 = node( 0, values [0], one )
+    val s5 = node( 0, values [2], one )
+    val s6 = node( 1, values [1], s4 )
+    val s7 = node( 1, values [0], s5 )
     val u1 = union [s6, s7]
 
     val i0 = intersection [s2,u1]
-    val o0 = flatNode( 1, IntVector.fromList [1]
-                     , flatNode( 0, IntVector.fromList [0], one ) )
+    val o0 = node( 1, values [1]
+                     , node( 0, values [0], one ) )
   in
     assertTrue( i0 = o0 )
   end
 
   fun testFlatInter10 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[4,5,6,7], one )
-    val s2 = flatNode( 1, IntVector.fromList [1], s0 )
-    val s3 = flatNode( 1, IntVector.fromList [0], s1 )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [4,5,6,7], one )
+    val s2 = node( 1, values [1], s0 )
+    val s3 = node( 1, values [0], s1 )
     val u0 = union [s2, s3]
 
-    val s4 = flatNode( 0, IntVector.fromList[0,17,23], one )
-    val s5 = flatNode( 0, IntVector.fromList[42,66], one )
-    val s6 = flatNode( 1, IntVector.fromList [1], s4 )
-    val s7 = flatNode( 1, IntVector.fromList [0], s5 )
+    val s4 = node( 0, values [0,17,23], one )
+    val s5 = node( 0, values [42,66], one )
+    val s6 = node( 1, values [1], s4 )
+    val s7 = node( 1, values [0], s5 )
     val u1 = union [s6, s7]
 
     val i0 = intersection [u1,u0]
-    val o0 = flatNode( 1, IntVector.fromList [1]
-                     , flatNode( 0, IntVector.fromList [0], one ) )
+    val o0 = node( 1, values [1]
+                     , node( 0, values [0], one ) )
   in
     assertTrue( i0 = o0 )
   end
@@ -309,28 +309,28 @@ struct
 
   fun testFlatInter13 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[4,5,6,7], one )
-    val s2 = flatNode( 0, IntVector.fromList[8,9,10],  one )
-    val s3 = flatNode( 1, IntVector.fromList [1], s0 )
-    val s4 = flatNode( 1, IntVector.fromList [0], s1 )
-    val s5 = flatNode( 1, IntVector.fromList [2], s2 )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [4,5,6,7], one )
+    val s2 = node( 0, values [8,9,10],  one )
+    val s3 = node( 1, values [1], s0 )
+    val s4 = node( 1, values [0], s1 )
+    val s5 = node( 1, values [2], s2 )
     val u0 = union [ s3, s4, s5 ]
 
-    val s6 = flatNode( 0, IntVector.fromList[0,17,23], one )
-    val s7 = flatNode( 0, IntVector.fromList[42,66], one )
-    val s8 = flatNode( 0, IntVector.fromList[8,127], one )
-    val s9 = flatNode( 1, IntVector.fromList [1], s6 )
-    val s10 = flatNode( 1, IntVector.fromList [0], s7 )
-    val s11 = flatNode( 1, IntVector.fromList [2], s8 )
+    val s6 = node( 0, values [0,17,23], one )
+    val s7 = node( 0, values [42,66], one )
+    val s8 = node( 0, values [8,127], one )
+    val s9 = node( 1, values [1], s6 )
+    val s10 = node( 1, values [0], s7 )
+    val s11 = node( 1, values [2], s8 )
     val u1 = union [ s9, s10, s11 ]
 
     val i0 = intersection [u1,u0]
     val o0 = union[
-               flatNode( 1, IntVector.fromList [1]
-                       , flatNode( 0, IntVector.fromList [0], one ) )
-             , flatNode( 1, IntVector.fromList [2]
-                       , flatNode( 0, IntVector.fromList [8], one ) )
+               node( 1, values [1]
+                       , node( 0, values [0], one ) )
+             , node( 1, values [2]
+                       , node( 0, values [8], one ) )
              ]
   in
     assertTrue( i0 = o0 )
@@ -338,26 +338,26 @@ struct
 
   fun testFlatInter14 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,3], s0 )
-    val s3 = flatNode( 1, IntVector.fromList[0,4], s1 )
-    val s4 = flatNode( 2, IntVector.fromList[0], s2 )
-    val s5 = flatNode( 2, IntVector.fromList[1], s3 )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 0, values [0,2], one )
+    val s2 = node( 1, values [0,3], s0 )
+    val s3 = node( 1, values [0,4], s1 )
+    val s4 = node( 2, values [0], s2 )
+    val s5 = node( 2, values [1], s3 )
     val u0 = union [ s4, s5 ]
 
-    val s6 = flatNode( 0, IntVector.fromList[0,3], one )
-    val s7 = flatNode( 0, IntVector.fromList[0,4], one )
-    val s8 = flatNode( 1, IntVector.fromList[0,5], s6 )
-    val s9 = flatNode( 1, IntVector.fromList[0,6], s7 )
-    val s10 = flatNode( 2, IntVector.fromList[0], s8 )
-    val s11 = flatNode( 2, IntVector.fromList[1], s9 )
+    val s6 = node( 0, values [0,3], one )
+    val s7 = node( 0, values [0,4], one )
+    val s8 = node( 1, values [0,5], s6 )
+    val s9 = node( 1, values [0,6], s7 )
+    val s10 = node( 2, values [0], s8 )
+    val s11 = node( 2, values [1], s9 )
     val u1 = union [ s10, s11 ]
 
     val i0 = intersection [u1,u0]
-    val o0 = flatNode( 2, IntVector.fromList [0,1]
-               , flatNode( 1, IntVector.fromList [0]
-                 ,  flatNode( 0, IntVector.fromList [0], one )))
+    val o0 = node( 2, values [0,1]
+               , node( 1, values [0]
+                 ,  node( 0, values [0], one )))
 
   in
     assertTrue( i0 = o0 )
@@ -365,20 +365,20 @@ struct
 
   fun testFlatInter15 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,3], s0 )
-    val s3 = flatNode( 1, IntVector.fromList[0,4], s1 )
-    val s4 = flatNode( 2, IntVector.fromList[0], s2 )
-    val s5 = flatNode( 2, IntVector.fromList[1], s3 )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 0, values [0,2], one )
+    val s2 = node( 1, values [0,3], s0 )
+    val s3 = node( 1, values [0,4], s1 )
+    val s4 = node( 2, values [0], s2 )
+    val s5 = node( 2, values [1], s3 )
     val u0 = union [ s4, s5 ]
 
-    val s6 = flatNode( ~1, IntVector.fromList[0,3], one )
-    val s7 = flatNode( ~1, IntVector.fromList[0,4], one )
-    val s8 = flatNode( 1, IntVector.fromList[0,5], s6 )
-    val s9 = flatNode( 1, IntVector.fromList[0,6], s7 )
-    val s10 = flatNode( 2, IntVector.fromList[0], s8 )
-    val s11 = flatNode( 2, IntVector.fromList[1], s9 )
+    val s6 = node( ~1, values [0,3], one )
+    val s7 = node( ~1, values [0,4], one )
+    val s8 = node( 1, values [0,5], s6 )
+    val s9 = node( 1, values [0,6], s7 )
+    val s10 = node( 2, values [0], s8 )
+    val s11 = node( 2, values [1], s9 )
     val u1 = union [ s10, s11 ]
   in
     ( intersection [u0,u1] ; fail "Must fail" )
@@ -394,8 +394,8 @@ struct
 
   fun testFlatDiff01 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[4,5,6,7], one )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [4,5,6,7], one )
     val d0 = difference( s1, s0 )
   in
     assertTrue( d0 = s1 )
@@ -403,8 +403,8 @@ struct
 
   fun testFlatDiff02 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[4,5,6,7], one )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [4,5,6,7], one )
     val d0 = difference( s0, s1 )
   in
     assertTrue( d0 = s0 )
@@ -412,18 +412,18 @@ struct
 
   fun testFlatDiff03 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,3], one )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [0,3], one )
     val d0 = difference( s0, s1 )
-    val o0 = flatNode( 0, IntVector.fromList[1,2], one )
+    val o0 = node( 0, values [1,2], one )
   in
     assertTrue( d0 = o0 )
   end
 
   fun testFlatDiff04 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,3], one )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [0,3], one )
     val d0 = difference( s1, s0 )
   in
     assertTrue( d0 = zero )
@@ -431,20 +431,20 @@ struct
 
   fun testFlatDiff05 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1,2,3], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,4], one )
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [0,4], one )
     val d0 = difference( s1, s0 )
-    val o0 = flatNode( 0, IntVector.fromList[4], one )
+    val o0 = node( 0, values [4], one )
   in
     assertTrue( d0 = o0 )
   end
 
   fun testFlatDiff06 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val s1 = flatNode( 0, IntVector.fromList[0], one )
-    val s2 = flatNode( 1, IntVector.fromList[0], s0  )
-    val s3 = flatNode( 1, IntVector.fromList[1], s1  )
+    val s0 = node( 0, values [0], one )
+    val s1 = node( 0, values [0], one )
+    val s2 = node( 1, values [0], s0  )
+    val s3 = node( 1, values [1], s1  )
     val u0 = union [s2,s3]
     val d0 = difference( u0, s2 )
   in
@@ -453,10 +453,10 @@ struct
 
   fun testFlatDiff07 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val s1 = flatNode( 0, IntVector.fromList[0], one )
-    val s2 = flatNode( 1, IntVector.fromList[0], s0  )
-    val s3 = flatNode( 1, IntVector.fromList[1], s1  )
+    val s0 = node( 0, values [0], one )
+    val s1 = node( 0, values [0], one )
+    val s2 = node( 1, values [0], s0  )
+    val s3 = node( 1, values [1], s1  )
     val u0 = union [s2,s3]
     val d0 = difference( u0, s3 )
   in
@@ -465,8 +465,8 @@ struct
 
   fun testFlatDiff08 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val s1 = flatNode( 1, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
+    val s1 = node( 1, values [0], one )
   in
     ( difference( s1, s0 ) ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -474,8 +474,8 @@ struct
 
   fun testFlatDiff09 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val s1 = flatNode( 1, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
+    val s1 = node( 1, values [0], one )
   in
     ( difference( s0, s1 ) ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -483,7 +483,7 @@ struct
 
   fun testFlatDiff10 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
   in
     ( difference( s0, one ) ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -491,7 +491,7 @@ struct
 
   fun testFlatDiff11 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
   in
     ( difference( one, s0 ) ; fail "Must fail" )
     handle x as _ => assertEqualExceptionName x IncompatibleSDD
@@ -499,7 +499,7 @@ struct
 
   fun testFlatDiff12 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
     val d0 = difference( s0, zero )
   in
     assertTrue( d0 = s0 )
@@ -507,7 +507,7 @@ struct
 
   fun testFlatDiff13 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
     val d0 = difference( zero, s0 )
   in
     assertTrue( d0 = zero )
@@ -529,43 +529,43 @@ struct
 
   fun testFlatDiff16 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s4 = flatNode( 2, IntVector.fromList[0,1], s2  )
-    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
-    val s5 = flatNode( 2, IntVector.fromList[2,3], s3  )
+    val s0 = node( 0, values [0,1], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s4 = node( 2, values [0,1], s2  )
+    val s1 = node( 0, values [2,3], one )
+    val s3 = node( 1, values [2,3], s1  )
+    val s5 = node( 2, values [2,3], s3  )
     val u0 = union [s4,s5]
 
-    val s7  = flatNode( 0, IntVector.fromList[0], one )
-    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
-    val s10 = flatNode( 2, IntVector.fromList[0], s9  )
-    val s11 = flatNode( 0, IntVector.fromList[3], one )
-    val s12 = flatNode( 1, IntVector.fromList[3], s11 )
-    val s13 = flatNode( 2, IntVector.fromList[3], s12 )
+    val s7  = node( 0, values [0], one )
+    val s9  = node( 1, values [0], s7  )
+    val s10 = node( 2, values [0], s9  )
+    val s11 = node( 0, values [3], one )
+    val s12 = node( 1, values [3], s11 )
+    val s13 = node( 2, values [3], s12 )
     val u1 = union [s10,s13]
 
     val d0 = difference ( u0, u1 )
 
     val o0 = union
-             [ flatNode( 2, IntVector.fromList [0],
-                 flatNode( 1, IntVector.fromList [0,1],
-                   flatNode( 0, IntVector.fromList [1], one)))
-             , flatNode( 2, IntVector.fromList [0],
-                 flatNode( 1, IntVector.fromList [1],
-                   flatNode( 0, IntVector.fromList [0,1], one)))
-             , flatNode( 2, IntVector.fromList [1],
-                 flatNode( 1, IntVector.fromList [0,1],
-                   flatNode( 0, IntVector.fromList [0,1], one)))
-             , flatNode( 2, IntVector.fromList [3],
-                 flatNode( 1, IntVector.fromList [2,3],
-                   flatNode( 0, IntVector.fromList [2], one)))
-             , flatNode( 2, IntVector.fromList [3],
-                 flatNode( 1, IntVector.fromList [2],
-                   flatNode( 0, IntVector.fromList [2,3], one)))
-             , flatNode( 2, IntVector.fromList [2],
-                 flatNode( 1, IntVector.fromList [2,3],
-                   flatNode( 0, IntVector.fromList [2,3], one)))
+             [ node( 2, values [0],
+                 node( 1, values [0,1],
+                   node( 0, values [1], one)))
+             , node( 2, values [0],
+                 node( 1, values [1],
+                   node( 0, values [0,1], one)))
+             , node( 2, values [1],
+                 node( 1, values [0,1],
+                   node( 0, values [0,1], one)))
+             , node( 2, values [3],
+                 node( 1, values [2,3],
+                   node( 0, values [2], one)))
+             , node( 2, values [3],
+                 node( 1, values [2],
+                   node( 0, values [2,3], one)))
+             , node( 2, values [2],
+                 node( 1, values [2,3],
+                   node( 0, values [2,3], one)))
              ]
   in
     assertTrue( d0 = o0 )
@@ -573,33 +573,33 @@ struct
 
   fun testFlatDiff17 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,3], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s3 = flatNode( 1, IntVector.fromList[0,2], s1  )
-    val s4 = flatNode( 2, IntVector.fromList[0,1], s2  )
-    val s5 = flatNode( 2, IntVector.fromList[2,3], s3  )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 0, values [0,3], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s3 = node( 1, values [0,2], s1  )
+    val s4 = node( 2, values [0,1], s2  )
+    val s5 = node( 2, values [2,3], s3  )
     val u0 = union [s4,s5]
 
-    val s7  = flatNode( 0, IntVector.fromList[0], one )
-    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
-    val s11 = flatNode( 2, IntVector.fromList[0], s9  )
+    val s7  = node( 0, values [0], one )
+    val s9  = node( 1, values [0], s7  )
+    val s11 = node( 2, values [0], s9  )
 
     val d0 = difference ( u0, s11 )
 
     val o0 = union
-             [ flatNode( 2, IntVector.fromList [0],
-                 flatNode( 1, IntVector.fromList [0,1],
-                   flatNode( 0, IntVector.fromList [1], one)))
-             , flatNode( 2, IntVector.fromList [0],
-                 flatNode( 1, IntVector.fromList [1],
-                   flatNode( 0, IntVector.fromList [0,1], one)))
-             , flatNode( 2, IntVector.fromList [1],
-                 flatNode( 1, IntVector.fromList [0,1],
-                   flatNode( 0, IntVector.fromList [0,1], one)))
-             , flatNode( 2, IntVector.fromList [2,3],
-                 flatNode( 1, IntVector.fromList [0,2],
-                   flatNode( 0, IntVector.fromList [0,3], one)))
+             [ node( 2, values [0],
+                 node( 1, values [0,1],
+                   node( 0, values [1], one)))
+             , node( 2, values [0],
+                 node( 1, values [1],
+                   node( 0, values [0,1], one)))
+             , node( 2, values [1],
+                 node( 1, values [0,1],
+                   node( 0, values [0,1], one)))
+             , node( 2, values [2,3],
+                 node( 1, values [0,2],
+                   node( 0, values [0,3], one)))
              ]
   in
     assertTrue( d0 = o0 )
@@ -607,25 +607,25 @@ struct
 
   fun testFlatDiff18 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList [0,1], one )
-    val s1 = flatNode( 1, IntVector.fromList [0,1], s0  )
-    val s2 = flatNode( 2, IntVector.fromList [0,1], s1  )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 1, values [0,1], s0  )
+    val s2 = node( 2, values [0,1], s1  )
 
-    val s3 = flatNode( 0, IntVector.fromList [0], one )
-    val s4 = flatNode( 1, IntVector.fromList [0], s3  )
-    val s5 = flatNode( 2, IntVector.fromList [0], s4  )
+    val s3 = node( 0, values [0], one )
+    val s4 = node( 1, values [0], s3  )
+    val s5 = node( 2, values [0], s4  )
 
     val d0 = difference ( s2, s5 )
     val o0 = union
-             [ flatNode( 2, IntVector.fromList [0],
-                 flatNode( 1, IntVector.fromList [0,1],
-                   flatNode( 0, IntVector.fromList [1], one)))
-             , flatNode( 2, IntVector.fromList [0],
-                 flatNode( 1, IntVector.fromList [1],
-                   flatNode( 0, IntVector.fromList [0,1], one)))
-             , flatNode( 2, IntVector.fromList [1],
-                 flatNode( 1, IntVector.fromList [0,1],
-                   flatNode( 0, IntVector.fromList [0,1], one)))
+             [ node( 2, values [0],
+                 node( 1, values [0,1],
+                   node( 0, values [1], one)))
+             , node( 2, values [0],
+                 node( 1, values [1],
+                   node( 0, values [0,1], one)))
+             , node( 2, values [1],
+                 node( 1, values [0,1],
+                   node( 0, values [0,1], one)))
              ]
   in
     assertTrue( d0 = o0 )
@@ -633,13 +633,13 @@ struct
 
   fun testFlatDiff19 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList [0,1], one )
-    val s1 = flatNode( 1, IntVector.fromList [0,1], s0  )
-    val s2 = flatNode( 2, IntVector.fromList [0,1], s1  )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 1, values [0,1], s0  )
+    val s2 = node( 2, values [0,1], s1  )
 
-    val s3 = flatNode( 0, IntVector.fromList [0], one )
-    val s4 = flatNode( 1, IntVector.fromList [0], s3  )
-    val s5 = flatNode( 2, IntVector.fromList [0], s4  )
+    val s3 = node( 0, values [0], one )
+    val s4 = node( 1, values [0], s3  )
+    val s5 = node( 2, values [0], s4  )
 
     val d0 = difference ( s5, s2 )
   in
@@ -648,17 +648,17 @@ struct
 
   fun testFlatDiff20 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s1 = flatNode( 0, IntVector.fromList[0,3], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s3 = flatNode( 1, IntVector.fromList[0,2], s1  )
-    val s4 = flatNode( 2, IntVector.fromList[0,1], s2  )
-    val s5 = flatNode( 2, IntVector.fromList[2,3], s3  )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 0, values [0,3], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s3 = node( 1, values [0,2], s1  )
+    val s4 = node( 2, values [0,1], s2  )
+    val s5 = node( 2, values [2,3], s3  )
     val u0 = union [s4,s5]
 
-    val s7  = flatNode( 0, IntVector.fromList[0], one )
-    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
-    val s11 = flatNode( 2, IntVector.fromList[0], s9  )
+    val s7  = node( 0, values [0], one )
+    val s9  = node( 1, values [0], s7  )
+    val s11 = node( 2, values [0], s9  )
 
     val d0 = difference ( s11, u0 )
   in
@@ -667,20 +667,20 @@ struct
 
   fun testFlatDiff21 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
-    val s4 = flatNode( 2, IntVector.fromList[0,1], s2  )
-    val s5 = flatNode( 2, IntVector.fromList[2,3], s3  )
+    val s0 = node( 0, values [0,1], one )
+    val s1 = node( 0, values [2,3], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s3 = node( 1, values [2,3], s1  )
+    val s4 = node( 2, values [0,1], s2  )
+    val s5 = node( 2, values [2,3], s3  )
     val u0 = union [s4,s5]
 
-    val s7  = flatNode( 0, IntVector.fromList[0], one )
-    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
-    val s10 = flatNode( 2, IntVector.fromList[0], s9  )
-    val s11 = flatNode( 0, IntVector.fromList[3], one )
-    val s12 = flatNode( 1, IntVector.fromList[3], s11 )
-    val s13 = flatNode( 2, IntVector.fromList[3], s12 )
+    val s7  = node( 0, values [0], one )
+    val s9  = node( 1, values [0], s7  )
+    val s10 = node( 2, values [0], s9  )
+    val s11 = node( 0, values [3], one )
+    val s12 = node( 1, values [3], s11 )
+    val s13 = node( 2, values [3], s12 )
     val u1 = union [s10,s13]
 
     val d0 = difference ( u1, u0 )
@@ -690,16 +690,16 @@ struct
 
   fun testFlatDiff23 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
+    val s0 = node( 0, values [0,1], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s1 = node( 0, values [2,3], one )
+    val s3 = node( 1, values [2,3], s1  )
     val u0 = union [s2,s3]
 
-    val s7  = flatNode( 0, IntVector.fromList[0], one )
-    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
-    val s11 = flatNode( 0, IntVector.fromList[3], one )
-    val s12 = flatNode( 1, IntVector.fromList[3], s11 )
+    val s7  = node( 0, values [0], one )
+    val s9  = node( 1, values [0], s7  )
+    val s11 = node( 0, values [3], one )
+    val s12 = node( 1, values [3], s11 )
 
     val d0 = difference ( u0, s9  )
     val d1 = difference ( u0, s12 )
@@ -710,29 +710,29 @@ struct
 
   fun testFlatDiff24 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
-    val s2 = flatNode( 1, IntVector.fromList[0,1], s0  )
-    val s1 = flatNode( 0, IntVector.fromList[2,3], one )
-    val s3 = flatNode( 1, IntVector.fromList[2,3], s1  )
+    val s0 = node( 0, values [0,1], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s1 = node( 0, values [2,3], one )
+    val s3 = node( 1, values [2,3], s1  )
     val u0 = union [s2,s3]
 
-    val s7  = flatNode( 0, IntVector.fromList[0], one )
-    val s9  = flatNode( 1, IntVector.fromList[0], s7  )
-    val s11 = flatNode( 0, IntVector.fromList[3], one )
-    val s12 = flatNode( 1, IntVector.fromList[3], s11 )
+    val s7  = node( 0, values [0], one )
+    val s9  = node( 1, values [0], s7  )
+    val s11 = node( 0, values [3], one )
+    val s12 = node( 1, values [3], s11 )
     val u1 = union [s9,s12]
 
     val d0 = difference ( u0, u1 )
 
     val o0 = union
-             [ flatNode( 1, IntVector.fromList [0,1],
-                 flatNode( 0, IntVector.fromList [1], one))
-             , flatNode( 1, IntVector.fromList [1],
-                 flatNode( 0, IntVector.fromList [0,1], one))
-             , flatNode( 1, IntVector.fromList [2,3],
-                 flatNode( 0, IntVector.fromList [2], one))
-             , flatNode( 1, IntVector.fromList [2],
-                 flatNode( 0, IntVector.fromList [2,3], one))
+             [ node( 1, values [0,1],
+                 node( 0, values [1], one))
+             , node( 1, values [1],
+                 node( 0, values [0,1], one))
+             , node( 1, values [2,3],
+                 node( 0, values [2], one))
+             , node( 1, values [2],
+                 node( 0, values [2,3], one))
              ]
   in
     assertTrue( d0 = o0 )
@@ -751,23 +751,23 @@ struct
     assertTrue( node( 0, Nested (node( 1, Nested zero, one )), zero ) = zero )
 
   fun testMkNode04 () =
-    assertTrue( node( 0, Nested(flatNode(1,IntVector.fromList [1],zero)), one)
+    assertTrue( node( 0, Nested(node(1,values [1],zero)), one)
                 = zero
               )
 
   fun testMkNode05 () =
-    assertTrue( node( 0, Nested(flatNode(1,IntVector.fromList [],one)), one)
+    assertTrue( node( 0, Nested(node(1,values [],one)), one)
                 = zero
               )
 
   fun testUnion00 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
     val x1 = node( 0, Nested s1, one )
     val u0 = union [x1,x0]
-    val o0 = flatNode( 0, IntVector.fromList[0,1,2,3], one)
+    val o0 = node( 0, values [0,1,2,3], one)
     val y0 = node( 0, Nested o0, one )
   in
     assertTrue( u0 = y0 )
@@ -775,7 +775,7 @@ struct
 
   fun testUnion01 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
     val u0 = union [x0,zero]
   in
@@ -784,7 +784,7 @@ struct
 
   fun testUnion02 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
     val u0 = union [x0,x0,x0,x0,x0]
   in
@@ -793,9 +793,9 @@ struct
 
   fun testUnion03 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
-    val s1 = flatNode( 1, IntVector.fromList[0,2,3], one )
+    val s1 = node( 1, values [0,2,3], one )
     val x1 = node( 0, Nested s1, one )
   in
     ( union [x0,x1] ; fail "Must fail" )
@@ -804,9 +804,9 @@ struct
 
   fun testUnion04 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
-    val s1 = flatNode( 0, IntVector.fromList[0,2,3], one )
+    val s1 = node( 0, values [0,2,3], one )
     val x1 = node( 1, Nested s1, one )
   in
     ( union [x0,x1] ; fail "Must fail" )
@@ -815,7 +815,7 @@ struct
 
   fun testUnion05 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
   in
     ( union [x0,one] ; fail "Must fail" )
@@ -824,7 +824,7 @@ struct
 
   fun testUnion06 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
     val x1 = node( 1, Nested one, one )
   in
@@ -834,7 +834,7 @@ struct
 
   fun testUnion07 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[1,2,3], one )
+    val s0 = node( 0, values [1,2,3], one )
     val x0 = node( 0, Nested s0, one )
     val u0 = union [zero,x0,zero,x0,zero,x0,zero,x0,zero,x0,zero]
   in
@@ -843,46 +843,46 @@ struct
 
   fun testPaths00 () =
   let
-    val s0 = flatNode( 0, values [1],
-              flatNode( 1, values [2],
-               flatNode( 2, values [0],
-                flatNode( 3, values [0],
-                 flatNode( 4, values [0], one)))))
-    val s1 = flatNode( 0, values [0],
-              flatNode( 1, values [0],
-               flatNode( 2, values [1],
-                flatNode( 3, values [1],
-                 flatNode( 4, values [1], one)))))
-    val s2 = flatNode( 0, values [0],
-              flatNode( 1, values [1],
-               flatNode( 2, values [1],
-                flatNode( 3, values [0],
-                 flatNode( 4, values [1], one)))))
-    val s3 = flatNode( 0, values [0],
-              flatNode( 1, values [1],
-               flatNode( 2, values [1],
-                flatNode( 3, values [1],
-                 flatNode( 4, values [0], one)))))
-    val s4 = flatNode( 0, values [1],
-              flatNode( 1, values [0],
-               flatNode( 2, values [0],
-                flatNode( 3, values [1],
-                 flatNode( 4, values [1], one)))))
-    val s5 = flatNode( 0, values [0],
-              flatNode( 1, values [2],
-               flatNode( 2, values [1],
-                flatNode( 3, values [0],
-                 flatNode( 4, values [0], one)))))
-    val s6 = flatNode( 0, values [1],
-              flatNode( 1, values [1],
-               flatNode( 2, values [0],
-                flatNode( 3, values [0],
-                 flatNode( 4, values [1], one)))))
-    val s7 = flatNode( 0, values [1],
-              flatNode( 1, values [1],
-               flatNode( 2, values [0],
-                flatNode( 3, values [1],
-                 flatNode( 4, values [0], one)))))
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val s1 = node( 0, values [0],
+              node( 1, values [0],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s2 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val s3 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+    val s4 = node( 0, values [1],
+              node( 1, values [0],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s5 = node( 0, values [0],
+              node( 1, values [2],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val s6 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val s7 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
 
     val s8 = union [s0,s1,s2,s3,s4,s5,s6,s7]
 
@@ -896,9 +896,9 @@ struct
   fun suite () =
       Test.labelTests
       [ ("Terminals00"       , testTerminal00      )
-      , ("MakeFlatNode00"    , testMkFlatNode00    )
-      , ("MakeFlatNode01"    , testMkFlatNode01    )
-      , ("MakeFlatNode02"    , testMkFlatNode02    )
+      , ("Makenode00"    , testMknode00    )
+      , ("Makenode01"    , testMknode01    )
+      , ("Makenode02"    , testMknode02    )
       , ("FlatUnion00"       , testFlatUnion00     )
       , ("FlatUnion01"       , testFlatUnion01     )
       , ("FlatUnion02"       , testFlatUnion02     )
