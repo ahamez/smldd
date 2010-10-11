@@ -31,7 +31,7 @@ sig
   val mkFixpoint      : hom -> hom
   val mkNested        : hom -> variable -> hom
 
-  val eval          : hom -> SDD -> SDD
+  val eval            : hom -> SDD -> SDD
 
   exception NotYetImplemented
 
