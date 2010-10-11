@@ -1411,8 +1411,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                 let
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
-                                      ( n + Values.length(!v) )
-                                      * (pathsHelper succ )
+                                      n
+                                      + ( ( Values.length(!v) )
+                                          * (pathsHelper succ )
+                                        )
                                     )
                                     0
                                     arcs
@@ -1429,7 +1431,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                 let
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
-                                      ( n + pathsHelper v )
+                                      n + ( pathsHelper v )
                                       * ( pathsHelper succ )
                                     )
                                     0
