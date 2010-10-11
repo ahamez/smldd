@@ -317,6 +317,57 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testUnion00 () =
+  let
+    val h0 = mkUnion [id]
+    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
+    val s1 = eval h0 s0
+  in
+    assertTrue( s1 = s0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testUnion01 () =
+  let
+    val h0 = mkUnion [id,id,id]
+    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
+    val s1 = eval h0 s0
+  in
+    assertTrue( s1 = s0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testUnion02 () =
+  let
+    val f0 = IntVector.map (fn x => x+1)
+    val f1 = IntVector.map (fn x => x+2)
+    val h0 = mkUnion [ mkFunction (ref f0) 0, mkFunction (ref f1) 0]
+    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s1 = eval h0 s0
+    val o0 = node( 0, Values (IntVector.fromList [1,2,3]), one )
+  in
+    assertTrue( s1 = o0 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testUnion03 () =
+  let
+    val f0 = IntVector.map (fn x => x+1)
+    val f1 = IntVector.map (fn x => x+2)
+    val h0 = mkUnion [ mkFunction (ref f0) 0, mkFunction (ref f1) 0, id ]
+    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s1 = eval h0 s0
+    val o0 = node( 0, Values (IntVector.fromList [0,1,2,3]), one )
+  in
+    assertTrue( s1 = o0 )
+  end
+
+
+  (* ---------------------------------------------------------------- *)
+
   fun suite () =
       Test.labelTests
       [ ("testId00"          , testId00        )
@@ -342,6 +393,10 @@ struct
       , ("testNested04"      , testNested04    )
       , ("testNested05"      , testNested05    )
       , ("testNested06"      , testNested06    )
+      , ("testUnion00"       , testUnion00     )
+      , ("testUnion01"       , testUnion01     )
+      , ("testUnion02"       , testUnion02     )
+      , ("testUnion03"       , testUnion03     )
       ]
 
   (* ---------------------------------------------------------------- *)
