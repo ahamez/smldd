@@ -441,15 +441,53 @@ struct
     val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
     val s1 = eval h2 s0
     val o0 = node( 0, Values (IntVector.fromList [4]), one )
-    val _ = print "\n"
-    val _ = print (toString o0)
-    val _ = print "\n"
-    val _ = print (toString s1)
-    val _ = print "\n"
   in
     assertTrue( o0 = s1 )
   end
 
+  (* ---------------------------------------------------------------- *)
+  (* ---------------------------------------------------------------- *)
+
+  fun pre c values =
+    IntVector.fromList
+      (List.mapPartial (fn x => if x < c then
+                                  NONE
+                                else
+                                  SOME (x-c)
+                       )
+                       (IntVectorToList values)
+      )
+
+  fun post c values =
+    IntVector.map (fn x => x + c) values
+
+  (* ---------------------------------------------------------------- *)
+  (* ---------------------------------------------------------------- *)
+
+  fun testFixpoint04 () =
+  let
+    val s0 = node( 0, Values(IntVector.fromList [1]),
+              node( 1, Values(IntVector.fromList [0]), one))
+
+    val t1pre  = mkFunction (ref (pre 1 )) 0
+    val t1post = mkFunction (ref (post 1)) 1
+    val t1 = mkComposition t1post t1pre
+
+    val t2pre  = mkFunction (ref (pre 1 )) 1
+    val t2post = mkFunction (ref (post 1)) 0
+    val t2 = mkComposition t2post t2pre
+
+    val h = mkFixpoint (mkUnion [id,t1,t2])
+    val s = eval h s0
+
+    val o0 = node( 0, Values(IntVector.fromList [1]),
+              node( 1, Values(IntVector.fromList [0]), one))
+    val o1 = node( 0, Values(IntVector.fromList [0]),
+              node( 1, Values(IntVector.fromList [1]), one))
+    val o2 = union [o0,o1]
+  in
+    assertTrue (o2 = s)
+  end
 
   (* ---------------------------------------------------------------- *)
 
@@ -488,6 +526,7 @@ struct
       , ("testFixpoint01"    , testFixpoint01  )
       , ("testFixpoint02"    , testFixpoint02  )
       , ("testFixpoint03"    , testFixpoint03  )
+      , ("testFixpoint04"    , testFixpoint04  )
       ]
 
   (* ---------------------------------------------------------------- *)
