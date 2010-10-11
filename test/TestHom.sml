@@ -419,6 +419,40 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testFixpoint02 () =
+  let
+    val f0 = IntVector.map (fn x => if x < 4 then x + 1 else x)
+    val h0 = mkFunction (ref f0) 0
+    val h2 = mkFixpoint h0
+    val s0 = node( 0, Values (IntVector.fromList [0]), one)
+    val s1 = eval h2 s0
+    val o0 = node( 0, Values (IntVector.fromList [4]), one )
+  in
+    assertTrue( o0 = s1 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFixpoint03 () =
+  let
+    val f0 = IntVector.map (fn x => if x < 4 then x + 1 else x)
+    val h0 = mkFunction (ref f0) 0
+    val h2 = mkFixpoint h0
+    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
+    val s1 = eval h2 s0
+    val o0 = node( 0, Values (IntVector.fromList [4]), one )
+    val _ = print "\n"
+    val _ = print (toString o0)
+    val _ = print "\n"
+    val _ = print (toString s1)
+    val _ = print "\n"
+  in
+    assertTrue( o0 = s1 )
+  end
+
+
+  (* ---------------------------------------------------------------- *)
+
   fun suite () =
       Test.labelTests
       [ ("testId00"          , testId00        )
@@ -452,6 +486,8 @@ struct
       , ("testUnion05"       , testUnion05     )
       , ("testFixpoint00"    , testFixpoint00  )
       , ("testFixpoint01"    , testFixpoint01  )
+      , ("testFixpoint02"    , testFixpoint02  )
+      , ("testFixpoint03"    , testFixpoint03  )
       ]
 
   (* ---------------------------------------------------------------- *)
