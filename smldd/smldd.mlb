@@ -8,6 +8,6 @@ in
   (* Variable  : Int
   ,  Valuation : IntVector.vector
   *)
-  signature SDD
+  structure SDD
 
 end
