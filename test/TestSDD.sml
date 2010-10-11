@@ -9,6 +9,8 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  val values = IntVector.fromList
+
   fun testTerminal00 () =
     assertTrue( zero <> one )
 
@@ -839,6 +841,56 @@ struct
     assertTrue( u0 = x0 )
   end
 
+  fun testPaths00 () =
+  let
+    val s0 = flatNode( 0, values [1],
+              flatNode( 1, values [2],
+               flatNode( 2, values [0],
+                flatNode( 3, values [0],
+                 flatNode( 4, values [0], one)))))
+    val s1 = flatNode( 0, values [0],
+              flatNode( 1, values [0],
+               flatNode( 2, values [1],
+                flatNode( 3, values [1],
+                 flatNode( 4, values [1], one)))))
+    val s2 = flatNode( 0, values [0],
+              flatNode( 1, values [1],
+               flatNode( 2, values [1],
+                flatNode( 3, values [0],
+                 flatNode( 4, values [1], one)))))
+    val s3 = flatNode( 0, values [0],
+              flatNode( 1, values [1],
+               flatNode( 2, values [1],
+                flatNode( 3, values [1],
+                 flatNode( 4, values [0], one)))))
+    val s4 = flatNode( 0, values [1],
+              flatNode( 1, values [0],
+               flatNode( 2, values [0],
+                flatNode( 3, values [1],
+                 flatNode( 4, values [1], one)))))
+    val s5 = flatNode( 0, values [0],
+              flatNode( 1, values [2],
+               flatNode( 2, values [1],
+                flatNode( 3, values [0],
+                 flatNode( 4, values [0], one)))))
+    val s6 = flatNode( 0, values [1],
+              flatNode( 1, values [1],
+               flatNode( 2, values [0],
+                flatNode( 3, values [0],
+                 flatNode( 4, values [1], one)))))
+    val s7 = flatNode( 0, values [1],
+              flatNode( 1, values [1],
+               flatNode( 2, values [0],
+                flatNode( 3, values [1],
+                 flatNode( 4, values [0], one)))))
+
+    val s8 = union [s0,s1,s2,s3,s4,s5,s6,s7]
+
+    val nb = paths s8
+  in
+    assertTrue( nb = 8 )
+  end
+
   (* ---------------------------------------------------------------- *)
 
   fun suite () =
@@ -912,6 +964,7 @@ struct
       , ("testUnion05"       , testUnion05         )
       , ("testUnion06"       , testUnion06         )
       , ("testUnion07"       , testUnion07         )
+      , ("testPaths00"       , testPaths00         )
       ]
 
   (* ---------------------------------------------------------------- *)
