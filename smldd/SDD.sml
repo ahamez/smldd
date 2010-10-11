@@ -547,7 +547,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         case xs' of
           []      => zero   (* No need to cache *)
         | (x::[]) => x      (* No need to cache *)
-        | _       => lookup(Union( (*qsort*) xs, lookup ))
+        | _       => lookup(Union( (*qsort*) xs', lookup ))
       end
 
       (*------------------------------------------------------------------*)
@@ -1297,7 +1297,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       case xs' of
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
-      | _       => SDDOpCache.lookup(SDDOperations.Union( (*qsort*) xs
+      | _       => SDDOpCache.lookup(SDDOperations.Union( (*qsort*) xs'
                                                         , cacheLookup ))
     end
 
