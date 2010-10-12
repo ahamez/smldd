@@ -632,11 +632,13 @@ functor SDDFun ( structure Variable  : VARIABLE
                          []
                          tbl
 
-       fun qsort []       = []
-        |   qsort ((arcx as (vlx,_))::xs)  =
-          qsort (List.filter (fn (vly,_) => (Values.lt(!vly,!vlx))) xs )
-        @ [arcx]
-        @ qsort (List.filter (fn (vly,_) => (not (Values.lt(!vly,!vlx)))) xs)
+        fun qsort [] = []
+        |   qsort ((arcx as (x,_))::xs) =
+        let
+          val (left,right) = List.partition (fn (y,_) => Values.lt(!y,!x)) xs
+        in
+          qsort left @ [arcx] @ qsort right
+        end
 
        in
          Vector.fromList (qsort alpha')
