@@ -67,9 +67,7 @@ struct
     val s4 = node( 0, values [0], one )
     val s5 = node( 0, values [~273,17,33], one )
     val u0 = union [s0,s1,s2,s3,s4,s5]
-    val o0 = node( 0
-                     , values [~273,0,1,2,3,17,33,42,43,44,666]
-                     , one)
+    val o0 = node( 0, values [~273,0,1,2,3,17,33,42,43,44,666], one)
   in
     assertTrue( u0 = o0 )
   end
