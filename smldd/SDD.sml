@@ -8,27 +8,29 @@ sig
   type variable
   type values
 
-  datatype valuation = Nested of SDD | Values of values
+  datatype valuation    = Nested of SDD
+                        | Values of values
 
-  val zero          : SDD
-  val one           : SDD
-  val flatNode      : variable * values    * SDD -> SDD
-  val node          : variable * valuation * SDD -> SDD
+  val zero              : SDD
+  val one               : SDD
+  val flatNode          : variable * values    * SDD -> SDD
+  val node              : variable * valuation * SDD -> SDD
 
-  val union         : SDD list -> SDD
-  val intersection  : SDD list -> SDD
-  val difference    : SDD * SDD -> SDD
+  val union             : SDD list -> SDD
+  val intersection      : SDD list -> SDD
+  val difference        : SDD * SDD -> SDD
 
-  val variable      : SDD -> variable
-  val alpha         : SDD -> (valuation * SDD) list
-  val hash          : SDD -> Word32.word
-  val hashValuation : valuation -> Word32.word
-  val eqValuation   : (valuation * valuation) -> bool
+  val variable          : SDD -> variable
+  val alpha             : SDD -> (valuation * SDD) list
+  val hash              : SDD -> Word32.word
+  val hashValuation     : valuation -> Word32.word
+  val eqValuation       : (valuation * valuation) -> bool
+  val valuationToString : valuation -> string
 
-  val paths         : SDD -> int
+  val paths             : SDD -> int
 
-  val toString      : SDD -> string
-  val toDot         : SDD -> string
+  val toString          : SDD -> string
+  val toDot             : SDD -> string
 
   exception IncompatibleSDD
   exception NotYetImplemented
@@ -1387,6 +1389,15 @@ functor SDDFun ( structure Variable  : VARIABLE
                          Values(valuesy) => Values.eq( valuesx, valuesy )
                        | _               => false
                        )
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+  (* Export a valuation to a string. Needed by HomFun*)
+  fun valuationToString x =
+  case x of
+    Nested(nested) => toString nested
+  | Values(values) => Values.toString values
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
