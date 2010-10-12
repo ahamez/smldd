@@ -26,15 +26,14 @@ struct
       true
     else if (IntVector.length r) = 0 then
       false
+    else if IntVector.sub(l,0) < IntVector.sub(r,0) then
+      true
+    else if IntVector.sub(l,0) > IntVector.sub(r,0) then
+      false
     else
-      if IntVector.sub(l,0) < IntVector.sub(r,0) then
-        true
-      else if IntVector.sub(l,0) > IntVector.sub(r,0) then
-        false
-      else
-        lt( IntVectorSlice.vector( IntVectorSlice.slice (l, 1, NONE))
-          , IntVectorSlice.vector( IntVectorSlice.slice (r, 1, NONE))
-          )
+      lt( IntVectorSlice.vector( IntVectorSlice.slice (l, 1, NONE))
+        , IntVectorSlice.vector( IntVectorSlice.slice (r, 1, NONE))
+        )
 
   (*----------------------------------------------------------------------*)
   fun hash vec =
