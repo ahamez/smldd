@@ -161,6 +161,72 @@ struct
     assertTrue( u0 = s0 )
   end
 
+  fun testFlatUnion11 () =
+  let
+    val s10 = node( 0, values [0,1], one )
+    val s11 = node( 1, values [0,1], s10 )
+    val s12 = node( 0, values [2,3], one )
+    val s13 = node( 1, values [2],   s12 )
+    val s14 = node( 0, values [2],   one )
+    val s15 = node( 1, values [3],   s14 )
+    val u2 = union [s11,s13,s15]
+    val u3 = union [s13,s15,s11]
+  in
+    assertTrue( u2 = u3 )
+  end
+
+  fun testFlatUnion12 () =
+  let
+    val s0 = node( 0, values [0,1], one )
+    val s2 = node( 1, values [0,1], s0  )
+    val s1 = node( 0, values [2,3], one )
+    val s3 = node( 1, values [2,3], s1  )
+    val u0 = union [s2,s3]
+    val u1 = union [s3,s2]
+  in
+    assertTrue( u0 = u1 )
+  end
+
+  fun testFlatUnion13 () =
+  let
+    val s4 = node( 0, values [0,1], one )
+    val s5 = node( 1, values [0],   s4  )
+    val s6 = node( 0, values [1],   one )
+    val s7 = node( 1, values [0],   s6  )
+    val s8 = node( 0, values [2,3], one )
+    val s9 = node( 1, values [2,3], s8  )
+    val u1 = union [s5,s7,s9]
+    val u2 = union [s7,s5,s9]
+  in
+    assertTrue( u1 = u2 )
+  end
+
+  fun testFlatUnion14 () =
+  let
+    val s1 = node( 0, values [0],
+              node( 1, values [0],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s3 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+
+    val s5 = node( 0, values [0],
+              node( 1, values [2],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+
+    val s8 = union [s1,s3,s5]
+    val s9 = union [s3,s1,s5]
+
+  in
+    assertTrue( s8 = s9 )
+  end
+
   fun testFlatInter00 () =
   let
     val s0 = node( 0, values [1,2,3], one )
@@ -896,9 +962,9 @@ struct
   fun suite () =
       Test.labelTests
       [ ("Terminals00"       , testTerminal00      )
-      , ("Makenode00"    , testMknode00    )
-      , ("Makenode01"    , testMknode01    )
-      , ("Makenode02"    , testMknode02    )
+      , ("Makenode00"        , testMknode00    )
+      , ("Makenode01"        , testMknode01    )
+      , ("Makenode02"        , testMknode02    )
       , ("FlatUnion00"       , testFlatUnion00     )
       , ("FlatUnion01"       , testFlatUnion01     )
       , ("FlatUnion02"       , testFlatUnion02     )
@@ -910,6 +976,10 @@ struct
       , ("FlatUnion08"       , testFlatUnion08     )
       , ("FlatUnion09"       , testFlatUnion09     )
       , ("FlatUnion10"       , testFlatUnion10     )
+      , ("FlatUnion11"       , testFlatUnion11     )
+      , ("FlatUnion12"       , testFlatUnion12     )
+      , ("FlatUnion13"       , testFlatUnion13     )
+      , ("FlatUnion14"       , testFlatUnion14     )
       , ("FlatInter00"       , testFlatInter00     )
       , ("FlatInter01"       , testFlatInter01     )
       , ("FlatInter02"       , testFlatInter02     )
