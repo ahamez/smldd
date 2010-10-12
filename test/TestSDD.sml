@@ -802,6 +802,16 @@ struct
     assertTrue( d0 = o0 )
   end
 
+  fun testFlatDiff25 () =
+  let
+    val s0 = node( 0, values [0,1,2,3], one )
+    val s1 = node( 0, values [0,3], one )
+    val d0 = difference( s0, s1 )
+    val u0 = union[d0,s1]
+  in
+    assertTrue( s0 = u0 )
+  end
+
   fun testMkNode00 () =
     assertTrue( node( 0, Nested zero , one  ) = zero )
 
@@ -1018,6 +1028,7 @@ struct
       , ("testFlatDiff21"    , testFlatDiff21      )
       , ("testFlatDiff23"    , testFlatDiff23      )
       , ("testFlatDiff24"    , testFlatDiff24      )
+      , ("testFlatDiff25"    , testFlatDiff25      )
       , ("testMkNode00"      , testMkNode00        )
       , ("testMkNode01"      , testMkNode01        )
       , ("testMkNode02"      , testMkNode02        )
