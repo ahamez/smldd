@@ -613,7 +613,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                      end
                      )
                      alpha
-       in
+
+       val alpha' =
          H.foldi (fn ( succ, vls, acc) =>
                           let
                             val vl = (case !vls of
@@ -625,11 +626,20 @@ functor SDDFun ( structure Variable  : VARIABLE
                                                 xs
                                      )
                          in
-                           Vector.concat[acc,Vector.fromList[(vl,succ)]]
+                           (vl,succ)::acc
                          end
                          )
-                         (Vector.fromList [])
+                         []
                          tbl
+
+       fun qsort []       = []
+        |   qsort ((arcx as (vlx,_))::xs)  =
+          qsort (List.filter (fn (vly,_) => (Values.lt(!vly,!vlx))) xs )
+        @ [arcx]
+        @ qsort (List.filter (fn (vly,_) => (not (Values.lt(!vly,!vlx)))) xs)
+
+       in
+         Vector.fromList (qsort alpha')
        end
 
       (*------------------------------------------------------------------*)
