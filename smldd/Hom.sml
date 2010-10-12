@@ -89,6 +89,28 @@ functor HomFun ( structure SDD : SDD
 
     fun hash (Hom(_,h)) = h
 
+    fun toString (Hom(h,hsh)) =
+      (*"#"
+         ^ (Word32.toString hsh)
+         ^ " [ "
+         ^ *)
+    (case h of
+        Id          => "Id"
+      | Cons(v,s,h) => "Cons(" ^ (Variable.toString v)
+                               ^ ", "
+                               ^ (SDD.valuationToString s)
+                               ^ ", "
+                               ^ (toString (!h))
+                               ^ ")"
+      | Const(s)    => "Const(" ^ (SDD.toString s) ^ ")"
+      | Union(hs)   => String.concatWith " + " (map (fn h => toString (!h)) hs)
+      | Compo(a,b)  => (toString (!a)) ^ " o " ^ (toString (!b))
+      | Fixpoint(h) => "(" ^ (toString (!h)) ^ ")*"
+      | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
+                                 ^ (Variable.toString v) ^ ")"
+      | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
+      )
+    (*^ " ] "*)
   end (* structure Definition *)
   open Definition
 
