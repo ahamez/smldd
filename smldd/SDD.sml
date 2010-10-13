@@ -877,7 +877,77 @@ functor SDDFun ( structure Variable  : VARIABLE
         (* Hierachical node case
            Warning! Duplicate logic with the SDD(Node{...},_) case above!
         *)
-        | SDD(HNode{...},_) => raise NotYetImplemented
+        | SDD(HNode{variable=var,...},_) =>
+        let
+          val ( initial, operands ) = case map alphaNodeToList xs of
+                                        []       => raise DoNotPanic
+                                      | (y::ys)  => (y,ys)
+
+
+          val squareUnion' = squareUnion cacheLookup
+
+          fun unionHelper ( lalpha, ralpha ) =
+          let
+
+            val commonPart =
+              let
+                val commonApply' = commonApply cacheLookup unionCallback
+              in
+                commonApply'( lalpha, ralpha )
+              end
+
+            val diffPartAB =
+            let
+              val bUnion = unionCallback cacheLookup
+                                         ( map (fn (x,_)=>x) ralpha )
+            in
+              foldl (fn ((aVal,aSuccs),acc) =>
+                      let
+                        val diff = differenceCallback cacheLookup
+                                                      (aVal,bUnion)
+                      in
+                        if diff = zero then
+                          acc
+                        else
+                          ( diff, aSuccs)::acc
+                      end
+                    )
+                    []
+                    lalpha
+            end
+
+            val diffPartBA =
+            let
+              val aUnion = unionCallback cacheLookup
+                                         ( map (fn (x,_)=>x) lalpha )
+            in
+              foldl (fn ((bVal,bSuccs),acc) =>
+                      let
+                        val diff = differenceCallback cacheLookup
+                                                      (bVal,aUnion)
+                      in
+                        if diff = zero then
+                          acc
+                        else
+                          ( diff, bSuccs)::acc
+                      end
+                    )
+                    []
+                    ralpha
+            end
+
+          in
+            alphaToList
+            (
+              squareUnion' (diffPartAB @ commonPart @ diffPartBA)
+            )
+          end
+
+        in
+          nodeAlpha( var
+                   , squareUnion'(foldl unionHelper initial operands)
+                   )
+        end (* Hierarchical node case *)
 
       end (* end fun union *)
 
