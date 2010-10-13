@@ -9,6 +9,30 @@ struct
   structure Test = SMLUnit.Test
 
   (* ---------------------------------------------------------------- *)
+
+  val values = Values o IntVector.fromList
+
+  (* ---------------------------------------------------------------- *)
+  (* ---------------------------------------------------------------- *)
+
+  fun pre c values =
+    (*IntVector.map (fn x => x-c )
+      (IntVector.fromList
+        (List.filter (fn x => x >= c ) (IntVectorToList values)))*)
+  IntVector.fromList
+    (List.mapPartial (fn x => if x < c then
+                                NONE
+                              else
+                                SOME (x-c)
+                      )
+                      (IntVectorToList values)
+    )
+
+  fun post c values =
+    IntVector.map (fn x => x + c) values
+
+  (* ---------------------------------------------------------------- *)
+  (* ---------------------------------------------------------------- *)
   
   fun testId00 () =
     assertTrue( eval id one = one )
@@ -393,6 +417,62 @@ struct
 
   (* ---------------------------------------------------------------- *)
 
+  fun testUnion06 () =
+  let
+    val S0  = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+
+    val t1pre1  = mkFunction (ref (pre 1 )) 0
+    val t1pre2  = mkFunction (ref (pre 2 )) 1
+    val t1post1 = mkFunction (ref (post 1)) 2
+    val t1post2 = mkFunction (ref (post 1)) 3
+    val t1post3 = mkFunction (ref (post 1)) 4
+    val t1     = mkComposition
+                  (mkComposition t1post1 (mkComposition t1post2
+                                           (mkComposition t1post3 id)))
+                  (mkComposition t1pre1 (mkComposition t1pre2 id ))
+
+    val t2pre1  = mkFunction (ref (pre 1 )) 3
+    val t2post1 = mkFunction (ref (post 1)) 1
+    val t2     = mkComposition
+                  (mkComposition t2post1 id)
+                  (mkComposition t2pre1  id)
+
+    val t3pre1  = mkFunction (ref (pre 1 )) 4
+    val t3post1 = mkFunction (ref (post 1)) 1
+    val t3     = mkComposition
+                  (mkComposition t3post1 id)
+                  (mkComposition t3pre1  id)
+
+    val t4pre1  = mkFunction (ref (pre 1 )) 2
+    val t4post1 = mkFunction (ref (post 1)) 2
+    val t4     = mkComposition
+                  (mkComposition t4post1 id)
+                  (mkComposition t4pre1  id)
+
+    val t5pre1  = mkFunction (ref (pre 1 )) 2
+    val t5post1 = mkFunction (ref (post 1)) 0
+    val t5     = mkComposition
+                  (mkComposition t5post1 id)
+                  (mkComposition t5pre1  id)
+
+
+    val h0 = mkUnion [id,t1,t2,t3,t4,t5]
+    val s0 = eval h0 S0
+    val h1 = mkUnion [t1,t2,t3,t4,t5,id]
+    val s1 = eval h1 S0
+    val h2 = mkUnion [t1,t3,t5,t2,t4,id]
+    val s2 = eval h2 S0
+
+  in
+    assertTrue ( s0 = s1 andalso s0 = s2 )
+  end
+
+  (* ---------------------------------------------------------------- *)
+
   fun testFixpoint00 () =
   let
     val h0 = mkFixpoint id
@@ -446,23 +526,6 @@ struct
   end
 
   (* ---------------------------------------------------------------- *)
-  (* ---------------------------------------------------------------- *)
-
-  fun pre c values =
-    IntVector.fromList
-      (List.mapPartial (fn x => if x < c then
-                                  NONE
-                                else
-                                  SOME (x-c)
-                       )
-                       (IntVectorToList values)
-      )
-
-  fun post c values =
-    IntVector.map (fn x => x + c) values
-
-  (* ---------------------------------------------------------------- *)
-  (* ---------------------------------------------------------------- *)
 
   fun testFixpoint04 () =
   let
@@ -491,6 +554,101 @@ struct
     val o2 = union [o0,o1]
   in
     assertTrue (o2 = s)
+  end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFixpoint05 () =
+  let
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+
+    val t1pre1  = mkFunction (ref (pre 1 )) 0
+    val t1pre2  = mkFunction (ref (pre 2 )) 1
+    val t1post1 = mkFunction (ref (post 1)) 2
+    val t1post2 = mkFunction (ref (post 1)) 3
+    val t1post3 = mkFunction (ref (post 1)) 4
+    val t1     = mkComposition
+                  (mkComposition t1post1 (mkComposition t1post2
+                                           (mkComposition t1post3 id)))
+                  (mkComposition t1pre1 (mkComposition t1pre2 id ))
+
+    val t2pre1  = mkFunction (ref (pre 1 )) 3
+    val t2post1 = mkFunction (ref (post 1)) 1
+    val t2     = mkComposition
+                  (mkComposition t2post1 id)
+                  (mkComposition t2pre1  id)
+
+    val t3pre1  = mkFunction (ref (pre 1 )) 4
+    val t3post1 = mkFunction (ref (post 1)) 1
+    val t3     = mkComposition
+                  (mkComposition t3post1 id)
+                  (mkComposition t3pre1  id)
+
+    val t4pre1  = mkFunction (ref (pre 1 )) 2
+    val t4post1 = mkFunction (ref (post 1)) 2
+    val t4     = mkComposition
+                  (mkComposition t4post1 id)
+                  (mkComposition t4pre1  id)
+
+    val t5pre1  = mkFunction (ref (pre 1 )) 2
+    val t5post1 = mkFunction (ref (post 1)) 0
+    val t5     = mkComposition
+                  (mkComposition t5post1 id)
+                  (mkComposition t5pre1  id)
+
+
+    val h = mkFixpoint (mkUnion [t3,t2,t1,t4,t5,id])
+    (*val h = mkFixpoint (mkUnion [t1,t2,t3,t4,t5,id])*)
+    val s = eval h s0
+
+    val o0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val o1 = node( 0, values [0],
+              node( 1, values [0],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val o2 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val o3 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+    val o4 = node( 0, values [1],
+              node( 1, values [0],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val o5 = node( 0, values [0],
+              node( 1, values [2],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val o6 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val o7 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+
+    val o8 = union [o0,o1,o2,o3,o4,o5,o6,o7]
+  in
+    assertTrue (o8 = s)
   end
 
   (* ---------------------------------------------------------------- *)
@@ -526,11 +684,13 @@ struct
       , ("testUnion03"       , testUnion03     )
       , ("testUnion04"       , testUnion04     )
       , ("testUnion05"       , testUnion05     )
+      , ("testUnion06"       , testUnion06     )
       , ("testFixpoint00"    , testFixpoint00  )
       , ("testFixpoint01"    , testFixpoint01  )
       , ("testFixpoint02"    , testFixpoint02  )
       , ("testFixpoint03"    , testFixpoint03  )
       , ("testFixpoint04"    , testFixpoint04  )
+      , ("testFixpoint05"    , testFixpoint05  )
       ]
 
   (* ---------------------------------------------------------------- *)
