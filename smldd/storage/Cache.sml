@@ -74,3 +74,20 @@ functor CacheFun ( structure Operation : OPERATION )
 end (* CacheFun *)
 
 (*--------------------------------------------------------------------------*)
+
+functor NoCacheFun ( structure Operation : OPERATION )
+  : CACHE
+= struct
+
+  structure O = Operation
+
+  type operation = O.operation
+  type result    = O.result
+
+
+  fun lookup x = O.apply x
+
+end (* CacheFun2 *)
+
+
+(*--------------------------------------------------------------------------*)
