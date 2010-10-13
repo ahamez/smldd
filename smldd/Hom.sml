@@ -21,6 +21,8 @@ sig
 
   val eval            : hom -> SDD -> SDD
 
+  val toString        : hom -> string
+
   exception NotYetImplemented
   exception NestedHomOnValues
   exception FunctionHomOnNested
@@ -460,6 +462,12 @@ functor HomFun ( structure SDD : SDD
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
+
+  fun toString x = Definition.toString (!x)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
 
 end (* functor HomFun *)
 
