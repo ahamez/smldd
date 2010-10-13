@@ -805,206 +805,79 @@ functor SDDFun ( structure Variable  : VARIABLE
         | SDD(Zero,_)       => raise DoNotPanic
 
           (* Flat node case *)
-        | SDD(Node{...},_)  =>
+        | SDD(Node{variable=var,...},_)  =>
         let
-
-          (* The variable of the current level *)
-          val var = case !(hd xs) of SDD(Node{variable=v,...},_) => v
-                                   | _ => raise DoNotPanic
-
-          (* Transform the alpha of each node into :
-             (values ref,SDD list) list.
-             This type is also used as the accumulator for the foldl
-             on the list of operands, as it will be given to the
-             square union operation.
-
-             initial  : (values ref * SDD list) list
-             operands : (values ref * SDD list) list list
-          *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
                                       | (y::ys)  => (y,ys)
 
-          (* Perform the union of the alpha of two operands *)
-          (* Both aAlpha and bAlpha are empty, everything is in res *)
-          fun unionHelper ( [], ( res, []) )
-          = ( [], res )
-
-          (* No more elements in aAlpha *)
-          |   unionHelper ( [], ( res, bAlpha ))
-          = ( [], bAlpha @ res )
-
-          (* Empty intersection for a *)
-          |   unionHelper ( (aVal,aSuccs)::aAlpha, ( res, [] ))
-          = unionHelper ( aAlpha, ( [], (aVal,aSuccs)::res ) )
-
-          (* General case *)
-          |   unionHelper ( aWholeAlpha as ((aVal,aSuccs)::aAlpha)
-                          , ( res, (bArc as (bVal,bSuccs))::bAlpha ) )
-          =
-          (* Same values sets, we just need to merge the lists 
-             of successors.
-          *)
-          if aVal = bVal then
-            unionHelper ( aAlpha
-                        , ( ( aVal, aSuccs@bSuccs )::res
-                          , bAlpha
-                          )
-                        )
-          else
-          let
-            val inter = valIntersection [aVal,bVal]
-          in
-            (* Is there any common part between the two current values sets?
-               If not, we just need to store the current b -> b_succs into res
-               as a potential element of the future alpha, and move on to the
-               next values set of b's alpha.
-            *)
-            if Values.empty(!inter) then
-              unionHelper ( aWholeAlpha
-                          , ( bArc::res
-                            , bAlpha
-                            )
-                          )
-            else
-            let
-              val diff  = valDifference( aVal, inter )
-            in
-              if bVal = inter then (* No need to go further *)
-                if Values.empty (!diff) then
-                  unionHelper ( aAlpha
-                              , ( ( inter, aSuccs@bSuccs )::res
-                                , bAlpha
-                                )
-                              )
-                else
-                  unionHelper ( ( diff, aSuccs )::aAlpha
-                              , ( ( inter, aSuccs@bSuccs )::res
-                                , bAlpha
-                                )
-                              )
-              else
-              let
-                val diff2 = valDifference( bVal, inter )
-              in
-                if Values.empty (!diff) then
-                  unionHelper ( aAlpha
-                              , ( ( inter, aSuccs@bSuccs)::res
-                                , ( diff2, bSuccs)::bAlpha
-                                )
-                              )
-                else
-                  unionHelper ( (diff, aSuccs )::aAlpha
-                              , ( ( inter, aSuccs@bSuccs)::res
-                                , ( diff2, bSuccs)::bAlpha
-                                )
-                              )
-              end
-            end
-          end
-
-          val (_,tmp) = foldl unionHelper ([],initial) operands
 
           val flatSquareUnion' = flatSquareUnion cacheLookup
-          val alpha = flatSquareUnion' tmp
+
+          fun unionHelper ( lalpha, ralpha ) =
+          let
+
+            val commonPart =
+              let
+                val flatCommonApply' = flatCommonApply cacheLookup
+                                                       unionCallback
+              in
+                flatCommonApply'( lalpha, ralpha )
+              end
+
+            val diffPartAB =
+            let
+              val bUnion = valUnion( map (fn (x,_)=>x) ralpha )
+            in
+              foldl (fn ((aVal,aSuccs),acc) =>
+                      let
+                        val diff = valDifference(aVal,bUnion)
+                      in
+                        if Values.empty(!diff) then
+                          acc
+                        else
+                          ( diff, aSuccs)::acc
+                      end
+                    )
+                    []
+                    lalpha
+            end
+
+            val diffPartBA =
+            let
+              val aUnion = valUnion( map (fn (x,_)=>x) lalpha )
+            in
+              foldl (fn ((bVal,bSuccs),acc) =>
+                      let
+                        val diff = valDifference(bVal,aUnion)
+                      in
+                        if Values.empty(!diff) then
+                          acc
+                        else
+                          ( diff, bSuccs)::acc
+                      end
+                    )
+                    []
+                    ralpha
+            end
+
+          in
+            alphaToList
+            (
+              flatSquareUnion' (diffPartAB @ commonPart @ diffPartBA)
+            )
+          end
 
         in
-          flatNodeAlpha( var, alpha )
+          flatNodeAlpha( var
+                       , flatSquareUnion'(foldl unionHelper initial operands)
+                       )
         end (* Flat node case *)
 
         (* Hierachical node case
            Warning! Duplicate logic with the SDD(Node{...},_) case above!
         *)
-        | SDD(HNode{...},_) =>
-        let
-
-          (* The variable of the current level *)
-          val var = case !(hd xs) of SDD(HNode{variable=v,...},_) => v
-                                   | _ => raise DoNotPanic
-
-          (* Transform the alpha of each node into :
-             (SDD ,SDD list) list.
-             This type is also used as the accumulator for the foldl
-             on the list of operands, as it will be given to the
-             square union operation.
-
-             initial  : (SDD * SDD list) list
-             operands : (SDD * SDD list) list list
-          *)
-          val ( initial, operands ) = case map alphaNodeToList xs of
-                                        []       => raise DoNotPanic
-                                      | (y::ys)  => (y,ys)
-
-          (* Perform the union of the alpha of two operands *)
-          (* Both aAlpha and bAlpha are empty, everything is in res *)
-          fun unionHelper ( [], ( res, []) )
-          = ( [], res )
-
-          (* No more elements in aAlpha *)
-          |   unionHelper ( [], ( res, bAlpha ))
-          = ( [], bAlpha @ res )
-
-          (* Empty intersection for a *)
-          |   unionHelper ( (aVal,aSuccs)::aAlpha, ( res, [] ))
-          = unionHelper ( aAlpha, ( [], (aVal,aSuccs)::res ) )
-
-          (* General case *)
-          |   unionHelper ( aWholeAlpha as ((aVal,aSuccs)::aAlpha)
-                          , ( res, (bArc as (bVal,bSuccs))::bAlpha ) )
-          =
-          (* Same valuation, we just need to merge the lists of successors. *)
-          if aVal = bVal then
-            unionHelper ( aAlpha
-                        , ( ( aVal, aSuccs@bSuccs )::res
-                          , bAlpha
-                          )
-                        )
-          else
-          let
-            val inter = intersectionCallback cacheLookup [aVal,bVal]
-          in
-            (* Is there any common part between the two current valuations?
-               If not, we just need to store the current b -> b_succs into res
-               as a potential element of the future alpha, and move on to the
-               next valuation of b's alpha.
-            *)
-            if inter = zero then
-              unionHelper ( aWholeAlpha
-                          , ( bArc::res
-                            , bAlpha
-                            )
-                          )
-            else
-            let
-              val diff  = differenceCallback cacheLookup (aVal, inter)
-            in
-              if bVal = inter then (* No need to go further *)
-                unionHelper ( ( diff, aSuccs )::aAlpha
-                            , ( ( inter, aSuccs@bSuccs )::res
-                              , bAlpha
-                              )
-                            )
-              else
-              let
-                val diff2 = differenceCallback cacheLookup (bVal, inter)
-              in
-                unionHelper ( (diff, aSuccs )::aAlpha
-                            , ( ( inter, aSuccs@bSuccs)::res
-                              , ( diff2, bSuccs)::bAlpha
-                              )
-                            )
-              end
-            end
-          end
-
-          val (_,tmp) = foldl unionHelper ([],initial) operands
-
-          val squareUnion' = squareUnion cacheLookup
-          val alpha = squareUnion' tmp
-
-        in
-          nodeAlpha( var, alpha )
-        end (* Hierarchical node case *)
+        | SDD(HNode{...},_) => raise NotYetImplemented
 
       end (* end fun union *)
 
