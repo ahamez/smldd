@@ -6,30 +6,25 @@ struct
   open Hom
   open SDD
   open SMLUnit.Assert
+  structure SV = SortedVector
   structure Test = SMLUnit.Test
 
   (* ---------------------------------------------------------------- *)
 
-  val values = Values o IntVector.fromList
+  val values = Values o SV.fromList
 
   (* ---------------------------------------------------------------- *)
   (* ---------------------------------------------------------------- *)
 
   fun pre c values =
-    (*IntVector.map (fn x => x-c )
-      (IntVector.fromList
-        (List.filter (fn x => x >= c ) (IntVectorToList values)))*)
-  IntVector.fromList
-    (List.mapPartial (fn x => if x < c then
-                                NONE
-                              else
-                                SOME (x-c)
-                      )
-                      (IntVectorToList values)
-    )
+  let
+    fun f x = if x < c then NONE else SOME (x-c)
+  in
+    SV.mapPartial f values
+  end
 
   fun post c values =
-    IntVector.map (fn x => x + c) values
+    SV.map (fn x => x + c) values
 
   (* ---------------------------------------------------------------- *)
   (* ---------------------------------------------------------------- *)
@@ -41,7 +36,7 @@ struct
 
   fun testId01 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0,1], one )
+    val s0 = node( 0, values [0,1], one )
   in
     assertTrue( eval id s0 = s0 )
   end
@@ -50,7 +45,7 @@ struct
 
   fun testCons00 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
     val x1 = node( 0, Nested s0, one )
     val h0 = mkCons 1 (Nested s0) id
     val c0 = eval h0 x1
@@ -63,7 +58,7 @@ struct
 
   fun testCons01 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
+    val s0 = node( 0, values [0], one )
     val x1 = node( 0, Nested s0, one )
     val h0 = mkCons 1 (Nested s0) id
     val c0 = eval h0 x1
@@ -76,8 +71,8 @@ struct
 
   fun testCons02 () =
   let
-    val s0 = flatNode( 0, IntVector.fromList[0], one )
-    val h0 = mkCons 0 (Values (IntVector.fromList [0])) id
+    val s0 = node( 0, values[0], one )
+    val h0 = mkCons 0 (values [0]) id
     val c0 = eval h0 one
   in
     assertTrue( c0 = s0 )
@@ -87,11 +82,11 @@ struct
 
   fun testFunction00 () =
   let
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
-    val f0 = ref (IntVector.map (fn x => x + 1))
+    val s0 = node( 0, values[0,1,2,3], one )
+    val f0 = ref (SV.map (fn x => x + 1))
     val h0 = mkFunction f0 0
     val s1 = eval h0 s0
-    val o0 = node( 0, Values (IntVector.fromList[1,2,3,4]), one )
+    val o0 = node( 0, values[1,2,3,4], one )
   in
     assertTrue( s1 = o0 )
   end
@@ -100,7 +95,7 @@ struct
 
   fun testFunction01 () =
   let
-    val f0 = ref (IntVector.map (fn x => x + 1))
+    val f0 = ref (SV.map (fn x => x + 1))
     val h0 = mkFunction f0 0
     val s0 = eval h0 SDD.zero
   in
@@ -111,8 +106,8 @@ struct
 
   fun testFunction02 () =
   let
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
-    val f0 = ref (IntVector.map (fn x => x + 1))
+    val s0 = node( 0, values[0,1,2,3], one )
+    val f0 = ref (SV.map (fn x => x + 1))
     val h0 = mkFunction f0 1
     val s1 = eval h0 s0
   in
@@ -124,19 +119,17 @@ struct
   fun testFunction03 () =
   let
 
-    fun f0 xs = IntVector.fromList
-                 (List.mapPartial (fn x => if x > 2 then
-                                             SOME x
-                                           else
-                                             NONE
-                                  )
-                                  (IntVectorToList xs)
-                 )
+    fun f0 xs =  SV.mapPartial (fn x => if x > 2 then
+                                          SOME x
+                                        else
+                                          NONE
+                               )
+                               xs
 
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3,4]), one )
+    val s0 = node( 0, values[0,1,2,3,4], one )
     val h0 = mkFunction (ref f0) 0
     val s1 = eval h0 s0
-    val o0 = node( 0, Values (IntVector.fromList[3,4]), one )
+    val o0 = node( 0, values[3,4], one )
   in
     assertTrue( s1 = o0 )
   end
@@ -145,10 +138,10 @@ struct
 
   fun testFunction04 () =
   let
-    fun f0 _ = IntVector.fromList []
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
-    val h0 = mkFunction (ref f0) 0
-    val s1 = eval h0 s0
+    fun f0 _ = SV.fromList []
+    val s0   = node( 0, values[0,1,2,3], one )
+    val h0   = mkFunction (ref f0) 0
+    val s1   = eval h0 s0
   in
     assertTrue( s1 = SDD.zero )
   end
@@ -157,16 +150,16 @@ struct
 
   fun testFunction05 () =
   let
-    fun f0 _ = IntVector.fromList [1,2,3]
-    val s0 = node( 0, Values (IntVector.fromList[0]), one )
-    val s1 = node( 1, Values (IntVector.fromList[0]), s0  )
-    val s2 = node( 0, Values (IntVector.fromList[1]), one )
-    val s3 = node( 1, Values (IntVector.fromList[1]), s2  )
-    val s4 = union [s3,s1]
-    val h0 = mkFunction (ref f0) 0
-    val s5 = eval h0 s4
-    val o0 = node( 0, Values (IntVector.fromList[1,2,3]), one )
-    val o1 = node( 1, Values (IntVector.fromList[0,1])  , o0  )
+    fun f0 _ = SV.fromList [1,2,3]
+    val s0   = node( 0, values[0], one )
+    val s1   = node( 1, values[0], s0  )
+    val s2   = node( 0, values[1], one )
+    val s3   = node( 1, values[1], s2  )
+    val s4   = union [s3,s1]
+    val h0   = mkFunction (ref f0) 0
+    val s5   = eval h0 s4
+    val o0   = node( 0, values[1,2,3], one )
+    val o1   = node( 1, values[0,1]  , o0  )
   in
     assertTrue( s5 = o1 )
   end
@@ -175,13 +168,13 @@ struct
 
   fun testFunction06 () =
   let
-    val f0 = IntVector.map (fn x => x+1)
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
-    val s1 = node( 1, Values (IntVector.fromList[0,1,2,3]), s0 )
+    val f0 = SV.map (fn x => x+1)
+    val s0 = node( 0, values[0,1,2,3], one )
+    val s1 = node( 1, values[0,1,2,3], s0 )
     val h0 = mkFunction (ref f0) 0
     val s2 = eval h0 s1
-    val o0 = node( 0, Values (IntVector.fromList[1,2,3,4]), one )
-    val o1 = node( 1, Values (IntVector.fromList[0,1,2,3]), o0 )
+    val o0 = node( 0, values[1,2,3,4], one )
+    val o1 = node( 1, values[0,1,2,3], o0 )
   in
     assertTrue( s2 = o1 )
   end
@@ -190,11 +183,11 @@ struct
 
   fun testFunction07 () =
   let
-    fun f0 _ = IntVector.fromList []
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
-    val s1 = node( 1, Values (IntVector.fromList[0,1,2,3]), s0 )
-    val h0 = mkFunction (ref f0) 0
-    val s2 = eval h0 s1
+    fun f0 _ = SV.fromList []
+    val s0   = node( 0, (values[0,1,2,3]), one )
+    val s1   = node( 1, (values[0,1,2,3]), s0 )
+    val h0   = mkFunction (ref f0) 0
+    val s2   = eval h0 s1
   in
     assertTrue( s2 = zero )
   end
@@ -204,7 +197,7 @@ struct
   fun testFunction08 () =
   let
     fun f0 x = x
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
+    val s0 = node( 0, (values[0,1,2,3]), one )
     val x0 = node( 0, Nested s0, one )
     val h0 = mkFunction (ref f0) 0
   in
@@ -228,11 +221,11 @@ struct
 
   fun testFunction10 () =
   let
-    fun f0 _ = IntVector.fromList []
-    val s0 = node( 0, Values (IntVector.fromList[0,1,2,3]), one )
-    val s1 = node( 1, Values (IntVector.fromList[0,1,2,3]), s0 )
-    val h0 = mkFunction (ref f0) 1
-    val s2 = eval h0 s1
+    fun f0 _ = SV.fromList []
+    val s0   = node( 0, (values[0,1,2,3]), one )
+    val s1   = node( 1, (values[0,1,2,3]), s0 )
+    val h0   = mkFunction (ref f0) 1
+    val s2   = eval h0 s1
   in
     assertTrue( s2 = zero )
   end
@@ -241,7 +234,7 @@ struct
 
   fun testNested00 () =
   let
-    val s0 = node( 0, Values (IntVector.fromList[0]), one)
+    val s0 = node( 0, (values[0]), one)
     val x0 = node( 0, Nested s0, one )
     val h0 = mkNested id 0
     val r0 = eval h0 x0
@@ -262,13 +255,13 @@ struct
 
   fun testNested02 () =
   let
-    val f0 = IntVector.map (fn x => x+1)
+    val f0 = SV.map (fn x => x+1)
     val h0 = mkFunction (ref f0) 0
     val h1 = mkNested h0 0
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
+    val s0 = node( 0, (values [0,1,2]), one )
     val x0 = node( 0, Nested s0, one )
     val x1 = eval h1 x0
-    val o0 = node( 0, Values (IntVector.fromList [1,2,3]), one )
+    val o0 = node( 0, (values [1,2,3]), one )
     val y0 = node( 0, Nested o0, one )
 
   in
@@ -282,12 +275,12 @@ struct
     val f0 = IntVector.map (fn x => x+1)
     val h0 = mkFunction (ref f0) 0
     val h1 = mkNested h0 0
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
+    val s0 = node( 0, (values [0,1,2]), one )
     val x0 = node( 0, Nested s0, one )
     val x1 = node( 1, Nested s0, x0 )
     val x2 = eval h1 x1
-    val o0 = node( 0, Values (IntVector.fromList [1,2,3]), one )
-    val o1 = node( 0, Values (IntVector.fromList [0,1,2]), one )
+    val o0 = node( 0, (values [1,2,3]), one )
+    val o1 = node( 0, (values [0,1,2]), one )
     val y0 = node( 0, Nested o0, one )
     val y1 = node( 1, Nested o1, y0 )
   in
@@ -298,13 +291,13 @@ struct
 
   fun testNested04 () =
   let
-    fun f0 _ = IntVector.fromList []
-    val h0 = mkFunction (ref f0) 0
-    val h1 = mkNested h0 0
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
-    val x0 = node( 0, Nested s0, one )
-    val x1 = node( 1, Nested s0, x0 )
-    val x2 = eval h1 x1
+    fun f0 _ = SV.fromList []
+    val h0   = mkFunction (ref f0) 0
+    val h1   = mkNested h0 0
+    val s0   = node( 0, (values [0,1,2]), one )
+    val x0   = node( 0, Nested s0, one )
+    val x1   = node( 1, Nested s0, x0 )
+    val x2   = eval h1 x1
   in
     assertTrue( x2 = zero )
   end
@@ -313,13 +306,13 @@ struct
 
   fun testNested05 () =
   let
-    fun f0 _ = IntVector.fromList []
-    val h0 = mkFunction (ref f0) 0
-    val h1 = mkNested h0 1
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
-    val x0 = node( 0, Nested s0, one )
-    val x1 = node( 1, Nested s0, x0 )
-    val x2 = eval h1 x1
+    fun f0 _ = SV.fromList []
+    val h0   = mkFunction (ref f0) 0
+    val h1   = mkNested h0 1
+    val s0   = node( 0, (values [0,1,2]), one )
+    val x0   = node( 0, Nested s0, one )
+    val x1   = node( 1, Nested s0, x0 )
+    val x2   = eval h1 x1
   in
     assertTrue( x2 = zero )
   end
@@ -328,13 +321,13 @@ struct
 
   fun testNested06 () =
   let
-    fun f0 _ = IntVector.fromList []
-    val h0 = mkFunction (ref f0) 0
-    val h1 = mkNested h0 2
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one )
-    val x0 = node( 0, Nested s0, one )
-    val x1 = node( 1, Nested s0, x0 )
-    val x2 = eval h1 x1
+    fun f0 _ = SV.fromList []
+    val h0   = mkFunction (ref f0) 0
+    val h1   = mkNested h0 2
+    val s0   = node( 0, (values [0,1,2]), one )
+    val x0   = node( 0, Nested s0, one )
+    val x1   = node( 1, Nested s0, x0 )
+    val x2   = eval h1 x1
   in
     assertTrue( x2 = x1 )
   end
@@ -344,7 +337,7 @@ struct
   fun testUnion00 () =
   let
     val h0 = mkUnion [id]
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
+    val s0 = node( 0, (values [0,1,2]), one)
     val s1 = eval h0 s0
   in
     assertTrue( s1 = s0 )
@@ -355,7 +348,7 @@ struct
   fun testUnion01 () =
   let
     val h0 = mkUnion [id,id,id]
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
+    val s0 = node( 0, (values [0,1,2]), one)
     val s1 = eval h0 s0
   in
     assertTrue( s1 = s0 )
@@ -368,9 +361,9 @@ struct
     val f0 = IntVector.map (fn x => x+1)
     val f1 = IntVector.map (fn x => x+2)
     val h0 = mkUnion [ mkFunction (ref f0) 0, mkFunction (ref f1) 0]
-    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h0 s0
-    val o0 = node( 0, Values (IntVector.fromList [1,2,3]), one )
+    val o0 = node( 0, (values [1,2,3]), one )
   in
     assertTrue( s1 = o0 )
   end
@@ -382,9 +375,9 @@ struct
     val f0 = IntVector.map (fn x => x+1)
     val f1 = IntVector.map (fn x => x+2)
     val h0 = mkUnion [ mkFunction (ref f0) 0, mkFunction (ref f1) 0, id ]
-    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h0 s0
-    val o0 = node( 0, Values (IntVector.fromList [0,1,2,3]), one )
+    val o0 = node( 0, (values [0,1,2,3]), one )
   in
     assertTrue( s1 = o0 )
   end
@@ -395,9 +388,9 @@ struct
   let
     val f0 = IntVector.map (fn x => x+1)
     val h0 = mkUnion [ mkFunction (ref f0) 0, mkFunction (ref f0) 0 ]
-    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h0 s0
-    val o0 = node( 0, Values (IntVector.fromList [1,2]), one )
+    val o0 = node( 0, (values [1,2]), one )
   in
     assertTrue( s1 = o0 )
   end
@@ -408,9 +401,9 @@ struct
   let
     val r0 = ref (IntVector.map (fn x => x+1))
     val h0 = mkUnion [ mkFunction r0 0, mkFunction r0 0 ]
-    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h0 s0
-    val o0 = node( 0, Values (IntVector.fromList [1,2]), one )
+    val o0 = node( 0, (values [1,2]), one )
   in
     assertTrue( s1 = o0 )
   end
@@ -476,7 +469,7 @@ struct
   fun testFixpoint00 () =
   let
     val h0 = mkFixpoint id
-    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h0 s0
   in
     assertTrue( s0 = s1 )
@@ -490,9 +483,9 @@ struct
     val h0 = mkFunction (ref f0) 0
     val h1 = mkUnion [h0,id]
     val h2 = mkFixpoint h1
-    val s0 = node( 0, Values (IntVector.fromList [0,1]), one)
+    val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h2 s0
-    val o0 = node( 0, Values (IntVector.fromList [0,1,2,3,4]), one )
+    val o0 = node( 0, (values [0,1,2,3,4]), one )
   in
     assertTrue( o0 = s1 )
   end
@@ -504,9 +497,9 @@ struct
     val f0 = IntVector.map (fn x => if x < 4 then x + 1 else x)
     val h0 = mkFunction (ref f0) 0
     val h2 = mkFixpoint h0
-    val s0 = node( 0, Values (IntVector.fromList [0]), one)
+    val s0 = node( 0, (values [0]), one)
     val s1 = eval h2 s0
-    val o0 = node( 0, Values (IntVector.fromList [4]), one )
+    val o0 = node( 0, (values [4]), one )
   in
     assertTrue( o0 = s1 )
   end
@@ -515,12 +508,12 @@ struct
 
   fun testFixpoint03 () =
   let
-    val f0 = IntVector.map (fn x => if x < 4 then x + 1 else x)
+    val f0 = SortedVector.map (fn x => if x < 4 then x + 1 else x)
     val h0 = mkFunction (ref f0) 0
     val h2 = mkFixpoint h0
-    val s0 = node( 0, Values (IntVector.fromList [0,1,2]), one)
+    val s0 = node( 0, values [0,1,2], one)
     val s1 = eval h2 s0
-    val o0 = node( 0, Values (IntVector.fromList [4]), one )
+    val o0 = node( 0, values [4], one )
   in
     assertTrue( o0 = s1 )
   end
@@ -529,8 +522,8 @@ struct
 
   fun testFixpoint04 () =
   let
-    val s0 = node( 0, Values(IntVector.fromList [1]),
-              node( 1, Values(IntVector.fromList [0]), one))
+    val s0 = node( 0, values [1],
+              node( 1, values [0], one))
 
     val t1pre  = mkFunction (ref (pre 1 )) 0
     val t1post = mkFunction (ref (post 1)) 1
@@ -547,10 +540,10 @@ struct
     val h = mkFixpoint (mkUnion [id,t1,t2])
     val s = eval h s0
 
-    val o0 = node( 0, Values(IntVector.fromList [1]),
-              node( 1, Values(IntVector.fromList [0]), one))
-    val o1 = node( 0, Values(IntVector.fromList [0]),
-              node( 1, Values(IntVector.fromList [1]), one))
+    val o0 = node( 0, values [1],
+              node( 1, values [0], one))
+    val o1 = node( 0, values [0],
+              node( 1, values [1], one))
     val o2 = union [o0,o1]
   in
     assertTrue (o2 = s)
