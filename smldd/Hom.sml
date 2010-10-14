@@ -23,6 +23,8 @@ sig
 
   val toString        : hom -> string
 
+  val stats           : unit -> string
+
   exception NotYetImplemented
   exception NestedHomOnValues
   exception FunctionHomOnNested
@@ -239,6 +241,8 @@ functor HomFun ( structure SDD : SDD
   structure Evaluation (* : OPERATION *) =
   struct
 
+    val name = "Hom"
+
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
@@ -435,11 +439,10 @@ functor HomFun ( structure SDD : SDD
 
   end (* structure Evaluation *)
 
-  structure cache = CacheFun(structure Operation = Evaluation)
-
-  val cacheLookup = cache.lookup
-
   in (* local Homomorphisms evaluation *)
+
+  structure cache = CacheFun(structure Operation = Evaluation)
+  val cacheLookup = cache.lookup
 
   (* Evaluate an homomorphism on an SDD.
      Warning! Duplicate logic with Evaluation.evalCallback!
@@ -468,6 +471,10 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  fun stats () = cache.stats()
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
 
 end (* functor HomFun *)
 

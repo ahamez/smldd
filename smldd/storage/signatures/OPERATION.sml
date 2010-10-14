@@ -9,4 +9,6 @@ sig
 
   val apply         : operation -> result
 
+  val name          : string
+
 end

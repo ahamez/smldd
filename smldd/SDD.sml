@@ -32,6 +32,8 @@ sig
   val toString          : SDD -> string
   val toDot             : SDD -> string
 
+  val stats             : unit -> string
+
   exception IncompatibleSDD
   exception NotYetImplemented
   exception IsNotANode
@@ -299,6 +301,8 @@ functor SDDFun ( structure Variable  : VARIABLE
     structure ValuesOperations (* : OPERATION *) =
     struct
 
+      val name = "Values"
+
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
@@ -374,13 +378,10 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     end (* end structure ValuesOperations *)
 
-    (*----------------------------------------------------------------------*)
-    (*----------------------------------------------------------------------*)
+  in (* local values manipulations *)
 
     (* Cache of operations on valuess *)
     structure ValOpCache = CacheFun(structure Operation = ValuesOperations)
-
-  in (* local values manipulations *)
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
@@ -412,6 +413,8 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
 
+    val stats = ValOpCache.stats
+
   end (* local valuess manipulations *)
 
   (*----------------------------------------------------------------------*)
@@ -437,6 +440,8 @@ functor SDDFun ( structure Variable  : VARIABLE
     (* Operations to manipulate SDD. Used by the cache. *)
     structure SDDOperations (* : OPERATION *) =
     struct
+
+      val name = "SDD"
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -1239,18 +1244,16 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
+
     end (* end struct SDDOperations *)
 
-    (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
+  in (* local SDD manipulations *)
 
     (* Cache of operations on SDDs *)
     structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
 
     (* Let operations in Op call the cache *)
     val cacheLookup = SDDOpCache.lookup
-
-  in (* local SDD manipulations *)
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
@@ -1454,6 +1457,13 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
+
+  fun stats () =
+   (ValOpCache.stats()) ^ (SDDOpCache.stats())
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
 
 end (* end functor SDDFun *)
 
