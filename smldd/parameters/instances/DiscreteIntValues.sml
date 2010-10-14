@@ -1,8 +1,63 @@
-structure DiscreteIntValues : VALUES =
+structure SortedVector =
 struct
 
   (*----------------------------------------------------------------------*)
   type t  = IntVector.vector
+
+  (*----------------------------------------------------------------------*)
+
+  local
+
+    fun insertHelper [] x             = [x]
+    |   insertHelper (L as (l::ls)) x =
+    if x = l then
+      L
+    else if x < l then
+      x::L
+    else
+      l::(insertHelper ls x)
+
+  in
+
+    fun insert vec x =
+    let
+      val L = IntVectorToList vec
+    in
+      IntVector.fromList (insertHelper L x)
+    end
+
+    fun fromList [] = IntVector.fromList []
+    |   fromList xs =
+      IntVector.fromList (foldl (fn (x,l) => insertHelper l x) [] xs)
+
+    fun map f vec =
+    if IntVector.length vec = 0 then
+      vec
+    else
+    let
+      val L = IntVectorToList vec
+    in
+      IntVector.fromList( foldl (fn (x,xs) => insertHelper xs (f x)) [] L )
+    end
+
+    fun mapPartial f vec =
+    if IntVector.length vec = 0 then
+      vec
+    else
+    let
+      val L = IntVectorToList vec
+    in
+      IntVector.fromList( foldl (fn (x,xs) =>
+                                  case f x of
+                                    NONE    => xs
+                                  | SOME x' => insertHelper xs x'
+                                )
+                                []
+                                L
+                        )
+    end
+
+  end
 
   (*----------------------------------------------------------------------*)
   fun eq (l,r) =
@@ -46,7 +101,7 @@ struct
   (*----------------------------------------------------------------------*)
   fun toString vec =
   let
-    val l = map (fn x => Int32.toString x ) (IntVectorToList vec)
+    val l = List.map (fn x => Int32.toString x ) (IntVectorToList vec)
     val s = String.concatWith "," l
   in
     "{" ^ s ^ "}"
@@ -117,4 +172,16 @@ struct
 
   (*----------------------------------------------------------------------*)
 
+end (* SortedVectorSet *)
+
+(* ------------------------------------------------------------------------ *)
+(* ------------------------------------------------------------------------ *)
+
+structure DiscreteIntValues : VALUES =
+struct
+  open SortedVector
 end (* DiscreteIntValues *)
+
+(* ------------------------------------------------------------------------ *)
+(* ------------------------------------------------------------------------ *)
+
