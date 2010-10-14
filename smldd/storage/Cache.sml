@@ -33,6 +33,9 @@ functor CacheFun ( structure Operation : OPERATION )
   val miss = ref 0
   val name = O.name
 
+  val cache : ( operation , (wresult * int ref) ) H.hash_table
+    = H.mkTable ( O.hash , O.eq ) ( 1000000, entry_not_found )
+
   fun stats () =
   let
     val total = (!miss) + (!hits)
@@ -41,6 +44,9 @@ functor CacheFun ( structure Operation : OPERATION )
     val rtotal = Real.fromInt(total)
     val hrate = rhits / rtotal * 100.0
     val mrate = rmiss / rtotal * 100.0
+    val buckets = H.bucketSizes cache
+    val bucketMean = Real.fromInt((foldl (fn (x,acc) => x + acc) 0 buckets))
+                     / Real.fromInt((length buckets))
   in
       "\n----------------------------\n"
     ^ "Cache " ^ name ^ "\n"
@@ -49,11 +55,11 @@ functor CacheFun ( structure Operation : OPERATION )
     ^ "total : " ^ (Int.toString (total)) ^ "\n"
     ^ "hits ratio : " ^ (Real.fmt (StringCvt.FIX (SOME 2)) hrate) ^"% | "
     ^ "miss ratio : " ^ (Real.fmt (StringCvt.FIX (SOME 2)) mrate) ^"%"
+    ^ "\n\n"
+    ^ "nb buckets : " ^ (Int.toString (length buckets)) ^ " | "
+    ^ "bucketMean : " ^ (Real.fmt (StringCvt.FIX (SOME 5)) bucketMean)
     ^ "\n"
   end
-
-  val cache : ( operation , (wresult * int ref) ) H.hash_table
-    = H.mkTable ( O.hash , O.eq ) ( 1000000, entry_not_found )
 
   fun lookup x =
   let
