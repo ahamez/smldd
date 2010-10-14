@@ -87,7 +87,7 @@ functor NoCacheFun ( structure Operation : OPERATION )
 
   fun lookup x = O.apply x
 
-end (* CacheFun2 *)
+end (* NoCacheFun *)
 
 
 (*--------------------------------------------------------------------------*)
