@@ -63,99 +63,57 @@ struct
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
+  fun unionHelper (L,R) =
+    case L of
+      []      => R
+    | (l::ls) =>
+        case R of
+          []      => L
+        | (r::rs) => if l > r then
+                       r::(unionHelper(L,rs))
+                     else if l < r then
+                       l::(unionHelper(ls,R))
+                     else
+                       l::(unionHelper(ls,rs))
+
   fun union (s1,s2) =
-    if IntVector.length s1 = 0 then
-      s2
-    else if IntVector.length s2 = 0 then
-      s1
-    else
-      let
-        val s1_head = IntVector.sub( s1, 0)
-        val s2_head = IntVector.sub( s2, 0)
-      in
-        if s1_head > s2_head then
-          IntVector.concat( [ IntVector.fromList([s2_head])
-                         , union( s1, IntVectorSlice.vector(
-                                        IntVectorSlice.slice( s2, 1, NONE))
-                                )
-                         ]
-                       )
-        else if s1_head < s2_head then
-          IntVector.concat( [ IntVector.fromList([s1_head])
-                         , union( s2, IntVectorSlice.vector(
-                                        IntVectorSlice.slice( s1, 1, NONE))
-                                )
-                         ]
-                       )
-        else
-          IntVector.concat( [ IntVector.fromList([s1_head])
-                         , union( IntVectorSlice.vector(
-                                    IntVectorSlice.slice( s1, 1, NONE))
-                                , IntVectorSlice.vector(
-                                    IntVectorSlice.slice( s2, 1, NONE))
-                                )
-                         ]
-                       )
-      end
+    IntVector.fromList (unionHelper (IntVectorToList s1, IntVectorToList s2))
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
+  fun interHelper (L,R) =
+    case L of
+      []      => []
+    | (l::ls) =>
+        case R of
+          []      => []
+        | (r::rs) => if l = r then
+                       r::(interHelper(ls,rs))
+                     else if l < r then
+                       interHelper(ls,R)
+                     else
+                       interHelper(L,rs)
+
   fun intersection (s1,s2) =
-    if IntVector.length s1 = 0 then
-      s1
-    else if IntVector.length s2 = 0 then
-      s2
-    else
-      let
-        val s1_head = IntVector.sub( s1, 0)
-        val s2_head = IntVector.sub( s2, 0)
-      in
-        if s1_head = s2_head then
-          IntVector.concat( [ IntVector.fromList([s1_head])
-                         , intersection( IntVectorSlice.vector(
-                                          IntVectorSlice.slice( s1, 1, NONE))
-                                       , IntVectorSlice.vector(
-                                          IntVectorSlice.slice( s2, 1, NONE))
-                                       )
-                         ]
-                       )
-        else if s1_head < s2_head then
-          intersection( s2, IntVectorSlice.vector(
-                              IntVectorSlice.slice( s1, 1, NONE))
-                      )
-        else
-          intersection( s1, IntVectorSlice.vector(
-                              IntVectorSlice.slice( s2, 1, NONE))
-                      )
-      end
+    IntVector.fromList (interHelper (IntVectorToList s1, IntVectorToList s2))
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
+  fun diffHelper (L,R) =
+    case L of
+      []      => []
+    | (l::ls) =>
+        case R of
+          []      => L
+        | (r::rs) => if l = r then
+                       diffHelper(ls,rs)
+                     else if l < r then
+                       l::(diffHelper(ls,R))
+                     else
+                       diffHelper(L,rs)
+
   fun difference (s1,s2) =
-    if IntVector.length s1 = 0 orelse IntVector.length s2 = 0 then
-      s1
-    else
-      let
-        val s1_head = IntVector.sub( s1, 0)
-        val s2_head = IntVector.sub( s2, 0)
-      in
-        if s1_head = s2_head then
-          difference( IntVectorSlice.vector(IntVectorSlice.slice(s1,1,NONE))
-                    , IntVectorSlice.vector(IntVectorSlice.slice(s2,1,NONE))
-                    )
-        else if s1_head < s2_head then
-          IntVector.concat( [ IntVector.fromList([s1_head])
-                         , difference( IntVectorSlice.vector(
-                                        IntVectorSlice.slice( s1, 1, NONE))
-                                     , s2
-                                     )
-                         ]
-                       )
-        else
-          difference( s1, IntVectorSlice.vector(
-                            IntVectorSlice.slice( s2, 1, NONE))
-                    )
-      end
+    IntVector.fromList (diffHelper (IntVectorToList s1, IntVectorToList s2))
 
   (*----------------------------------------------------------------------*)
 
