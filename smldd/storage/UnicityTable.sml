@@ -69,7 +69,7 @@ functor UnicityTableFun ( structure Data : DATA )
       case H.find values_table wrvalues of
         SOME v  =>  valOf(W.get v)
       | NONE    =>  ( H.insert values_table (wrvalues,wrvalues);
-                      valOf( W.get wrvalues )
+                      rvalues
                     )
     end
 

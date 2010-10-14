@@ -87,11 +87,11 @@ functor CacheFun ( structure Operation : OPERATION )
 
     fun store x =
       let
-        val res  = O.apply x
-        val wres = W.new res
+        val res   = O.apply x
+        val wres  = W.new res
+        val _     = H.insert cache ( x , (wres,ref 0) );
       in
-        H.insert cache ( x , (wres,ref 0) );
-        valOf( W.get wres )
+        res
       end
   in
 
