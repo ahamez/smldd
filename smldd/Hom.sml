@@ -63,7 +63,7 @@ functor HomFun ( structure SDD : SDD
   structure Definition =
   struct
 
-    datatype t = Hom of ( hom * Word32.word )
+    datatype t = Hom of ( hom * Hash.t )
     and hom    = Id
                | Cons     of ( variable * valuation * t ref )
                | Const    of SDD
@@ -95,7 +95,7 @@ functor HomFun ( structure SDD : SDD
 
     fun toString (Hom(h,hsh)) =
       (*"#"
-         ^ (Word32.toString hsh)
+         ^ (H.toString hsh)
          ^ " [ "
          ^ *)
     (case h of
@@ -122,8 +122,10 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
 
   type hom     = Definition.t ref
+
   structure UT = UnicityTableFun( structure Data = Definition )
-  structure H  = HashTable
+  structure H  = Hash
+  structure HT = HashTable
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -135,8 +137,8 @@ functor HomFun ( structure SDD : SDD
 
   fun mkCons var vl next =
   let
-    val hash = Word32.xorb( Variable.hash var
-                 , Word32.xorb( SDD.hashValuation vl, hash (!next) ) )
+    val hash = H.hashCombine( Variable.hash var
+                 , H.hashCombine( SDD.hashValuation vl, hash (!next) ) )
   in
     UT.unify( Hom( Cons(var,vl,next), hash ))
   end
@@ -146,7 +148,7 @@ functor HomFun ( structure SDD : SDD
 
   fun mkConst sdd =
   let
-    val hash = Word32.xorb( SDD.hash sdd, Word32.fromInt 149199441 )
+    val hash = H.hashCombine( SDD.hash sdd, H.const 149199441 )
   in
     UT.unify( Hom( Const(sdd), hash ))
   end
@@ -158,7 +160,7 @@ functor HomFun ( structure SDD : SDD
   if h = id then
     id
   else
-    UT.unify( Hom( Nested(h,vr), Word32.xorb(hash (!h), Variable.hash vr ) ) )
+    UT.unify( Hom( Nested(h,vr), H.hashCombine(hash (!h), Variable.hash vr )))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -170,28 +172,28 @@ functor HomFun ( structure SDD : SDD
   | _     =>
     let
 
-      val locals : (( variable, hom list ref ) H.hash_table) ref
-          = ref (H.mkTable( fn x => Variable.hash x , Variable.eq )
+      val locals : (( variable, hom list ref ) HT.hash_table) ref
+          = ref (HT.mkTable( fn x => Variable.hash x , Variable.eq )
                           ( 10000, DoNotPanic ))
 
       fun unionHelper ( h, operands ) =
       case !h of
         Hom( Union(ys), _ )     => (foldl unionHelper [] ys) @ operands
       | Hom( Nested(h,var), _ ) =>
-        (case H.find (!locals) var of
-          NONE       => H.insert (!locals) ( var, ref [h] )
+        (case HT.find (!locals) var of
+          NONE       => HT.insert (!locals) ( var, ref [h] )
         | SOME hList => hList := h::(!hList);
         operands
         )
       | _                       => h::operands
 
       val unionLocals = map (fn (var,xs) => mkNested (mkUnion (!xs)) var)
-                            (H.listItemsi(!locals))
+                            (HT.listItemsi(!locals))
 
       val operands = (foldl unionHelper [] xs) @ unionLocals
 
-      val unionHash = foldl (fn (x,acc) => Word32.xorb(hash (!x), acc))
-                            (Word32.fromInt 16564717)
+      val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                            (H.const 16564717)
                             operands
     in
       UT.unify( Hom( Union(operands), unionHash ) )
@@ -207,8 +209,8 @@ functor HomFun ( structure SDD : SDD
     x
   else
   let
-    val hsh = Word32.xorb( Word32.fromInt 539351353
-                  , Word32.xorb( hash (!x), hash(!y) ) )
+    val hsh = H.hashCombine( H.const 539351353
+                  , H.hashCombine( hash (!x), hash(!y) ) )
   in
     UT.unify( Hom( Compo( x, y ), hsh ) )
   end
@@ -221,14 +223,14 @@ functor HomFun ( structure SDD : SDD
     Hom( Id, _ )          => x
   | Hom( Fixpoint(_), _ ) => x
   | _ => UT.unify( Hom( Fixpoint(x)
-                      , Word32.xorb(hash (!x), Word32.fromInt 5959527)))
+                      , H.hashCombine(hash (!x), H.const 5959527)))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   fun mkFunction f var =
   let
-    val hsh = Word32.xorb( Word32.fromInt 7837892, Variable.hash var )
+    val hsh = H.hashCombine( H.const 7837892, Variable.hash var )
   in
     UT.unify( Hom( Func(f,var), hsh ) )
   end
@@ -259,7 +261,7 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
 
     fun hash (Op(h,s,_)) =
-      Word32.xorb( Definition.hash(!h), SDD.hash s )
+      H.hashCombine( Definition.hash(!h), SDD.hash s )
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)

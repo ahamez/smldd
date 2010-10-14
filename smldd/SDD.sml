@@ -22,8 +22,8 @@ sig
 
   val variable          : SDD -> variable
   val alpha             : SDD -> (valuation * SDD) list
-  val hash              : SDD -> Word32.word
-  val hashValuation     : valuation -> Word32.word
+  val hash              : SDD -> Hash.t
+  val hashValuation     : valuation -> Hash.t
   val eqValuation       : (valuation * valuation) -> bool
   val valuationToString : valuation -> string
 
@@ -55,7 +55,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   structure Definition =
   struct
 
-    datatype t    = SDD of ( sdd * Word32.word ) (* Word32.word: hash value *)
+    datatype t    = SDD of ( sdd * Hash.t )
     and sdd       = Zero
                   | One
                   | Node of  { variable : Variable.t
@@ -128,7 +128,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   structure ValUT = UnicityTableFun( structure Data = Values )
   structure SDDUT = UnicityTableFun( structure Data = Definition )
 
-  structure H = HashTable
+  structure H  = Hash
+  structure HT = HashTable
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -152,7 +153,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       | One   => "|1|"
       | Node{ variable=vr, alpha=alpha} =>
           "(" ^ (Variable.toString vr) ^ ")"
-        (*^ " #" ^ (Word32.toString h) ^ "#"*)
+        (*^ " #" ^ (H.toString h) ^ "#"*)
         ^ " [ "
         ^ String.concatWith " + "
                             (VectorToList
@@ -205,8 +206,8 @@ functor SDDFun ( structure Variable  : VARIABLE
         let
           val SDD(_,hashNext)    = !next
           val hashValues         = Values.hash values
-          val h = Word32.xorb( Variable.hash var
-                             , Word32.xorb( hashNext, hashValues ))
+          val h = H.hashCombine( Variable.hash var
+                             , H.hashCombine( hashNext, hashValues ))
           val unikValues = ValUT.unify values
           val alpha = Vector.fromList [( unikValues, next )]
         in
@@ -226,14 +227,14 @@ functor SDDFun ( structure Variable  : VARIABLE
   else
   let
     val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
-                                    Word32.xorb( Values.hash(!vl)
-                                               , Word32.xorb( hash(!succ), h )
+                                    H.hashCombine( Values.hash(!vl)
+                                               , H.hashCombine( hash(!succ), h )
                                                )
                                   )
-                     (Word32.fromInt 0)
+                     (H.const 0)
                      alpha
 
-    val h = Word32.xorb( Variable.hash var, hashAlpha )
+    val h = H.hashCombine( Variable.hash var, hashAlpha )
   in
     SDDUT.unify( SDD( Node{variable=var,alpha=alpha}, h) )
   end
@@ -252,8 +253,8 @@ functor SDDFun ( structure Variable  : VARIABLE
       let
         val SDD(_,hash_next)    = !next
         val SDD(_,hash_nested)  = !nested
-        val h = Word32.xorb( Variable.hash vr
-                           , Word32.xorb( hash_next, hash_nested ) )
+        val h = H.hashCombine( Variable.hash vr
+                           , H.hashCombine( hash_next, hash_nested ) )
         val alpha = Vector.fromList [( nested, next )]
       in
         SDDUT.unify( SDD(HNode{ variable=vr, alpha=alpha}, h) )
@@ -271,14 +272,14 @@ functor SDDFun ( structure Variable  : VARIABLE
   else
   let
     val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
-                                    Word32.xorb( hash (!vl)
-                                               , Word32.xorb( hash(!succ), h )
+                                    H.hashCombine( hash (!vl)
+                                               , H.hashCombine( hash(!succ), h )
                                                )
                                   )
-                     (Word32.fromInt 0)
+                     (H.const 0)
                      alpha
 
-    val h = Word32.xorb( Variable.hash var, hashAlpha )
+    val h = H.hashCombine( Variable.hash var, hashAlpha )
   in
     SDDUT.unify( SDD( HNode{variable=var,alpha=alpha}, h) )
   end
@@ -338,13 +339,13 @@ functor SDDFun ( structure Variable  : VARIABLE
              the hash value of the valuation... Maybe we should store
              this hash alongside of the valuation? *)
           fun hashOperands( h0, xs ) =
-            foldl (fn(x,h) => Word32.xorb( Values.hash(!x), h)) h0 xs
+            foldl (fn(x,h) => H.hashCombine( Values.hash(!x), h)) h0 xs
         in
           case x of
-            Union(xs) => hashOperands( Word32.fromInt 15411567, xs)
-          | Inter(xs) => hashOperands( Word32.fromInt 78995947, xs)
-          | Diff(l,r) => Word32.xorb( Word32.fromInt 94165961
-                                    , Word32.xorb( Values.hash(!l)
+            Union(xs) => hashOperands( H.const 15411567, xs)
+          | Inter(xs) => hashOperands( H.const 78995947, xs)
+          | Diff(l,r) => H.hashCombine( H.const 94165961
+                                    , H.hashCombine( Values.hash(!l)
                                                  , Values.hash(!r))
                                     )
         end
@@ -599,8 +600,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* This table associates a list of values sets to a single
             SDD successor *)
          val tbl :
-           ( ( SDD , values ref list ref) H.hash_table )
-           = (H.mkTable( fn x => hash(!x) , op = )
+           ( ( SDD , values ref list ref) HT.hash_table )
+           = (HT.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
          (* Fill the hash table *)
@@ -611,8 +612,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                        if Values.empty(!vl) then
                         ()
                        else
-                         case H.find tbl u of
-                           NONE   => H.insert tbl ( u, ref [vl] )
+                         case HT.find tbl u of
+                           NONE   => HT.insert tbl ( u, ref [vl] )
                            (* update list of values set *)
                          | SOME x => x := vl::(!x)
                      end
@@ -620,7 +621,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                      alpha
 
        val alpha' =
-         H.foldi (fn ( succ, vls, acc) =>
+         HT.foldi (fn ( succ, vls, acc) =>
                           let
                             val vl = (case !vls of
                                        []      => raise DoNotPanic
@@ -666,8 +667,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (* This table associates a list of valuations to a single
             SDD successor *)
          val tbl :
-           ( ( SDD , SDD list ref) H.hash_table )
-           = (H.mkTable( fn x => hash(!x) , op = )
+           ( ( SDD , SDD list ref) HT.hash_table )
+           = (HT.mkTable( fn x => hash(!x) , op = )
              ( 10000, DoNotPanic ))
 
          (* Fill the hash table *)
@@ -678,15 +679,15 @@ functor SDDFun ( structure Variable  : VARIABLE
                        if vl = zero then
                         ()
                        else
-                         case H.find tbl u of
-                           NONE   => H.insert tbl ( u, ref [vl] )
+                         case HT.find tbl u of
+                           NONE   => HT.insert tbl ( u, ref [vl] )
                            (* update list of valuations *)
                          | SOME x => x := vl::(!x)
                      end
                      )
                      alpha
        in
-         H.foldi (fn ( succ, vls, acc) =>
+         HT.foldi (fn ( succ, vls, acc) =>
                           let
                             val vl =
                               (case !vls of
@@ -1211,13 +1212,13 @@ functor SDDFun ( structure Variable  : VARIABLE
       fun hash x =
       let
         fun hashOperands( h0, xs ) =
-          foldl (fn(x,h) => Word32.xorb( Definition.hash(!x), h)) h0 xs
+          foldl (fn(x,h) => H.hashCombine( Definition.hash(!x), h)) h0 xs
       in
         case x of
-          Union(xs,_)  => hashOperands( Word32.fromInt 15411567, xs)
-        | Inter(xs,_ ) => hashOperands( Word32.fromInt 78995947, xs)
-        | Diff(l,r,_)  => Word32.xorb( Word32.fromInt 94169137
-                                     , Word32.xorb( Definition.hash(!l)
+          Union(xs,_)  => hashOperands( H.const 15411567, xs)
+        | Inter(xs,_ ) => hashOperands( H.const 78995947, xs)
+        | Diff(l,r,_)  => H.hashCombine( H.const 94169137
+                                     , H.hashCombine( Definition.hash(!l)
                                                   , Definition.hash(!r) )
                                      )
       end
@@ -1377,8 +1378,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
-      val cache : (( SDD, int ) H.hash_table) ref
-          = ref ( H.mkTable( fn x => hash x , op = )
+      val cache : (( SDD, int ) HT.hash_table) ref
+          = ref ( HT.mkTable( fn x => hash x , op = )
                            ( 10000, DoNotPanic ) )
       fun pathsHelper x =
         let
@@ -1388,7 +1389,7 @@ functor SDDFun ( structure Variable  : VARIABLE
             Zero  =>  0
           | One   =>  1
           | Node{alpha=(arcs),...} =>
-              (case H.find (!cache) x of
+              (case HT.find (!cache) x of
                 SOME r => r
               | NONE   =>
                 let
@@ -1401,14 +1402,14 @@ functor SDDFun ( structure Variable  : VARIABLE
                                     )
                                     0
                                     arcs
-                  val _     = H.insert (!cache) ( x, value )
+                  val _     = HT.insert (!cache) ( x, value )
                 in
                   value
                 end
               )
 
           | HNode{alpha=(arcs),...} =>
-              (case H.find (!cache) x of
+              (case HT.find (!cache) x of
                 SOME r => r
               | NONE   =>
                 let
@@ -1419,7 +1420,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                                     )
                                     0
                                     arcs
-                  val _     = H.insert (!cache) ( x, value )
+                  val _     = HT.insert (!cache) ( x, value )
                 in
                   value
                 end

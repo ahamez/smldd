@@ -6,6 +6,7 @@ $(SML_LIB)/smlnj-lib/smlnj-lib.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
 ./util.sml
+./hash.sml
 
 ./parameters/signatures/VALUES.sml
 ./parameters/signatures/VARIABLE.sml

@@ -5,7 +5,7 @@ sig
 
   val eq            : t * t -> bool
   val lt            : t * t -> bool
-  val hash          : t -> Word32.word
+  val hash          : t -> Hash.t
   val length        : t -> int
   val empty         : t -> bool
   val mkEmpty       : unit -> t

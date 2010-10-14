@@ -93,9 +93,9 @@ struct
   (*----------------------------------------------------------------------*)
   fun hash vec =
     let
-      fun helper (x1,x2) = Word32.xorb ( MLton.hash x1, x2 )
+      fun helper (x1,x2) = Hash.hashCombine ( Hash.hashInt x1, x2 )
     in
-      IntVector.foldl helper (Word32.fromInt 42) vec
+      IntVector.foldl helper (Hash.const 42) vec
     end
 
   (*----------------------------------------------------------------------*)

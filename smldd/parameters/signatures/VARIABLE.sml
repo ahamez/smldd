@@ -4,7 +4,7 @@ sig
   type t
 
   val eq        : t * t -> bool
-  val hash      : t -> Word32.word
+  val hash      : t -> Hash.t
   val toString  : t -> string
 
 end
