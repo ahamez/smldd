@@ -79,7 +79,7 @@ functor CacheFun ( structure Operation : OPERATION )
       after()
 )    end
 
-    (* Cleanup cache *)
+    (* Cleanup cache if necessary *)
     val _ = if ( H.numItems cache ) > 1000000 then
               cleanup ()
             else
