@@ -988,15 +988,10 @@ functor SDDFun ( structure Variable  : VARIABLE
         | SDD(Zero,_)       => raise DoNotPanic
 
         (* Flat node case *)
-        | SDD(Node{...},_)  =>
+        | SDD(Node{variable=var,...},_)  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
-
-          (* The variable of the current level *)
-          val var = case !(hd xs) of
-                      SDD(Node{variable=v,...},_) => v
-                    | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
              (values ref,SDD list) list.
@@ -1026,15 +1021,10 @@ functor SDDFun ( structure Variable  : VARIABLE
         end (* Flat node case *)
 
         (* Hierachical node case *)
-        | SDD(HNode{...},_)  =>
+        | SDD(HNode{variable=var,...},_)  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
-
-          (* The variable of the current level *)
-          val var = case !(hd xs) of
-                      SDD(HNode{variable=v,...},_) => v
-                    | _ => raise DoNotPanic
 
           (* Transform the alpha of each node into :
              (SDD,SDD list) list.
