@@ -631,61 +631,71 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
+      (* Merge all valuations that lead to the same successor,
+         using an hash table.
+         Returns an alpha suitable to build a new node with nodeAlpha.
 
-       (* Merge all valuations that lead to the same successor,
-          using an hash table.
-          Returns an alpha suitable to build a new node with nodeAlpha.
+         alpha : ( SDD * SDD list ) list
+           -> ( SDD * SDD ) Vector.vector
 
-          alpha : ( SDD * SDD list ) list
-            -> ( SDD * SDD ) Vector.vector
+         Warning! Duplicate logic with flatSquareUnion!
+      *)
+      fun squareUnion cacheLookup alpha =
+      let
+        (* This table associates a list of valuations to a single
+           SDD successor *)
+        val tbl :
+          ( ( SDD , SDD list ref) HT.hash_table )
+          = (HT.mkTable( fn x => hash(!x) , op = )
+            ( 10000, DoNotPanic ))
 
-          Warning! Duplicate logic with flatSquareUnion!
-       *)
-       fun squareUnion cacheLookup alpha =
+        (* Fill the hash table *)
+        val _ = app (fn ( vl, succs ) =>
+                    let
+                      val u = unionCallback cacheLookup succs
+                    in
+                      if vl = zero then
+                       ()
+                      else
+                        case HT.find tbl u of
+                          NONE   => HT.insert tbl ( u, ref [vl] )
+                          (* update list of valuations *)
+                        | SOME x => x := vl::(!x)
+                    end
+                    )
+                    alpha
+      val alpha' =
+        HT.foldi (fn ( succ, vls, acc) =>
+                        let
+                          val vl =
+                            (case !vls of
+                              []      => raise DoNotPanic
+                            | (x::[]) => x
+                            | (x::xs) =>
+                              foldl (fn (y,acc) =>
+                                     unionCallback cacheLookup [y,acc]
+                                    )
+                                    x
+                                    xs
+                            )
+                        in
+                          (vl,succ)::acc
+                        end
+                        )
+                        []
+                        tbl
+
+       fun qsort [] = []
+       |   qsort ((arcx as (x,_))::xs) =
        let
-         (* This table associates a list of valuations to a single
-            SDD successor *)
-         val tbl :
-           ( ( SDD , SDD list ref) HT.hash_table )
-           = (HT.mkTable( fn x => hash(!x) , op = )
-             ( 10000, DoNotPanic ))
-
-         (* Fill the hash table *)
-         val _ = app (fn ( vl, succs ) =>
-                     let
-                       val u = unionCallback cacheLookup succs
-                     in
-                       if vl = zero then
-                        ()
-                       else
-                         case HT.find tbl u of
-                           NONE   => HT.insert tbl ( u, ref [vl] )
-                           (* update list of valuations *)
-                         | SOME x => x := vl::(!x)
-                     end
-                     )
-                     alpha
+         val (left,right) = List.partition (fn (y,_) => id y < id x) xs
        in
-         HT.foldi (fn ( succ, vls, acc) =>
-                          let
-                            val vl =
-                              (case !vls of
-                                []      => raise DoNotPanic
-                              | (x::[]) => x
-                              | (x::xs) =>
-                                foldl (fn (y,acc) =>
-                                       unionCallback cacheLookup [y,acc]
-                                      )
-                                      x
-                                      xs
-                              )
-                         in
-                           Vector.concat[acc,Vector.fromList[(vl,succ)]]
-                         end
-                         )
-                         (Vector.fromList [])
-                         tbl
+         qsort left @ [arcx] @ qsort right
        end
+
+      in
+        Vector.fromList (qsort alpha')
+      end
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
