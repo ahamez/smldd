@@ -176,15 +176,15 @@ functor HomFun ( structure SDD : SDD
                           ( 10000, DoNotPanic ))
 
       fun unionHelper ( h, operands ) =
-      case !h of
-        Hom( Union(ys), _ )     => (foldl unionHelper [] ys) @ operands
-      | Hom( Nested(h,var), _ ) =>
+      case let val ref(Hom(x,_)) = h in x end of
+        Union(ys)     => (foldl unionHelper [] ys) @ operands
+      | Nested(i,var) =>
         (case HT.find (!locals) var of
-          NONE       => HT.insert (!locals) ( var, ref [h] )
+          NONE       => HT.insert (!locals) ( var, ref [i] )
         | SOME hList => hList := h::(!hList);
         operands
         )
-      | _                       => h::operands
+      | _ => h::operands
 
       val unionLocals = map (fn (var,xs) => mkNested (mkUnion (!xs)) var)
                             (HT.listItemsi(!locals))
@@ -217,12 +217,13 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun mkFixpoint x =
-  case !x of
-    Hom( Id, _ )          => x
-  | Hom( Fixpoint(_), _ ) => x
-  | _ => UT.unify( Hom( Fixpoint(x)
-                      , H.hashCombine(hash (!x), H.const 5959527)))
+  fun mkFixpoint (rh as (ref (Hom(h,hsh)))) =
+  case h of
+    Id          => rh
+  | Fixpoint(_) => rh
+  | _           => UT.unify( Hom( Fixpoint(rh)
+                                , H.hashCombine( hsh, H.const 5959527) )
+                           )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -265,16 +266,16 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
-    fun skipVariable var hom =
-    case !hom of
-      Hom( Id, _ )          => true
-    | Hom( Const(_), _ )    => false
-    | Hom( Cons(_,_,_), _ ) => false
-    | Hom( Nested(_,v),_)   => not (Variable.eq (var,v))
-    | Hom( Union(xs),_)     => List.all (fn x => skipVariable var x) xs
-    | Hom( Compo(a,b),_)    => skipVariable var a andalso skipVariable var b
-    | Hom( Fixpoint(f),_)   => skipVariable var f
-    | Hom( Func(_,v),_)     => not (Variable.eq (var,v))
+    fun skipVariable var (ref (Hom(h,_))) =
+    case h of
+      Id          => true
+    | Const(_)    => false
+    | Cons(_,_,_) => false
+    | Nested(_,v) => not (Variable.eq (var,v))
+    | Union(xs)   => List.all (fn x => skipVariable var x) xs
+    | Compo(a,b)  => skipVariable var a andalso skipVariable var b
+    | Fixpoint(f) => skipVariable var f
+    | Func(_,v)   => not (Variable.eq (var,v))
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -286,14 +287,14 @@ functor HomFun ( structure SDD : SDD
     if sdd = SDD.zero then
       SDD.zero
     else
-      case !h of
-        Hom( Id, _ )       => sdd
-      | Hom( Const(c), _ ) => c
-      | Hom( Cons(var,vl,next), _) => if next = id then
+      case let val ref(Hom(x,_)) = h in x end of
+        Id                => sdd
+      | Const(c)          => c
+      | Cons(var,vl,next) => if next = id then
                                         SDD.node( var, vl, sdd )
                                       else
                                         lookup( Op( h, sdd, lookup ) )
-      | _ => lookup( Op( h, sdd, lookup ) )
+      | _                 => lookup( Op( h, sdd, lookup ) )
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -447,28 +448,16 @@ functor HomFun ( structure SDD : SDD
           SDD.union res
         end
       else
-        case !h of
+        case let val ref(Hom(x,_)) = h in x end of
 
-          Hom( Id, _ )    => raise DoNotPanic
-        | Hom(Const(_),_) => raise DoNotPanic
-
-        | Hom(Cons(var,nested,next),_)
-          => cons lookup (var, nested, next) sdd
-
-        | Hom( Union(xs),_ )
-          => union lookup xs sdd
-
-        | Hom( Compo( a, b ), _ )
-          => composition lookup a b sdd
-
-        | Hom( Fixpoint(g), _ )
-          => fixpoint lookup g sdd
-
-        | Hom( Nested( g, var ), _ )
-          => nested lookup g var sdd
-
-        | Hom( Func( f, var ), _ )
-          => function lookup f var sdd
+          Id                    => raise DoNotPanic
+        | Const(_)              => raise DoNotPanic
+        | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
+        | Union(xs)             => union lookup xs sdd
+        | Compo( a, b )         => composition lookup a b sdd
+        | Fixpoint(g)           => fixpoint lookup g sdd
+        | Nested( g, var )      => nested lookup g var sdd
+        | Func( f, var )        => function lookup f var sdd
 
     end
 
@@ -489,10 +478,10 @@ functor HomFun ( structure SDD : SDD
   if sdd = SDD.zero then
     SDD.zero
   else
-    case !h of
-      Hom( Id, _ )       => sdd
-    | Hom( Const(c), _ ) => c
-    | Hom( Cons(var,vl,next), _) =>
+    case let val ref(Hom(x,_)) = h in x end of
+      Id                => sdd
+    | Const(c)          => c
+    | Cons(var,vl,next) =>
       if next = id then
         SDD.node( var, vl, sdd )
       else
