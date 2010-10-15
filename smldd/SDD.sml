@@ -794,15 +794,15 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         case !(hd xs) of
 
-          (* All operands are |1| *)
+        (* All operands are |1| *)
           iSDD(One,_,_)        => one
 
-          (* There shouldn't be any |0|, they should have been filtered
-             before querying the cache.
-          *)
+        (* There shouldn't be any |0|, they should have been filtered
+           before querying the cache.
+        *)
         | iSDD(Zero,_,_)       => raise DoNotPanic
 
-          (* Flat node case *)
+        (* Flat node case *)
         | iSDD(Node{variable=var,...},_,_)  =>
           unionSDD flatAlphaNodeToList
                    alphaToList
@@ -814,6 +814,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                    flatNodeAlpha
                    xs var
 
+        (* Hierarchical node case *)
         | iSDD(HNode{variable=var,...},_,_) =>
           unionSDD alphaNodeToList
                    alphaToList
