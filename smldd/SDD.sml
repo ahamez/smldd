@@ -190,20 +190,16 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
-
   (* Return the |0| ("zero") terminal *)
   val zero = SDDUT.unify (mkNode Zero (H.const 0))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return the |1| ("one") terminal *)
   val one = SDDUT.unify (mkNode One (H.const 1))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return a node with a set of discrete values on arc *)
   fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) )
     = case next of
@@ -224,7 +220,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Construct a flat node with an already computed alpha.
      For internal use only! *)
   fun flatNodeAlpha ( var   : Variable.t
@@ -249,7 +244,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return an hierarchical node *)
   fun hierNode ( vr, rnested as (ref (iSDD(nested,hashNested,_)))
                    , rnext as (ref (iSDD(next,hashNext,_))) ) =
@@ -270,7 +264,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Construct a node with an already computed alpha.
      For internal use only! *)
   fun nodeAlpha ( vr : Variable.t , alpha : (SDD * SDD) Vector.vector )
@@ -293,7 +286,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return a node *)
   fun node ( vr : Variable.t, vl : valuation , next : SDD ) =
   case vl of
@@ -302,7 +294,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   local (* Values manipulations *)
 
     (* Operations to manipulate values. Used by the cache. *)
@@ -339,7 +330,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       fun hash x =
         let
           (* Values.hash(!x) -> problem: we have to compute again
@@ -359,7 +349,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Evaluation an operation on valuations. Called by CacheFun. *)
       fun apply operation =
 
@@ -393,7 +382,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
-
     fun valUnion xs =
       case xs of
         []      => raise DoNotPanic
@@ -402,7 +390,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
-
     fun valIntersection xs =
       case xs of
         []      => raise DoNotPanic
@@ -411,7 +398,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
-
     fun valDifference(x,y) =
       if x = y then
         ValUT.unify( Values.mkEmpty() )
@@ -442,8 +428,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
-
-
     (* Operations to manipulate SDD. Used by the cache. *)
     structure SDDOperations (* : OPERATION *) =
     struct
@@ -452,7 +436,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
+      (* Types required by the OPERATION signature *)
       type result        = SDD
       datatype operation = Union of
                               ( SDD list * (operation -> result) )
@@ -463,7 +447,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Check compatibility of operands *)
       fun check []     = raise DoNotPanic
       |   check(x::xs) =
@@ -502,7 +485,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Convert an alpha (a vector) into a more easy to manipulate type
          (a list of values, each one leading to a list of successors).
          Thus, it make usable by flatSquareUnion.
@@ -543,7 +525,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Warning: duplicate code with SDD.union! Keep in sync! *)
       fun unionCallback lookup xs =
       let
@@ -562,7 +543,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
       fun intersectionCallback lookup xs =
         case xs of
@@ -572,7 +552,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
       fun differenceCallback lookup ( x, y ) =
         if x = y then          (* No need to cache *)
@@ -586,7 +565,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
        (* Merge all values that lead to the same successor,
           using an hash table.
           Returns an alpha suitable to build a new flat node with
@@ -712,7 +690,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Used by the intersection and difference operations which need
          to apply an operation ('cont') recursively on common parts.
 
@@ -747,7 +724,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Used by the intersection and difference operations which need
          to apply an operation ('cont') recursively on common parts.
 
@@ -782,7 +758,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Do the n-ary union of a list of flat SDDs.
          The general idea is to create a potential alpha
          of type (values ref * SDD list ) list which stores all
@@ -838,7 +813,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* N-ary intersection of SDDs *)
       fun intersection cacheLookup xs =
       let
@@ -936,7 +910,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Compute the difference of two SDDs *)
       fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
       case l of
@@ -1066,7 +1039,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Apply an SDD operation. Called by CacheFun. *)
       fun apply x =
       case x of
@@ -1076,7 +1048,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Hash an SDD operation *)
       fun hash x =
       let
@@ -1094,7 +1065,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-
       (* Compare two SDD operations *)
       fun eq (x,y) =
       case x of
@@ -1114,20 +1084,23 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
 
-
     end (* end struct SDDOperations *)
 
   in (* local SDD manipulations *)
 
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
     (* Cache of operations on SDDs *)
     structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
 
     (* Let operations in Op call the cache *)
     val cacheLookup = SDDOpCache.lookup
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
-
     (* Warning! Duplicate code with SDD.SDDOperations.unionCallback! *)
     fun union xs =
     let
@@ -1177,7 +1150,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return the variable of an SDD. Needed by HomFun*)
   fun variable (ref (iSDD(x,_,_))) =
   case x of
@@ -1187,7 +1159,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   fun alpha (x as (ref (iSDD(sdd,_,_)))) =
   let
     fun alphaHelper a f =
@@ -1204,13 +1175,11 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return the hash value of an SDD. Needed by HomFun*)
   fun hash x = Definition.hash (!x)
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Return the hash value of a valuation. Needed by HomFun*)
   fun hashValuation x =
   case x of
@@ -1219,7 +1188,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Compare two valuations. Needed by HomFun*)
   fun eqValuation (x,y) =
   case x of
@@ -1234,7 +1202,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Export a valuation to a string. Needed by HomFun*)
   fun valuationToString x =
   case x of
@@ -1243,7 +1210,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
@@ -1307,7 +1273,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   (* Export an SDD to a DOT representation *)
   fun toDot x =
   let
@@ -1333,7 +1298,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
-
   fun stats () =
    (ValOpCache.stats()) ^ (SDDOpCache.stats())
 
