@@ -4,9 +4,8 @@ signature UnicityTable =
 sig
 
   type data
-  type rdata  = data ref
 
-  val unify : data -> rdata
+  val unify  : data -> data ref
 
 end
 
