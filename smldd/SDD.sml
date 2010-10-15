@@ -65,7 +65,11 @@ functor SDDFun ( structure Variable  : VARIABLE
                              , alpha : ( t ref * t ref ) Vector.vector
                              }
 
-    (* Compare two SDDs *)
+    (* Compare two SDDs.
+       At this point, we can't use the identifier to know if two SDDs are
+       equals because this equality is called by the unicity table which is
+       responsible for the generation of this id.=
+    *)
     fun eq ( iSDD(lsdd,lh,_), iSDD(rsdd,rh,_) ) =
     if lh <> rh then
       false
