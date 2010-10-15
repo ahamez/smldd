@@ -226,9 +226,9 @@ functor SDDFun ( structure Variable  : VARIABLE
     zero
   else
   let
-    val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
+    val hashAlpha = Vector.foldl (fn ((vl,(succ,_)),h) =>
                                     H.hashCombine( Values.hash(!vl)
-                                               , H.hashCombine( hash(!succ), h )
+                                               , H.hashCombine( hash(!succ),h)
                                                )
                                   )
                      (H.const 0)
@@ -273,7 +273,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   let
     val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
                                     H.hashCombine( hash (!vl)
-                                               , H.hashCombine( hash(!succ), h )
+                                               , H.hashCombine( hash(!succ),h)
                                                )
                                   )
                      (H.const 0)
