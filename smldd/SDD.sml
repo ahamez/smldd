@@ -55,7 +55,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   structure Definition =
   struct
 
-    datatype t    = iSDD of ( sdd * Hash.t )
+    datatype t    = iSDD of ( sdd * Hash.t * int )
     and sdd       = Zero
                   | One
                   | Node of  { variable : Variable.t
@@ -66,7 +66,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                              }
 
     (* Compare two SDDs *)
-    fun eq ( iSDD(lsdd,lh), iSDD(rsdd,rh) ) =
+    fun eq ( iSDD(lsdd,lh,_), iSDD(rsdd,rh,_) ) =
     if lh <> rh then
       false
     else
@@ -107,7 +107,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     (* The hash value of a node is stored with it, because we can't
        use the address of the reference (like in C). Thus, it has to
        be computed by functions who construct SDD nodes. *)
-    fun hash (iSDD(_,h)) = h
+    fun hash (iSDD(_,h,_)) = h
 
   end (* end struct Definition *)
   open Definition
@@ -125,8 +125,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Unicity *)
-  structure ValUT = UnicityTableFun( structure Data = Values )
-  structure SDDUT = UnicityTableFun( structure Data = Definition )
+  structure ValUT = UnicityTableFun  ( structure Data = Values )
+  structure SDDUT = UnicityTableFunID( structure Data = Definition )
 
   structure H  = Hash
   structure HT = HashTable
@@ -145,8 +145,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Export an SDD to a string *)
   fun toString x =
     let
-      val iSDD(sdd,_) = !x
-      (*val SDD(_,h) = !x*)
+      val iSDD(sdd,_,_) = !x
+      (*val SDD(_,h,_) = !x*)
     in
       case sdd of
         Zero  => "|0|"
@@ -183,14 +183,21 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
+  (* Called by the unicity table to construct an SDD with an id *)
+  fun mkNode n h id = iSDD( n, h, id)
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+
+
   (* Return the |0| ("zero") terminal *)
-  val zero = SDDUT.unify( iSDD( Zero , H.const 0 ) )
+  val zero = SDDUT.unify (mkNode Zero (H.const 0))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Return the |1| ("one") terminal *)
-  val one = SDDUT.unify( iSDD( One  , H.const 1 ) )
+  val one = SDDUT.unify (mkNode One (H.const 1))
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -198,20 +205,20 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Return a node with a set of discrete values on arc *)
   fun flatNode ( var : Variable.t , values : Values.t , next : SDD )
     = case !next of
-      iSDD(Zero,_) => zero
-    | _           =>
+      iSDD(Zero,_,_) => zero
+    | _              =>
       if Values.empty values then
         zero
       else
         let
-          val iSDD(_,hashNext)   = !next
+          val iSDD(_,hashNext,_)   = !next
           val hashValues         = Values.hash values
           val h = H.hashCombine( Variable.hash var
                              , H.hashCombine( hashNext, hashValues ))
           val unikValues = ValUT.unify values
           val alpha = Vector.fromList [( unikValues, next )]
         in
-          SDDUT.unify( iSDD( Node{ variable=var, alpha=alpha}, h) )
+          SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) h )
         end
 
   (*----------------------------------------------------------------------*)
@@ -236,28 +243,28 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     val h = H.hashCombine( Variable.hash var, hashAlpha )
   in
-    SDDUT.unify( iSDD( Node{variable=var,alpha=alpha}, h) )
+    SDDUT.unify ( mkNode (Node{variable=var,alpha=alpha}) h )
   end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  (* Return an hierarchical  node *)
+  (* Return an hierarchical node *)
   fun hierNode ( vr : Variable.t, nested : SDD , next : SDD ) =
   case !next of
-    iSDD(Zero,_) => zero
+    iSDD(Zero,_,_) => zero
   | _           =>
   ( case !nested of
-      iSDD(Zero,_) => zero
+      iSDD(Zero,_,_) => zero
     | _           =>
       let
-        val iSDD(_,hash_next)    = !next
-        val iSDD(_,hash_nested)  = !nested
+        val iSDD(_,hash_next,_)    = !next
+        val iSDD(_,hash_nested,_)  = !nested
         val h = H.hashCombine( Variable.hash vr
                              , H.hashCombine( hash_next, hash_nested ) )
         val alpha = Vector.fromList [( nested, next )]
       in
-        SDDUT.unify( iSDD(HNode{ variable=vr, alpha=alpha}, h) )
+        SDDUT.unify ( mkNode (HNode{ variable=vr, alpha=alpha}) h )
       end
   )
 
@@ -281,7 +288,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     val h = H.hashCombine( Variable.hash var, hashAlpha )
   in
-    SDDUT.unify( iSDD( HNode{variable=var,alpha=alpha}, h) )
+    SDDUT.unify ( mkNode (HNode{variable=var,alpha=alpha}) h )
   end
 
   (*----------------------------------------------------------------------*)
@@ -427,11 +434,11 @@ functor SDDFun ( structure Variable  : VARIABLE
     fun qsort []       = []
     |   qsort (x::xs)  =
     let
-      fun hashOperand x = let val iSDD(_,res) = !x in res end
+      fun idOperand x = let val iSDD(_,_,id) = !x in id end
     in
-        qsort (List.filter (fn y => (hashOperand y) < (hashOperand x) )  xs )
+        qsort (List.filter (fn y => (idOperand y) <  (idOperand x) )  xs )
       @ [x]
-      @ qsort (List.filter (fn y => (hashOperand y) >= (hashOperand x) ) xs )
+      @ qsort (List.filter (fn y => (idOperand y) >= (idOperand x) ) xs )
     end
 
     (*--------------------------------------------------------------------*)
@@ -463,18 +470,21 @@ functor SDDFun ( structure Variable  : VARIABLE
       |   check(x::xs) =
 
         foldl (fn (x,y) =>
+              let
+                val iSDD(sx,_,_) = !x
+                val iSDD(sy,_,_) = !y
+              in
+                case sx of
 
-                case !x of
-
-                    iSDD(One,_)  =>
-                      (case !y of
-                        iSDD(One,_) => y
+                    One  =>
+                      (case sy of
+                        One => y
                       | _ => raise IncompatibleSDD
                       )
 
-                  | iSDD(Node{variable=var1,...},_) =>
-                      (case !y of
-                        iSDD(Node{variable=var2,...},_) =>
+                  | Node{variable=var1,...} =>
+                      (case sy of
+                        Node{variable=var2,...} =>
                           if not( Variable.eq( var1, var2 ) ) then
                             raise IncompatibleSDD
                           else
@@ -482,9 +492,9 @@ functor SDDFun ( structure Variable  : VARIABLE
                       | _ => raise IncompatibleSDD
                       )
 
-                  | iSDD(HNode{variable=var1,...},_) =>
-                      (case !y of
-                        iSDD(HNode{variable=var2,...},_) =>
+                  | HNode{variable=var1,...} =>
+                      (case sy of
+                        HNode{variable=var2,...} =>
                           if not( Variable.eq( var1, var2 ) ) then
                             raise IncompatibleSDD
                           else
@@ -493,7 +503,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                       )
 
                   (* Zero should have been filtered out *)
-                  | iSDD(Zero,_) => raise DoNotPanic
+                  | Zero => raise DoNotPanic
+              end
               )
               x
               xs
@@ -524,7 +535,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       *)
       fun flatAlphaNodeToList n =
       case !n of
-        iSDD(Node{alpha=alpha,...},_) => alphaToList alpha
+        iSDD(Node{alpha=alpha,...},_,_) => alphaToList alpha
       | _ => raise DoNotPanic
 
       (* Apply alphaToList to a node
@@ -536,7 +547,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       *)
       fun alphaNodeToList n =
       case !n of
-        iSDD(HNode{alpha=alpha,...},_) => alphaToList alpha
+        iSDD(HNode{alpha=alpha,...},_,_) => alphaToList alpha
       | _ => raise DoNotPanic
 
       (*------------------------------------------------------------------*)
@@ -547,8 +558,8 @@ functor SDDFun ( structure Variable  : VARIABLE
       let
         (* Remove all |0| *)
         val xs' = List.filter (fn x => case !x of
-                                        iSDD(Zero,_) => false
-                                      | _           => true
+                                        iSDD(Zero,_,_) => false
+                                      | _              => true
                               )
                               xs
       in
@@ -803,15 +814,15 @@ functor SDDFun ( structure Variable  : VARIABLE
         case !(hd xs) of
 
           (* All operands are |1| *)
-          iSDD(One,_)        => one
+          iSDD(One,_,_)        => one
 
           (* There shouldn't be any |0|, they should have been filtered
              before querying the cache.
           *)
-        | iSDD(Zero,_)       => raise DoNotPanic
+        | iSDD(Zero,_,_)       => raise DoNotPanic
 
           (* Flat node case *)
-        | iSDD(Node{variable=var,...},_)  =>
+        | iSDD(Node{variable=var,...},_,_)  =>
         let
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -883,7 +894,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         (* Hierachical node case
            Warning! Duplicate logic with the SDD(Node{...},_) case above!
         *)
-        | iSDD(HNode{variable=var,...},_) =>
+        | iSDD(HNode{variable=var,...},_,_) =>
         let
           val ( initial, operands ) = case map alphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -966,8 +977,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         (* Test if there are any zero in operands *)
         val hasZero = case List.find (fn x => case !x of
-                                                iSDD(Zero,_) => true
-                                              | _           => false
+                                                iSDD(Zero,_,_) => true
+                                              | _              => false
                                      )
                                      xs
                        of
@@ -982,13 +993,13 @@ functor SDDFun ( structure Variable  : VARIABLE
           case !(hd xs) of
 
         (* All operands are |1| *)
-          iSDD(One,_)        => check xs
+          iSDD(One,_,_)        => check xs
 
         (* There shouldn't be any |0| *)
-        | iSDD(Zero,_)       => raise DoNotPanic
+        | iSDD(Zero,_,_)       => raise DoNotPanic
 
         (* Flat node case *)
-        | iSDD(Node{variable=var,...},_)  =>
+        | iSDD(Node{variable=var,...},_,_)  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
@@ -1021,7 +1032,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         end (* Flat node case *)
 
         (* Hierachical node case *)
-        | iSDD(HNode{variable=var,...},_)  =>
+        | iSDD(HNode{variable=var,...},_,_)  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
@@ -1059,26 +1070,26 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       (* Compute the difference of two SDDs *)
-      fun difference cacheLookup (l,r) =
-      case !l of
+      fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
+      case l of
 
-        iSDD(Zero,_) => raise DoNotPanic
+        Zero => raise DoNotPanic
 
-      | iSDD(One,_)  => (case !r of
-                          iSDD(Zero,_) => raise DoNotPanic
-                        | iSDD(One,_)  => zero
-                        | _           => raise IncompatibleSDD
-                        )
+      | One  => (case r of
+                  Zero => raise DoNotPanic
+                | One  => zero
+                | _           => raise IncompatibleSDD
+                )
 
-      | iSDD( Node{variable=lvr,alpha=la}, _ ) =>
+      | Node{variable=lvr,alpha=la} =>
 
-      (case !r of
-        iSDD(Zero,_)       => raise DoNotPanic
-      | iSDD(One,_)        => raise IncompatibleSDD
-      | iSDD(HNode{...},_) => raise IncompatibleSDD
+      (case r of
+        Zero       => raise DoNotPanic
+      | One        => raise IncompatibleSDD
+      | HNode{...} => raise IncompatibleSDD
 
       (* Difference of two flat nodes *)
-      | iSDD( Node{variable=rvr,alpha=ra}, _ ) =>
+      | Node{variable=rvr,alpha=ra} =>
       if not( Variable.eq(lvr,rvr) ) then
         raise IncompatibleSDD
       else
@@ -1127,15 +1138,15 @@ functor SDDFun ( structure Variable  : VARIABLE
       )
 
       (* Difference of two hierarchical nodes *)
-      | iSDD( HNode{variable=lvr,alpha=la}, _ ) =>
+      | HNode{variable=lvr,alpha=la} =>
 
-      (case !r of
-        iSDD(Zero,_)       => raise DoNotPanic
-      | iSDD(One,_)        => raise IncompatibleSDD
-      | iSDD(Node{...},_)  => raise IncompatibleSDD
+      (case r of
+        Zero       => raise DoNotPanic
+      | One        => raise IncompatibleSDD
+      | Node{...}  => raise IncompatibleSDD
 
       (* Difference of two hiearchical nodes *)
-      | iSDD( HNode{variable=rvr,alpha=ra}, _ ) =>
+      | HNode{variable=rvr,alpha=ra} =>
       if not( Variable.eq(lvr,rvr) ) then
         raise IncompatibleSDD
       else
@@ -1254,8 +1265,8 @@ functor SDDFun ( structure Variable  : VARIABLE
     let
       (* Remove all |0| *)
       val xs' = List.filter (fn x => case !x of
-                                       iSDD(Zero,_) => false
-                                     | _           => true
+                                       iSDD(Zero,_,_) => false
+                                     | _              => true
                             )
                             xs
     in
@@ -1300,16 +1311,16 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return the variable of an SDD. Needed by HomFun*)
-  fun variable x =
-  case !x of
-    iSDD(Node{variable=var,...},_)  => var
-  | iSDD(HNode{variable=var,...},_) => var
-  | _                              => raise IsNotANode
+  fun variable (ref (iSDD(x,_,_))) =
+  case x of
+    Node{variable=var,...}  => var
+  | HNode{variable=var,...} => var
+  | _                       => raise IsNotANode
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  fun alpha x =
+  fun alpha (x as (ref (iSDD(sdd,_,_)))) =
   let
     fun alphaHelper a f =
         Vector.foldr
@@ -1317,10 +1328,10 @@ functor SDDFun ( structure Variable  : VARIABLE
         []
         a
   in
-    case !x of
-      iSDD(Node{alpha=a,...},_)  => alphaHelper a (fn x => Values (!x))
-    | iSDD(HNode{alpha=a,...},_) => alphaHelper a (fn x => Nested x)
-    | _                          => raise IsNotANode
+    case sdd of
+      Node{alpha=a,...}  => alphaHelper a (fn x => Values (!x))
+    | HNode{alpha=a,...} => alphaHelper a (fn x => Nested x)
+    | _                  => raise IsNotANode
   end
 
   (*----------------------------------------------------------------------*)
@@ -1373,7 +1384,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                            ( 10000, DoNotPanic ) )
       fun pathsHelper x =
         let
-          val iSDD(sdd,_) = !x
+          val iSDD(sdd,_,_) = !x
         in
             case sdd of
             Zero  =>  IntInf.fromInt 0
@@ -1440,12 +1451,12 @@ functor SDDFun ( structure Variable  : VARIABLE
     ^ (Int.toString value)
     ^ "\"]\n;"
 
-    fun dotHelper x =
-    case !x of
-      iSDD( Zero, _ ) => terminal 0
-    | iSDD( One, _ )  => terminal 1
-    | iSDD( Node{...}, _ )  => raise NotYetImplemented
-    | iSDD( HNode{...}, _ ) => raise NotYetImplemented
+    fun dotHelper (ref (iSDD(sdd,_,_))) =
+    case sdd of
+      Zero       => terminal 0
+    | One        => terminal 1
+    | Node{...}  => raise NotYetImplemented
+    | HNode{...} => raise NotYetImplemented
   in
       "digraph sdd {\n"
     ^ (dotHelper x)
