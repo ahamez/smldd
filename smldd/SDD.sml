@@ -792,30 +792,30 @@ functor SDDFun ( structure Variable  : VARIABLE
         val _ = check xs
       in
 
-        case !(hd xs) of
+        case let val ref(iSDD(x,_,_)) = hd xs in x end of
 
         (* All operands are |1| *)
-          iSDD(One,_,_)        => one
+          One        => one
 
         (* There shouldn't be any |0|, they should have been filtered
            before querying the cache.
         *)
-        | iSDD(Zero,_,_)       => raise DoNotPanic
+        | Zero       => raise DoNotPanic
 
         (* Flat node case *)
-        | iSDD(Node{variable=var,...},_,_)  =>
+        | Node{variable=var,...}  =>
           unionSDD flatAlphaNodeToList
                    alphaToList
                    (flatSquareUnion cacheLookup)
                    (flatCommonApply cacheLookup unionCallback)
                    valUnion
                    valDifference
-                   (fn x => Values.empty (!x))
+                   (Values.empty o !)
                    flatNodeAlpha
                    xs var
 
         (* Hierarchical node case *)
-        | iSDD(HNode{variable=var,...},_,_) =>
+        | HNode{variable=var,...} =>
           unionSDD alphaNodeToList
                    alphaToList
                    (squareUnion cacheLookup)
@@ -850,16 +850,16 @@ functor SDDFun ( structure Variable  : VARIABLE
         if hasZero then
           zero
         else
-          case !(hd xs) of
+          case let val ref(iSDD(x,_,_)) = hd xs in x end of
 
         (* All operands are |1| *)
-          iSDD(One,_,_)        => check xs
+          One        => check xs
 
         (* There shouldn't be any |0| *)
-        | iSDD(Zero,_,_)       => raise DoNotPanic
+        | Zero       => raise DoNotPanic
 
         (* Flat node case *)
-        | iSDD(Node{variable=var,...},_,_)  =>
+        | Node{variable=var,...}  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
@@ -892,7 +892,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         end (* Flat node case *)
 
         (* Hierachical node case *)
-        | iSDD(HNode{variable=var,...},_,_)  =>
+        | HNode{variable=var,...}  =>
         let
           (* Check operands compatibility *)
           val _ = check xs
