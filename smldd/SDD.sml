@@ -420,7 +420,6 @@ functor SDDFun ( structure Variable  : VARIABLE
     fun qsort []       = []
     |   qsort (x::xs)  =
     let
-      fun id x = let val iSDD(_,_,id) = !x in id end
       val (left,right) = List.partition (fn y => id y < id x) xs
     in
         qsort left @ [x] @ qsort right
