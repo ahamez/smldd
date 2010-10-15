@@ -805,148 +805,26 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           (* Flat node case *)
         | iSDD(Node{variable=var,...},_,_)  =>
-        let
-          val ( initial, operands ) = case map flatAlphaNodeToList xs of
-                                        []       => raise DoNotPanic
-                                      | (y::ys)  => (y,ys)
+          unionSDD flatAlphaNodeToList
+                   alphaToList
+                   (flatSquareUnion cacheLookup)
+                   (flatCommonApply cacheLookup unionCallback)
+                   valUnion
+                   valDifference
+                   (fn x => Values.empty (!x))
+                   flatNodeAlpha
+                   xs var
 
-
-          val flatSquareUnion' = flatSquareUnion cacheLookup
-
-          fun unionHelper ( lalpha, ralpha ) =
-          let
-
-            val commonPart =
-              let
-                val flatCommonApply' = flatCommonApply cacheLookup
-                                                       unionCallback
-              in
-                flatCommonApply'( lalpha, ralpha )
-              end
-
-            val diffPartAB =
-            let
-              val bUnion = valUnion( map (fn (x,_)=>x) ralpha )
-            in
-              foldl (fn ((aVal,aSuccs),acc) =>
-                      let
-                        val diff = valDifference(aVal,bUnion)
-                      in
-                        if Values.empty(!diff) then
-                          acc
-                        else
-                          ( diff, aSuccs)::acc
-                      end
-                    )
-                    []
-                    lalpha
-            end
-
-            val diffPartBA =
-            let
-              val aUnion = valUnion( map (fn (x,_)=>x) lalpha )
-            in
-              foldl (fn ((bVal,bSuccs),acc) =>
-                      let
-                        val diff = valDifference(bVal,aUnion)
-                      in
-                        if Values.empty(!diff) then
-                          acc
-                        else
-                          ( diff, bSuccs)::acc
-                      end
-                    )
-                    []
-                    ralpha
-            end
-
-          in
-            alphaToList
-            (
-              flatSquareUnion' (diffPartAB @ commonPart @ diffPartBA)
-            )
-          end
-
-        in
-          flatNodeAlpha( var
-                       , flatSquareUnion'(foldl unionHelper initial operands)
-                       )
-        end (* Flat node case *)
-
-        (* Hierachical node case
-           Warning! Duplicate logic with the SDD(Node{...},_) case above!
-        *)
         | iSDD(HNode{variable=var,...},_,_) =>
-        let
-          val ( initial, operands ) = case map alphaNodeToList xs of
-                                        []       => raise DoNotPanic
-                                      | (y::ys)  => (y,ys)
-
-
-          val squareUnion' = squareUnion cacheLookup
-
-          fun unionHelper ( lalpha, ralpha ) =
-          let
-
-            val commonPart =
-              let
-                val commonApply' = commonApply cacheLookup unionCallback
-              in
-                commonApply'( lalpha, ralpha )
-              end
-
-            val diffPartAB =
-            let
-              val bUnion = unionCallback cacheLookup
-                                         ( map (fn (x,_)=>x) ralpha )
-            in
-              foldl (fn ((aVal,aSuccs),acc) =>
-                      let
-                        val diff = differenceCallback cacheLookup
-                                                      (aVal,bUnion)
-                      in
-                        if diff = zero then
-                          acc
-                        else
-                          ( diff, aSuccs)::acc
-                      end
-                    )
-                    []
-                    lalpha
-            end
-
-            val diffPartBA =
-            let
-              val aUnion = unionCallback cacheLookup
-                                         ( map (fn (x,_)=>x) lalpha )
-            in
-              foldl (fn ((bVal,bSuccs),acc) =>
-                      let
-                        val diff = differenceCallback cacheLookup
-                                                      (bVal,aUnion)
-                      in
-                        if diff = zero then
-                          acc
-                        else
-                          ( diff, bSuccs)::acc
-                      end
-                    )
-                    []
-                    ralpha
-            end
-
-          in
-            alphaToList
-            (
-              squareUnion' (diffPartAB @ commonPart @ diffPartBA)
-            )
-          end
-
-        in
-          nodeAlpha( var
-                   , squareUnion'(foldl unionHelper initial operands)
-                   )
-        end (* Hierarchical node case *)
+          unionSDD alphaNodeToList
+                   alphaToList
+                   (squareUnion cacheLookup)
+                   (commonApply cacheLookup unionCallback)
+                   (unionCallback cacheLookup)
+                   (differenceCallback cacheLookup)
+                   (fn x => x = zero)
+                   nodeAlpha
+                   xs var
 
       end (* end fun union *)
 

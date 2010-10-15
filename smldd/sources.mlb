@@ -18,6 +18,8 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./storage/Cache.sml
 ./storage/UnicityTable.sml
 
+./exceptions.sml
+./unionSDD.sml
 ./SDD.sml
 ./Hom.sml
 
