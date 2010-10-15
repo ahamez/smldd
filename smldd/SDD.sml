@@ -184,13 +184,13 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
 
   (* Return the |0| ("zero") terminal *)
-  val zero = SDDUT.unify( iSDD( Zero , MLton.hash 0 ) )
+  val zero = SDDUT.unify( iSDD( Zero , H.const 0 ) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Return the |1| ("one") terminal *)
-  val one = SDDUT.unify( iSDD( One  , MLton.hash 1 ) )
+  val one = SDDUT.unify( iSDD( One  , H.const 1 ) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)

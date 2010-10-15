@@ -130,17 +130,17 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
-  val id = UT.unify( Hom(Id,MLton.hash 1) )
+  val id = UT.unify( Hom(Id,H.const 1) )
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   fun mkCons var vl next =
   let
-    val hash = H.hashCombine( Variable.hash var
-                 , H.hashCombine( SDD.hashValuation vl, hash (!next) ) )
+    val hsh = H.hashCombine( Variable.hash var
+                , H.hashCombine( SDD.hashValuation vl, hash (!next) ) )
   in
-    UT.unify( Hom( Cons(var,vl,next), hash ))
+    UT.unify( Hom( Cons(var,vl,next), hsh ))
   end
 
   (*----------------------------------------------------------------------*)
