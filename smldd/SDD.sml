@@ -27,7 +27,7 @@ sig
   val eqValuation       : (valuation * valuation) -> bool
   val valuationToString : valuation -> string
 
-  val paths             : SDD -> int
+  val paths             : SDD -> IntInf.int
 
   val toString          : SDD -> string
   val toDot             : SDD -> string
@@ -1378,7 +1378,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Count the number of distinct paths in an SDD *)
   fun paths x =
     let
-      val cache : (( SDD, int ) HT.hash_table) ref
+      val cache : (( SDD, IntInf.int ) HT.hash_table) ref
           = ref ( HT.mkTable( fn x => hash x , op = )
                            ( 10000, DoNotPanic ) )
       fun pathsHelper x =
@@ -1386,8 +1386,8 @@ functor SDDFun ( structure Variable  : VARIABLE
           val SDD(sdd,_) = !x
         in
             case sdd of
-            Zero  =>  0
-          | One   =>  1
+            Zero  =>  IntInf.fromInt 0
+          | One   =>  IntInf.fromInt 1
           | Node{alpha=(arcs),...} =>
               (case HT.find (!cache) x of
                 SOME r => r
@@ -1396,9 +1396,11 @@ functor SDDFun ( structure Variable  : VARIABLE
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
                                       n
-                                      + ( ( Values.length(!v) )
-                                          * (pathsHelper succ )
-                                        )
+                                      +
+                                      (
+                                        IntInf.fromInt(Values.length(!v))
+                                      * pathsHelper succ
+                                      )
                                     )
                                     0
                                     arcs
@@ -1415,8 +1417,12 @@ functor SDDFun ( structure Variable  : VARIABLE
                 let
                   val value = Vector.foldl
                                     ( fn ((v,succ), n ) =>
-                                      n + ( pathsHelper v )
-                                      * ( pathsHelper succ )
+                                      n
+                                      +
+                                      (
+                                        pathsHelper v
+                                      * pathsHelper succ
+                                      )
                                     )
                                     0
                                     arcs
