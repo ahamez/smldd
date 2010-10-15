@@ -1286,24 +1286,120 @@ functor SDDFun ( structure Variable  : VARIABLE
   fun toDot x =
   let
 
-    fun terminal value =
-      "terminal"
-    ^ (Int.toString value)
-    ^ " [shape=rectangle,regular=true,label=\""
-    ^ (Int.toString value)
-    ^ "\"]\n;"
+    fun terminal value depth =
+        "terminal"
+      ^ (Int.toString value)
+      ^ "_"
+      ^ (Int.toString depth)
+      ^ " [shape=rectangle,regular=true,label=\""
+      ^ (Int.toString value)
+      ^ "\"];\n"
 
-    fun dotHelper (ref (iSDD(sdd,_,_))) =
-    case sdd of
-      Zero       => terminal 0
-    | One        => terminal 1
-    | Node{...}  => raise NotYetImplemented
-    | HNode{...} => raise NotYetImplemented
-  in
+    fun node sdd depth dotHelper =
+        "\"node"
+      ^ (Int.toString (id sdd))
+      ^ "_"
+      ^ (Int.toString depth)
+      ^ "\" [shape=circle,label=\""
+      ^ (Variable.toString (variable sdd))
+      ^ "\"];\n"
+      ^ (foldl (fn ((_,succ),str) => str ^ (dotHelper succ depth))
+               ""
+               (alpha sdd)
+        )
+
+    fun hNode sdd depth dotHelper =
+      raise NotYetImplemented
+
+    val nodes : ( ( SDD , int list ref ) HT.hash_table )
+          = (HT.mkTable( fn x => hash x , op = ) ( 10000, DoNotPanic ))
+
+    val maxDepth = ref 0
+
+    fun dotHelper sdd depth =
+    let
+      val _ = case HT.find nodes sdd of
+                NONE        => HT.insert nodes ( sdd, ref [depth] )
+              | SOME depths =>
+                let
+                  fun insertSorted x [] = []
+                  |   insertSorted x (Y as (y::ys)) =
+                    if x = y then
+                      Y
+                    else if x < y then
+                      x::Y
+                    else
+                      y::(insertSorted x ys)
+                in
+                  depths := insertSorted depth (!depths)
+                end
+      val _ = if depth > !maxDepth then
+                maxDepth := depth
+              else
+                ()
+    in
+      case !sdd of
+        iSDD(Node{...},_,_)  => node sdd depth dotHelper
+      | iSDD(HNode{...},_,_) => hNode sdd depth dotHelper
+      | _ => ""
+    end
+
+    fun nodeArc sdd depth =
+        (foldl (fn((values,succ),str) =>
+                  str
+                ^ "\"node"
+                ^ (Int.toString (id sdd))
+                ^ "_"
+                ^ (Int.toString depth)
+                ^ "\""
+                ^ " -> "
+                ^ (case let val ref(iSDD(nxt,_,_)) = succ in nxt end of
+                    Zero       => raise DoNotPanic
+                  | One        => "terminal1_" ^ (Int.toString depth)
+                  | Node{...}  => "\"node" ^ (Int.toString (id succ))
+                                         ^ "_" ^ (Int.toString depth) ^ "\""
+                  | HNode{...} => "\"hnode" ^ (Int.toString (id succ))
+                                          ^ "_" ^ (Int.toString depth) ^ "\""
+                  )
+                ^ " [label=\""
+                ^ (case values of
+                    Nested _ => raise DoNotPanic
+                  | Values v => Values.toString v
+                  )
+                ^ "\"];\n"
+               )
+               ""
+               (alpha sdd)
+        )
+
+    fun hNodeArc sdd depth =
+      raise NotYetImplemented
+
+    fun dotArcHelper () =
+      HT.foldi (fn (sdd, ref depths, str) =>
+                 str ^
+                 (case let val ref(iSDD(s,_,_)) = sdd in s end of
+                    Node{...} =>
+                      foldl (fn (depth,str) => str ^ (nodeArc sdd depth))
+                            ""
+                            depths
+                  | HNode{...} =>
+                      foldl (fn (depth,str) => str ^ (hNodeArc sdd depth))
+                            ""
+                            depths
+                  | _ => ""
+                  )
+               )
+               ""
+               nodes
+
+   in
       "digraph sdd {\n"
-    ^ (dotHelper x)
+    ^ (dotHelper x 0)
+    ^ (dotArcHelper ())
+    ^ (String.concat (List.tabulate ( !maxDepth + 1, terminal 1) ))
     ^ "\n}\n"
-  end
+   end
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
