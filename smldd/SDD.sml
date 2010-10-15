@@ -136,7 +136,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   exception IncompatibleSDD
   exception NotYetImplemented
-  exception DoNotPanic
   exception IsNotANode
 
   (*----------------------------------------------------------------------*)

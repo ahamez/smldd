@@ -47,7 +47,6 @@ functor HomFun ( structure SDD : SDD
   exception NotYetImplemented
   exception NestedHomOnValues
   exception FunctionHomOnNested
-  exception DoNotPanic
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
