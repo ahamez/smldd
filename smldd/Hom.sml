@@ -305,10 +305,17 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
 
     fun union lookup xs sdd =
+    if sdd = SDD.one then
+      SDD.union (map (fn x => evalCallback lookup x sdd ) xs)
+    else
     let
-      val res = map (fn x => evalCallback lookup x sdd ) xs
+      (*val res = map (fn x => evalCallback lookup x sdd ) xs*)
+      val var = SDD.variable sdd
+      val (F,G) = List.partition (skipVariable var) xs
+      val fRes = evalCallback lookup (mkUnion F) sdd
+      val gRes = map (fn x => evalCallback lookup x sdd ) G
     in
-      SDD.union res
+      SDD.union (fRes::gRes)
     end
 
     (*--------------------------------------------------------------------*)
@@ -322,13 +329,43 @@ functor HomFun ( structure SDD : SDD
 
     fun fixpoint lookup h sdd =
     let
-      (* Should we avoid caching inner evaluations? *)
-      val res = evalCallback lookup h sdd
+
+      val (saturate,xs) =
+        case !h of
+          Hom(Union(xs),_) => ( List.exists (fn x => x = id) xs, SOME xs )
+        | _ => ( false, NONE )
+
+      fun fixpointHelper f sdd =
+      let
+        val res = f sdd
+      in
+        if res = sdd then
+          res
+        else
+          fixpointHelper f res
+      end
+
     in
-      if res = sdd then
-        res
+
+      if sdd = SDD.one orelse not saturate then
+        fixpointHelper (evalCallback lookup h) sdd
+
       else
-        fixpoint lookup h res
+      let
+        val var = SDD.variable sdd
+        val (F,G) = List.partition (skipVariable var) (valOf(xs))
+        fun loop sdd =
+        let
+          val resF = evalCallback lookup (mkFixpoint (mkUnion (id::F))) sdd
+        in
+          foldl (fn (g,sdd) => SDD.union[sdd,evalCallback lookup g sdd])
+                resF
+                G
+        end
+      in
+        fixpointHelper loop sdd
+      end
+
     end
 
     (*--------------------------------------------------------------------*)
