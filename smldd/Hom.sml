@@ -266,15 +266,15 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
 
-    fun skipVariable (var, hom) =
+    fun skipVariable var hom =
     case !hom of
       Hom( Id, _ )          => true
     | Hom( Const(_), _ )    => false
     | Hom( Cons(_,_,_), _ ) => false
     | Hom( Nested(_,v),_)   => not (Variable.eq (var,v))
-    | Hom( Union(xs),_)     => List.all (fn x => skipVariable(var,x)) xs
-    | Hom( Compo(a,b),_)    => skipVariable(var,a) andalso skipVariable(var,b)
-    | Hom( Fixpoint(f),_)   => skipVariable(var,f)
+    | Hom( Union(xs),_)     => List.all (fn x => skipVariable var x) xs
+    | Hom( Compo(a,b),_)    => skipVariable var a andalso skipVariable var b
+    | Hom( Fixpoint(f),_)   => skipVariable var f
     | Hom( Func(_,v),_)     => not (Variable.eq (var,v))
 
     (*--------------------------------------------------------------------*)
@@ -391,7 +391,7 @@ functor HomFun ( structure SDD : SDD
     *)
     fun apply ( Op( h, sdd, lookup) ) =
     let
-      val skip = let val v = SDD.variable sdd in skipVariable (v,h) end
+      val skip = let val v = SDD.variable sdd in skipVariable v h end
                  handle SDD.IsNotANode => false
     in
       if skip then
