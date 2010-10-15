@@ -11,7 +11,6 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./parameters/signatures/VALUES.sml
 ./parameters/signatures/VARIABLE.sml
 ./parameters/instances/DiscreteIntValues.sml
-./parameters/instances/CharVariable.sml
 ./parameters/instances/IntVariable.sml
 
 ./storage/signatures/DATA.sml
