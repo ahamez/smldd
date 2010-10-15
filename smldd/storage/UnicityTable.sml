@@ -50,6 +50,8 @@ functor UnicityTableFun ( structure Data : DATA )
     = H.mkTable ( hash, eq )
                 ( 10000, data_not_found )
 
+  val cleanup = ref 1000
+
   (* Return a ref to the unified valuation *)
   (* Values must be canonized before this unification *)
   fun unify ( values : data ) : rdata =
@@ -61,8 +63,11 @@ functor UnicityTableFun ( structure Data : DATA )
                      NONE    => false
                    | SOME _  => true
     in
-      if (H.numItems values_table) > 100000 then
+      (* Remove weak pointers to nothing *)
+      if (H.numItems values_table) > (!cleanup) then
+      ( cleanup := !cleanup * 2;
         H.filter keep values_table
+      )
       else
         ();
 
