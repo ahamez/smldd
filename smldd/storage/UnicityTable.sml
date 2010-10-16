@@ -142,8 +142,8 @@ functor UnicityTableFunID ( structure Data : DATA )
   fun unify mk =
     let
       val i = case !unused of
-                []   => (id := !id + 1; !id)
-              | x::_ => (unused := tl (!unused); x)
+                []    => (id := !id + 1; !id)
+              | x::xs => (unused := xs; x)
       val rvalues  = ref (mk i)
       val wrvalues = W.new rvalues
       (* Tell HashTable.filter which entries to keep *)
@@ -163,7 +163,7 @@ functor UnicityTableFunID ( structure Data : DATA )
         ();
 
       case H.find values_table wrvalues of
-        SOME (v,_) => valOf(W.get v)
+        SOME (v,_) => ( unused := i::(!unused) ; valOf(W.get v))
       | NONE       => ( H.insert values_table ( wrvalues, (wrvalues,i) );
                         rvalues
                       )
