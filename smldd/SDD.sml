@@ -30,7 +30,7 @@ sig
   val eqValuation       : (valuation * valuation) -> bool
   val valuationToString : valuation -> string
 
-  val paths             : SDD -> IntInf.int
+  val nbPaths           : SDD -> IntInf.int
 
   val toString          : SDD -> string
 
@@ -1241,7 +1241,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Count the number of distinct paths in an SDD *)
-  fun paths x =
+  fun nbPaths x =
     let
       val cache : (( SDD, IntInf.int ) HT.hash_table) ref
           = ref ( HT.mkTable( fn x => hash x , op = )
