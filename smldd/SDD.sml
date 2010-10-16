@@ -32,7 +32,9 @@ sig
   val paths             : SDD -> IntInf.int
 
   val toString          : SDD -> string
-  val toDot             : bool -> SDD -> string
+
+  datatype dotMode      = ShowSharing | ShowHierarchy
+  val toDot             : dotMode -> SDD -> string
 
   val stats             : unit -> string
 
@@ -1300,9 +1302,14 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
+  datatype dotMode = ShowSharing | ShowHierarchy
+
   (* Export an SDD to a DOT representation *)
-  fun toDot maxShare x =
+  fun toDot mode x =
   let
+
+    val maxShare = case mode of ShowHierarchy => false
+                              | ShowSharing   => true
 
     fun depthStr depth = if maxShare then
                            ""
