@@ -21,6 +21,8 @@ sig
   val difference        : SDD * SDD -> SDD
 
   val variable          : SDD -> variable
+  val values            : valuation -> values
+  val nested            : valuation -> SDD
   val alpha             : SDD -> (valuation * SDD) list
   val hash              : SDD -> Hash.t
   val hashValuation     : valuation -> Hash.t
@@ -30,13 +32,15 @@ sig
   val paths             : SDD -> IntInf.int
 
   val toString          : SDD -> string
-  val toDot             : SDD -> string
+  val toDot             : bool -> SDD -> string
 
   val stats             : unit -> string
 
   exception IncompatibleSDD
   exception NotYetImplemented
   exception IsNotANode
+  exception IsNotValues
+  exception IsNotNested
 
 end
 
@@ -141,6 +145,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   exception IncompatibleSDD
   exception NotYetImplemented
   exception IsNotANode
+  exception IsNotValues
+  exception IsNotNested
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -1168,6 +1174,18 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
+  fun values x = case x of
+                   Nested _ => raise IsNotNested
+                 | Values v => v
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
+  fun nested x = case x of
+                   Values v => raise IsNotValues
+                 | Nested s => s
+
+  (*----------------------------------------------------------------------*)
+  (*----------------------------------------------------------------------*)
   fun alpha (x as (ref (iSDD(sdd,_,_)))) =
   let
     fun alphaHelper a f =
@@ -1283,14 +1301,20 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Export an SDD to a DOT representation *)
-  fun toDot x =
+  fun toDot maxShare x =
   let
+
+    fun depthStr depth = if maxShare then
+                           ""
+                         else
+                           "_" ^ (Int.toString depth)
 
     fun terminal value depth =
         "terminal"
       ^ (Int.toString value)
-      ^ "_"
-      ^ (Int.toString depth)
+      (*^ "_"
+      ^ (Int.toString depth)*)
+      ^ (depthStr depth)
       ^ " [shape=rectangle,regular=true,label=\""
       ^ (Int.toString value)
       ^ "\"];\n"
@@ -1298,8 +1322,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     fun node sdd depth dotHelper =
         "\"node"
       ^ (Int.toString (id sdd))
-      ^ "_"
-      ^ (Int.toString depth)
+      ^ (depthStr depth)
       ^ "\" [shape=circle,label=\""
       ^ (Variable.toString (variable sdd))
       ^ "\"];\n"
@@ -1309,8 +1332,27 @@ functor SDDFun ( structure Variable  : VARIABLE
         )
 
     fun hNode sdd depth dotHelper =
-      raise NotYetImplemented
+        "\"node"
+      ^ (Int.toString (id sdd))
+      ^ (depthStr depth)
+      ^ "\" [shape=circle,label=\""
+      ^ (Variable.toString (variable sdd))
+      ^ "\"];\n"
+      ^ (foldl (fn ((nested,succ),str) =>
+                  str
+                ^ (dotHelper (case nested of
+                               Values _ => raise DoNotPanic
+                             | Nested n => n
+                             )
+                             (depth +1)
+                  )
+                ^ (dotHelper succ depth)
+               )
+               ""
+               (alpha sdd)
+        )
 
+    (* Associate an SDD to a list of all hierarchies it belongs to *)
     val nodes : ( ( SDD , int list ref ) HT.hash_table )
           = (HT.mkTable( fn x => hash x , op = ) ( 10000, DoNotPanic ))
 
@@ -1344,36 +1386,91 @@ functor SDDFun ( structure Variable  : VARIABLE
       | _ => ""
     end
 
+    (* Store already visited nodes, to avoid duplicate arcs *)
+    val arcs : ( ( SDD , SDD ) HT.hash_table )
+          = (HT.mkTable( fn x => hash x , op = ) ( 10000, DoNotPanic ))
+
     fun nodeArc sdd depth =
-        (foldl (fn((values,succ),str) =>
-                  str
-                ^ "\"node"
-                ^ (Int.toString (id sdd))
-                ^ "_"
-                ^ (Int.toString depth)
-                ^ "\""
-                ^ " -> "
-                ^ (case let val ref(iSDD(nxt,_,_)) = succ in nxt end of
-                    Zero       => raise DoNotPanic
-                  | One        => "terminal1_" ^ (Int.toString depth)
-                  | Node{...}  => "\"node" ^ (Int.toString (id succ))
-                                         ^ "_" ^ (Int.toString depth) ^ "\""
-                  | HNode{...} => "\"hnode" ^ (Int.toString (id succ))
-                                          ^ "_" ^ (Int.toString depth) ^ "\""
-                  )
-                ^ " [label=\""
-                ^ (case values of
-                    Nested _ => raise DoNotPanic
-                  | Values v => Values.toString v
-                  )
-                ^ "\"];\n"
-               )
-               ""
-               (alpha sdd)
-        )
+    let
+      fun nodeArcHelper () =
+      foldl (fn((values,succ),str) =>
+                str
+              ^ "\"node"
+              ^ (Int.toString (id sdd))
+              ^ (depthStr depth)
+              ^ "\""
+              ^ " -> "
+              ^ (case let val ref(iSDD(x,_,_)) = succ in x end of
+                  Zero       => raise DoNotPanic
+                | One        => "terminal1" ^ (depthStr depth)
+                | Node{...}  => "\"node" ^ (Int.toString (id succ))
+                                       ^ (depthStr depth) ^ "\""
+                | HNode{...} => "\"node" ^ (Int.toString (id succ))
+                                        ^ (depthStr depth) ^ "\""
+                )
+              ^ " [label=\""
+              ^ (case values of
+                  Nested _ => raise DoNotPanic
+                | Values v => Values.toString v
+                )
+              ^ "\"];\n"
+             )
+             ""
+             (alpha sdd)
+    in
+      if maxShare then
+        case HT.find arcs sdd of
+          NONE   => ( HT.insert arcs (sdd,sdd); nodeArcHelper () )
+        | SOME _ => ""
+      else
+        nodeArcHelper ()
+    end
 
     fun hNodeArc sdd depth =
-      raise NotYetImplemented
+    let
+      fun hNodeArcHelper () =
+      foldl (fn((vl,succ),str) =>
+            let
+              val curr  =   "\"node"
+                          ^ (Int.toString (id sdd))
+                          ^ (depthStr depth)
+                          ^ "\""
+              val ghost =   "\"ghost"
+                          ^ (Int.toString(id sdd))
+                          ^ "_"
+                          ^ (Int.toString(id (nested vl)))
+                          ^ "_"
+                          ^ (Int.toString(id succ))
+                          ^ (depthStr depth)
+                          ^ "\""
+              val nst   =   "\"node"
+                          ^ (Int.toString(id (nested vl)))
+                          ^ (depthStr (depth + 1))
+                          ^ "\""
+              val nxt   = (case let val ref(iSDD(x,_,_)) = succ in x end of
+                            Zero       => raise DoNotPanic
+                          | One        => "terminal1" ^ (depthStr depth)
+                          | _          => "\"node" ^ (Int.toString (id succ))
+                                          ^ (depthStr depth) ^ "\""
+                          )
+            in
+                str
+              ^ ghost ^ " [shape=point,label=\"\",height=0,width=0];\n"
+              ^ curr  ^ " -> " ^ ghost ^ " [arrowhead=none];\n"
+              ^ ghost ^ " -> " ^ nxt ^ ";\n"
+              ^ ghost ^ " -> " ^ nst ^ " [style=dashed,weight=0];\n"
+            end
+            )
+            ""
+            (alpha sdd)
+    in
+      if maxShare then
+        case HT.find arcs sdd of
+          NONE   => ( HT.insert arcs (sdd,sdd); hNodeArcHelper () )
+        | SOME _ => ""
+      else
+        hNodeArcHelper ()
+    end
 
     fun dotArcHelper () =
       HT.foldi (fn (sdd, ref depths, str) =>
@@ -1394,10 +1491,19 @@ functor SDDFun ( structure Variable  : VARIABLE
                nodes
 
    in
-      "digraph sdd {\n"
+     if x = one then
+      terminal 1 0
+     else if x = zero then
+      terminal 0 0
+     else
+      "digraph sdd {\n\n"
     ^ (dotHelper x 0)
     ^ (dotArcHelper ())
-    ^ (String.concat (List.tabulate ( !maxDepth + 1, terminal 1) ))
+    ^ (if maxShare then
+         terminal 1 0
+       else
+         String.concat (List.tabulate ( !maxDepth + 1, terminal 1) )
+      )
     ^ "\n}\n"
    end
 
