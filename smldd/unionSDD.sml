@@ -38,6 +38,14 @@ let
     alphaToList ( squareUnion (diffPartAB @ commonPart @ diffPartBA) )
   end
 
+  val alphaList = foldl unionHelper initial operands
+
+  val l = map (fn (vl,succs) => case succs of
+                                  s::[] => (vl,s)
+                                | _     => raise DoNotPanic
+              )
+              alphaList
+
 in
-  nodeAlpha( var, squareUnion (foldl unionHelper initial operands) )
+  nodeAlpha( var,  Vector.fromList l )
 end
