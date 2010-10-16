@@ -8,6 +8,7 @@ in
     ../smldd/sources.mlb
     ./TestSDD.sml
     ./TestHom.sml
+    ./TestDot.sml
     ./main.sml
   end
 end
