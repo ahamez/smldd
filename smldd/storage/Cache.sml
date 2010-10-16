@@ -133,5 +133,4 @@ functor NoCacheFun ( structure Operation : OPERATION )
 
 end (* NoCacheFun *)
 
-
 (*--------------------------------------------------------------------------*)
