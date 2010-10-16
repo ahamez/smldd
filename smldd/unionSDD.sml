@@ -24,7 +24,7 @@ let
                 if empty diff then
                   acc
                 else
-                  ( diff, xSuccs)::acc
+                  ( diff, xSuccs )::acc
               end
             )
             []
@@ -47,5 +47,5 @@ let
               alphaList
 
 in
-  nodeAlpha( var,  Vector.fromList l )
+  nodeAlpha( var, Vector.fromList l )
 end
