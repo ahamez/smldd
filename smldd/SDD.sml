@@ -1312,8 +1312,6 @@ functor SDDFun ( structure Variable  : VARIABLE
     fun terminal value depth =
         "terminal"
       ^ (Int.toString value)
-      (*^ "_"
-      ^ (Int.toString depth)*)
       ^ (depthStr depth)
       ^ " [shape=rectangle,regular=true,label=\""
       ^ (Int.toString value)
