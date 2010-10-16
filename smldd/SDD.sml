@@ -21,10 +21,11 @@ sig
   val difference        : SDD * SDD -> SDD
 
   val variable          : SDD -> variable
-  val values            : valuation -> values
-  val nested            : valuation -> SDD
   val alpha             : SDD -> (valuation * SDD) list
   val hash              : SDD -> Hash.t
+
+  val values            : valuation -> values
+  val nested            : valuation -> SDD
   val hashValuation     : valuation -> Hash.t
   val eqValuation       : (valuation * valuation) -> bool
   val valuationToString : valuation -> string
