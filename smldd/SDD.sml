@@ -1361,6 +1361,13 @@ functor SDDFun ( structure Variable  : VARIABLE
       val _ = case HT.find nodes sdd of
                 NONE        => HT.insert nodes ( sdd, ref [depth] )
               | SOME depths =>
+                if maxShare then
+                  (* Insert only for the first time, as
+                     in real sharing mode, we don't care
+                     about depth
+                  *)
+                  ()
+                else
                 let
                   fun insertSorted x [] = []
                   |   insertSorted x (Y as (y::ys)) =
@@ -1384,13 +1391,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       | _ => ""
     end
 
-    (* Store already visited nodes, to avoid duplicate arcs *)
-    val arcs : ( ( SDD , SDD ) HT.hash_table )
-          = (HT.mkTable( fn x => hash x , op = ) ( 10000, DoNotPanic ))
-
     fun nodeArc sdd depth =
-    let
-      fun nodeArcHelper () =
       foldl (fn((values,succ),str) =>
                 str
               ^ "\"node"
@@ -1415,18 +1416,8 @@ functor SDDFun ( structure Variable  : VARIABLE
              )
              ""
              (alpha sdd)
-    in
-      if maxShare then
-        case HT.find arcs sdd of
-          NONE   => ( HT.insert arcs (sdd,sdd); nodeArcHelper () )
-        | SOME _ => ""
-      else
-        nodeArcHelper ()
-    end
 
     fun hNodeArc sdd depth =
-    let
-      fun hNodeArcHelper () =
       foldl (fn((vl,succ),str) =>
             let
               val curr  =   "\"node"
@@ -1461,14 +1452,6 @@ functor SDDFun ( structure Variable  : VARIABLE
             )
             ""
             (alpha sdd)
-    in
-      if maxShare then
-        case HT.find arcs sdd of
-          NONE   => ( HT.insert arcs (sdd,sdd); hNodeArcHelper () )
-        | SOME _ => ""
-      else
-        hNodeArcHelper ()
-    end
 
     fun dotArcHelper () =
       HT.foldi (fn (sdd, ref depths, str) =>
