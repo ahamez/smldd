@@ -78,41 +78,31 @@ functor SDDFun ( structure Variable  : VARIABLE
        responsible for the generation of this id.=
     *)
     fun eq ( iSDD(lsdd,lh,_), iSDD(rsdd,rh,_) ) =
-    if lh <> rh then
-      false
-    else
-      case lsdd of
+      if lh <> rh then
+        false
+      else
+        case ( lsdd, rsdd ) of
 
-        Zero => (case rsdd of
-                  Zero  => true
-                | _     => false
-                )
+          ( Zero, Zero ) => true
+        | ( Zero, _    ) => false
+        | ( One, One   ) => true
+        | ( One, _     ) => false
 
-      | One  => (case rsdd of
-                  One   => true
-                | _     => false
-                )
-
-      | Node{ variable=lvr, alpha=lalpha } =>
-          (case rsdd of
-            Node{ variable=rvr, alpha=ralpha } =>
+        | ( Node{ variable=lvr, alpha=lalpha }
+          , Node{ variable=rvr, alpha=ralpha } ) =>
               if not( Variable.eq(lvr,rvr) ) then
                 false
               else
                 lalpha = ralpha
-          | _ => false
-          )
+        | ( Node{ variable=lvr, alpha=lalpha } , _ ) => false
 
-      | HNode{ variable=lvr, alpha=lalpha } =>
-          (case rsdd of
-            HNode{ variable=rvr, alpha=ralpha } =>
+        | ( HNode{ variable=lvr, alpha=lalpha }
+          , HNode{ variable=rvr, alpha=ralpha } ) =>
               if not( Variable.eq(lvr,rvr) ) then
                 false
               else
                 lalpha = ralpha
-          | _ => false
-          )
-
+        | ( HNode{ variable=lvr, alpha=lalpha } , _ ) => false
     (* end fun eq *)
 
     (* The hash value of a node is stored with it, because we can't
@@ -323,19 +313,13 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
 
       fun eq (l,r) =
-        case l of
-          Union(xs) =>    (case r of
-                            Union(ys) => xs = ys
-                          |  _ => false
-                          )
-        | Inter(xs) =>    (case r of
-                            Inter(ys) => xs = ys
-                          | _ => false
-                          )
-        | Diff(lx,ly) =>  (case r of
-                            Diff(rx,ry) => lx = rx andalso ly = ry
-                          | _ => false
-                          )
+        case (l,r) of
+          ( Union(xs), Union(ys) )     => xs = ys
+        | ( Union(_) , _ )             => false
+        | ( Inter(xs), Inter(ys) )     => xs = ys
+        | ( Inter(_) , _ )             => false
+        | ( Diff(lx,ly), Diff(rx,ry) ) => lx = rx andalso ly = ry
+        | ( Diff(_,_), _ )             => false
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -1082,19 +1066,13 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (* Compare two SDD operations *)
       fun eq (x,y) =
-      case x of
-        Union( xs, _ )    =>  (case y of
-                                Union( ys, _ )  => xs = ys
-                              | _               => false
-                              )
-      | Inter( xs, _ )    =>  (case y of
-                                Inter( ys, _ ) => xs = ys
-                              | _              => false
-                              )
-      | Diff( xl, xr, _ ) =>  (case y of
-                                Diff( yl, yr, _ ) => xl = yl andalso xr = yr
-                              | _ => false
-                              )
+        case (x,y) of
+          ( Union(xs,_), Union(ys,_) )     => xs = ys
+        | ( Union(_,_) , _ )               => false
+        | ( Inter(xs,_), Inter(ys,_) )     => xs = ys
+        | ( Inter(_,_) , _ )               => false
+        | ( Diff(lx,ly,_), Diff(rx,ry,_) ) => lx = rx andalso ly = ry
+        | ( Diff(_,_,_), _ )               => false
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -1217,15 +1195,11 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (* Compare two valuations. Needed by HomFun*)
   fun eqValuation (x,y) =
-  case x of
-    Nested(nestedx) => (case y of
-                         Nested(nestedy) => nestedx = nestedy
-                       | _               => false
-                       )
-  | Values(valuesx) => (case y of
-                         Values(valuesy) => Values.eq( valuesx, valuesy )
-                       | _               => false
-                       )
+    case (x,y) of
+      ( Nested(nx), Nested(ny) ) => nx = ny
+    | ( Nested(_), _ )           => false
+    | ( Values(vx), Values(vy) ) => Values.eq( vx, vy )
+    | ( Values(_), _ )           => false
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
