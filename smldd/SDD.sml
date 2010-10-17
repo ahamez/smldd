@@ -627,16 +627,16 @@ functor SDDFun ( structure Variable  : VARIABLE
                          []
                          tbl
 
-        fun qsort [] = []
-        |   qsort ((arcx as (x,_))::xs) =
+        fun sortAlpha [] = []
+        |   sortAlpha ((arcx as (x,_))::xs) =
         let
           val (left,right) = List.partition (fn (y,_) => Values.lt(!y,!x)) xs
         in
-          qsort left @ [arcx] @ qsort right
+          sortAlpha left @ [arcx] @ sortAlpha right
         end
 
        in
-         Vector.fromList (qsort alpha')
+         Vector.fromList (sortAlpha alpha')
        end
 
       (*------------------------------------------------------------------*)
@@ -690,16 +690,16 @@ functor SDDFun ( structure Variable  : VARIABLE
                         []
                         tbl
 
-       fun qsort [] = []
-       |   qsort ((arcx as (x,_))::xs) =
+       fun sortAlpha [] = []
+       |   sortAlpha ((arcx as (x,_))::xs) =
        let
          val (left,right) = List.partition (fn (y,_) => id y < id x) xs
        in
-         qsort left @ [arcx] @ qsort right
+         sortAlpha left @ [arcx] @ sortAlpha right
        end
 
       in
-        Vector.fromList (qsort alpha')
+        Vector.fromList (sortAlpha alpha')
       end
 
       (*------------------------------------------------------------------*)
