@@ -4,6 +4,6 @@ in
 
   structure SDD
   structure Hom
-  structure SortedVector
+  structure IntSortedVector
 
 end
