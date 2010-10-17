@@ -16,8 +16,9 @@ let
   fun helper []      = []
   |   helper (x::xs) =
     let
-      val left  = List.filter (fn y => lt( extract y , extract x ) ) xs
-      val right = List.filter (fn y => gt( extract y , extract x ) ) xs
+      val x'    = extract x
+      val left  = List.filter (fn y => lt( extract y , x' ) ) xs
+      val right = List.filter (fn y => gt( extract y , x' ) ) xs
     in
       helper left @ [x] @ helper right
     end
