@@ -9,3 +9,19 @@ fun IntVectorToList ( vec : IntVector.vector ) =
   IntVector.foldr (fn (elm,acc) => elm::acc ) [] vec
 
 (*--------------------------------------------------------------------------*)
+
+fun sortUnique extract lt gt xs =
+let
+
+  fun helper []      = []
+  |   helper (x::xs) =
+    let
+      val left  = List.filter (fn y => lt( extract y , extract x ) ) xs
+      val right = List.filter (fn y => gt( extract y , extract x ) ) xs
+    in
+      helper left @ [x] @ helper right
+    end
+
+in
+  helper xs
+end
