@@ -1,5 +1,4 @@
 (*--------------------------------------------------------------------------*)
-(*--------------------------------------------------------------------------*)
 
 signature SDD =
 sig
@@ -48,7 +47,6 @@ sig
 end
 
 (*--------------------------------------------------------------------------*)
-(*--------------------------------------------------------------------------*)
 
 functor SDDFun ( structure Variable  : VARIABLE
                ; structure Values    : VALUES )
@@ -59,7 +57,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   type values     = Values.plain
   type values'    = Values.unique
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   (* Define an SDD *)
@@ -109,22 +106,16 @@ functor SDDFun ( structure Variable  : VARIABLE
   open Definition
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
 
   type SDD = Definition.t ref
-
   datatype valuation = Nested of SDD | Values of values
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
 
-  (* Unicity *)
   structure SDDUT = UnicityTableFunID( structure Data = Definition )
-
   structure H  = Hash
   structure HT = HashTable
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
 
   exception IncompatibleSDD
@@ -134,8 +125,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   exception IsNotNested
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   (* Export an SDD to a string *)
   fun toString (ref (iSDD(sdd,_,h))) =
   case sdd of
@@ -170,26 +159,21 @@ functor SDDFun ( structure Variable  : VARIABLE
     ^ " ]"
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   (* Extract the identifier of an SDD *)
   fun uid (ref(iSDD(_,_,x))) = x
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Called by the unicity table to construct an SDD with an id *)
   fun mkNode n h uid = iSDD( n, h, uid)
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   (* Return the |0| ("zero") terminal *)
   val zero = SDDUT.unify (mkNode Zero (H.const 0))
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   (* Return the |1| ("one") terminal *)
   val one = SDDUT.unify (mkNode One (H.const 1))
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Return a node with a set of discrete values on arc *)
   fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) )
@@ -209,9 +193,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-  (* Construct a flat node with an already computed alpha.
-     For internal use only! *)
+  (* Construct a flat node with an pre-computed alpha. Internal use only! *)
   fun flatNodeAlpha ( var   : Variable.t
                     , alpha : (values' * SDD ) Vector.vector )
   =
@@ -233,8 +215,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-  (* Return an hierarchical node *)
+  (* Return an hierarchical node. Not exported *)
   fun hierNode ( vr, rnested as (ref (iSDD(nested,hashNested,_)))
                    , rnext as (ref (iSDD(next,hashNext,_))) ) =
   case next of
@@ -253,9 +234,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   )
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-  (* Construct a node with an already computed alpha.
-     For internal use only! *)
+  (* Construct a node with an pre-computed alpha. Internal use only! *)
   fun nodeAlpha ( vr : Variable.t , alpha : (SDD * SDD) Vector.vector )
   = if Vector.length alpha = 0 then
     zero
@@ -275,7 +254,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   (* Return a node *)
   fun node ( vr : Variable.t, vl : valuation , next : SDD ) =
   case vl of
@@ -284,15 +262,13 @@ functor SDDFun ( structure Variable  : VARIABLE
 
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
 
   local (* SDD manipulation *)
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
+
     val sortSDDs = sortUnique uid (op <) (op >)
 
-    (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
     (* Operations to manipulate SDD. Used by the cache. *)
     structure SDDOperations (* : OPERATION *) =
@@ -300,7 +276,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       val name = "SDD"
 
-      (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
       (* Types required by the OPERATION signature *)
       type result        = SDD
@@ -311,7 +286,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                          | Diff  of
                               ( SDD * SDD * (operation -> result) )
 
-      (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
       (* Check compatibility of operands *)
       fun check []     = raise DoNotPanic
@@ -350,14 +324,12 @@ functor SDDFun ( structure Variable  : VARIABLE
               xs
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* Convert an alpha (a vector) into a more easy to manipulate type
          (a list of values, each one leading to a list of successors).
          Thus, it make usable by squareUnion.
 
          (values * SDD) Vector.vector
            -> ( values * SDD list ) list
-
       *)
       fun alphaToList( alpha ) =
       Vector.foldr
@@ -390,7 +362,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       | _ => raise DoNotPanic
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* Warning: duplicate code with SDD.union! Keep in sync! *)
       fun unionCallback lookup xs =
       let
@@ -408,7 +379,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       end
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
       fun intersectionCallback lookup xs =
         case xs of
@@ -416,7 +386,6 @@ functor SDDFun ( structure Variable  : VARIABLE
         | (x::[]) => x    (* No need to cache *)
         | _       => lookup(Inter( sortSDDs xs, lookup))
 
-      (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
       fun differenceCallback lookup ( x, y ) =
@@ -430,18 +399,6 @@ functor SDDFun ( structure Variable  : VARIABLE
           lookup(Diff( x, y, lookup ))
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
-      (* Do the n-ary union of a list of flat SDDs.
-         The general idea is to create a potential alpha
-         of type (values * SDD list ) list which stores all
-         successors for a given values set, which is then given to
-         the square union function.
-
-         In fact, it's not a real n-ary union as we operate on two operands
-         at a time, the result becoming the 'bAlpha' operand on next iteration
-         while 'aAlpha' is the head of the remaining operands (thus we use a 
-         foldl). 'bAlpha' is initialized by the alpha of the first operand.
-      *)
       fun union cacheLookup xs =
       let
         (* Check operands compatibility *)
@@ -491,7 +448,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       end (* end fun union *)
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* N-ary intersection of SDDs *)
       fun intersection cacheLookup xs =
       let
@@ -526,13 +482,13 @@ functor SDDFun ( structure Variable  : VARIABLE
           val _ = check xs
 
           (* Transform the alpha of each node into :
-             (values,SDD list) list.
+             (values',SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (values * SDD list) list
-             operands : (values * SDD list) list list
+             initial  : (values' * SDD list) list
+             operands : (values' * SDD list) list list
           *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -596,7 +552,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       end (* end fun intersection *)
 
-      (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
       (* Compute the difference of two SDDs *)
       fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
@@ -739,7 +694,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* end fun difference *)
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* Apply an SDD operation. Called by CacheFun. *)
       fun apply x =
       case x of
@@ -747,7 +701,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       | Inter( xs, cacheLookup)  => intersection cacheLookup xs
       | Diff( x,y, cacheLookup)  => difference   cacheLookup (x,y)
 
-      (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
       (* Hash an SDD operation *)
       fun hash x =
@@ -765,7 +718,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       end
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* Compare two SDD operations *)
       fun eq (x,y) =
         case (x,y) of
@@ -775,24 +727,19 @@ functor SDDFun ( structure Variable  : VARIABLE
         | ( _, _ )                         => false
 
       (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
 
     end (* end struct SDDOperations *)
 
   in (* local SDD manipulations *)
 
     (*------------------------------------------------------------------*)
-    (*------------------------------------------------------------------*)
     (* Cache of operations on SDDs *)
     structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
 
     (*------------------------------------------------------------------*)
-    (*------------------------------------------------------------------*)
-
     (* Let operations in Op call the cache *)
     val cacheLookup = SDDOpCache.lookup
 
-    (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
     (* Warning! Duplicate code with SDD.SDDOperations.unionCallback! *)
     fun union xs =
@@ -812,8 +759,6 @@ functor SDDFun ( structure Variable  : VARIABLE
     end
 
     (*------------------------------------------------------------------*)
-    (*------------------------------------------------------------------*)
-
     (* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback! *)
     fun intersection xs =
     case xs of
@@ -823,8 +768,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                                                       , cacheLookup ))
 
     (*------------------------------------------------------------------*)
-    (*------------------------------------------------------------------*)
-
     (* Warning! Duplicate code with SDD.SDDOperations.differenceCallback! *)
     fun difference(x,y) =
     if x = y then          (* No need to cache *)
@@ -837,11 +780,9 @@ functor SDDFun ( structure Variable  : VARIABLE
       SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
 
     (*------------------------------------------------------------------*)
-    (*------------------------------------------------------------------*)
 
   end (* local SDD manipulations *)
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Return the variable of an SDD. Needed by HomFun*)
   fun variable (ref (iSDD(x,_,_))) =
@@ -851,18 +792,15 @@ functor SDDFun ( structure Variable  : VARIABLE
   | _                       => raise IsNotANode
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   fun values x = case x of
                    Nested _ => raise IsNotNested
                  | Values v => v
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   fun nested x = case x of
                    Values v => raise IsNotValues
                  | Nested s => s
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   fun alpha (x as (ref (iSDD(sdd,_,_)))) =
   let
@@ -879,11 +817,9 @@ functor SDDFun ( structure Variable  : VARIABLE
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   (* Return the hash value of an SDD. Needed by HomFun*)
   fun hash x = Definition.hash (!x)
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Return the hash value of a valuation. Needed by HomFun*)
   fun hashValuation x =
@@ -891,7 +827,6 @@ functor SDDFun ( structure Variable  : VARIABLE
     Nested(nested) => Definition.hash (!nested)
   | Values(values) => Values.hash (Values.mkUnique values)
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Compare two valuations. Needed by HomFun*)
   fun eqValuation (x,y) =
@@ -901,14 +836,12 @@ functor SDDFun ( structure Variable  : VARIABLE
   | ( _ , _ )                  => false
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
   (* Export a valuation to a string. Needed by HomFun*)
   fun valuationToString x =
   case x of
     Nested(nested) => toString nested
   | Values(values) => Values.toString (Values.mkUnique values)
 
-  (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Count the number of distinct paths in an SDD *)
   fun nbPaths x =
@@ -972,7 +905,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     end (* end fun paths *)
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
+  (* Indicate if the dot output emphasizes on hierarchy or sharing *)
   datatype dotMode = ShowSharing | ShowHierarchy
 
   (* Export an SDD to a DOT representation *)
@@ -1167,14 +1100,11 @@ functor SDDFun ( structure Variable  : VARIABLE
    end (* fun toDot *)
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-  fun stats () =
-   SDDOpCache.stats()
 
-  (*----------------------------------------------------------------------*)
+  fun stats () = SDDOpCache.stats()
+
   (*----------------------------------------------------------------------*)
 
 end (* end functor SDDFun *)
 
-(*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)

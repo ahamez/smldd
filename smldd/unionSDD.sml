@@ -1,3 +1,14 @@
+(* Do the n-ary union of a list of SDDs.
+   The general idea is to create a potential alpha
+   of type ([values|SDD] * SDD list ) list which stores all
+   successors for a given values set, which is then given to
+   the square union function.
+
+   In fact, it's not a real n-ary union as we operate on two operands
+   at a time, the result becoming the 'bAlpha' operand on next iteration
+   while 'aAlpha' is the head of the remaining operands (thus we use a
+   foldl). 'bAlpha' is initialized by the alpha of the first operand.
+*)
 fun unionSDD alphaNodeToList alphaToList
              squareUnion
              valInter valDiff valEmpty
