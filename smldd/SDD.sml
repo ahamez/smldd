@@ -497,14 +497,9 @@ functor SDDFun ( structure Variable  : VARIABLE
                                          (unionCallback cacheLookup)
                                          Values.union
                                          Values.lt
-
-          (* Intersect two operands *)
-          fun interHelper (xs,ys) = commonApply'( xs, ys )
-
-          val alpha = squareUnion' ( foldl interHelper initial operands )
-
         in
-          flatNodeAlpha( var, alpha )
+          flatNodeAlpha( var
+                       , squareUnion'( foldl commonApply' initial operands ) )
         end (* Flat node case *)
 
         (* Hierachical node case *)
@@ -534,14 +529,9 @@ functor SDDFun ( structure Variable  : VARIABLE
           val squareUnion' = squareUnion uid (unionCallback cacheLookup)
                                              (unionCallback cacheLookup)
                                              (fn (x,y) => uid x < uid y)
-
-          (* Intersect two operands *)
-          fun interHelper (xs,ys) = commonApply'( xs, ys )
-
-          val alpha = squareUnion' ( foldl interHelper initial operands )
-
         in
-          nodeAlpha( var, alpha )
+          nodeAlpha( var
+                   , squareUnion' ( foldl commonApply' initial operands ) )
         end (* Hierachical node case *)
 
       end (* end fun intersection *)
