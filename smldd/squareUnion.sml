@@ -11,9 +11,9 @@ let
 
   fun mergeSuccs ( ( vl , succs  ) , acc ) =
   let
-  
+
     val succ = SDDUnion succs
-  
+
     fun insert [] (succ,vl) = [ (succ, [vl]) ]
     |   insert (X as ((xsucc,xvls)::xs)) (succ,vl) =
       if uid succ = uid xsucc then
@@ -22,17 +22,17 @@ let
         ( succ, [vl] )::X
       else
         (xsucc,xvls)::(insert xs (succ,vl))
-  
+
   in
     insert acc (succ,vl)
   end
-  
-  
+
+
   fun mergeVls ( (succ,vls), acc ) =
   let
-  
+
     val vl = valUnion vls
-  
+
     fun insert [] x = [x]
     |   insert (X as ((xvl,xsucc)::xs)) (vl,succ) =
       if vl = xvl then
@@ -41,7 +41,7 @@ let
         (vl,succ)::X
       else
         (xvl,xsucc)::( insert xs (vl,succ) )
-  
+
   in
     insert acc ( vl, succ )
   end
