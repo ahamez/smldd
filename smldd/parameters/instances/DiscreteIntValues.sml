@@ -112,6 +112,6 @@ struct
 
     val stats = cache.stats
 
-  end (* local valuess manipulations *)
+  end (* local *)
 
 end (* DiscreteIntValues *)
