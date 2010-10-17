@@ -24,6 +24,7 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./parameters/instances/IntVariable.sml
 
 ./squareUnion.sml
+./commonApply.sml
 ./unionSDD.sml
 ./SDD.sml
 ./Hom.sml

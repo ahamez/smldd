@@ -431,74 +431,6 @@ functor SDDFun ( structure Variable  : VARIABLE
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
-      (* Used by the intersection and difference operations which need
-         to apply an operation ('cont') recursively on common parts.
-
-          Warning! Duplicate logic with commonApply!
-      *)
-      fun flatCommonApply _ _         ( [], _ )                = []
-      |   flatCommonApply lookup cont ( aArc::aAlpha, bAlpha ) =
-      let
-
-        fun propagate ( _, [] ) =  []
-        |   propagate ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
-        let
-          val inter = Values.intersection [aVal,bVal]
-        in
-          if Values.empty inter then
-            propagate ( aArc, bAlpha)
-          else
-            let
-              val succ = cont lookup (aSuccs@bSuccs)
-            in
-              if succ = zero then
-                propagate ( aArc, bAlpha )
-              else
-                ( inter, [succ] ) :: propagate ( aArc, bAlpha)
-            end
-        end
-
-      in
-          propagate ( aArc, bAlpha  )
-        @ flatCommonApply lookup cont ( aAlpha, bAlpha )
-      end
-
-      (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
-      (* Used by the intersection and difference operations which need
-         to apply an operation ('cont') recursively on common parts.
-
-         Warning! Duplicate logic with flatCommonApply!
-      *)
-      fun commonApply _ _         ( [], _ )                = []
-      |   commonApply lookup cont ( aArc::aAlpha, bAlpha ) =
-      let
-
-        fun propagate ( _, [] ) =  []
-        |   propagate ( aArc as (aVal,aSuccs), (bVal,bSuccs)::bAlpha ) =
-        let
-          val inter = intersectionCallback lookup [aVal,bVal]
-        in
-          if inter = zero then
-            propagate ( aArc, bAlpha)
-          else
-            let
-              val succ = cont lookup (aSuccs@bSuccs)
-            in
-              if succ = zero then
-                propagate ( aArc, bAlpha )
-              else
-                ( inter, [succ] ) :: propagate ( aArc, bAlpha)
-            end
-        end
-
-      in
-          propagate ( aArc, bAlpha  )
-        @ commonApply lookup cont ( aAlpha, bAlpha )
-      end
-
-      (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
       (* Do the n-ary union of a list of flat SDDs.
          The general idea is to create a potential alpha
          of type (values * SDD list ) list which stores all
@@ -606,8 +538,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                                         []       => raise DoNotPanic
                                       | (y::ys)  => (y,ys)
 
-          val flatCommonApply'
-            = flatCommonApply cacheLookup intersectionCallback
+          val commonApply' = commonApply Values.intersection
+                                         Values.empty
+                                         (intersectionCallback cacheLookup)
+                                         zero
 
           val squareUnion' = squareUnion uid
                                          (unionCallback cacheLookup)
@@ -615,7 +549,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                                          Values.lt
 
           (* Intersect two operands *)
-          fun interHelper (xs,ys) = flatCommonApply'( xs, ys )
+          fun interHelper (xs,ys) = commonApply'( xs, ys )
 
           val alpha = squareUnion' ( foldl interHelper initial operands )
 
@@ -642,8 +576,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                                         []       => raise DoNotPanic
                                       | (y::ys)  => (y,ys)
 
-          val commonApply'
-            = commonApply cacheLookup intersectionCallback
+          val commonApply' = commonApply (intersectionCallback cacheLookup)
+                                         (fn x => x = zero )
+                                         (intersectionCallback cacheLookup)
+                                         zero
 
           val squareUnion' = squareUnion uid (unionCallback cacheLookup)
                                              (unionCallback cacheLookup)
@@ -693,16 +629,19 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         val commonPart =
         let
-          (* Difference is a binary operation, while flatCommonApply
+          (* Difference is a binary operation, while commonApply
              expects an n-ary operation *)
-          fun callback lookup xs =
+          fun callback xs =
             case xs of
               (x::y::[]) => differenceCallback cacheLookup (x, y)
             | _          => raise DoNotPanic
 
-          val flatCommonApply' = flatCommonApply cacheLookup callback
+          val commonApply' = commonApply Values.intersection
+                                         Values.empty
+                                         callback
+                                         zero
         in
-          flatCommonApply'( lalpha, ralpha )
+          commonApply' ( lalpha, ralpha )
         end
 
         val diffPart =
@@ -754,16 +693,19 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         val commonPart =
         let
-          (* Difference is a binary operation, while flatCommonApply
+          (* Difference is a binary operation, while commonApply
              expects an n-ary operation *)
-          fun callback lookup xs =
+          fun callback xs =
             case xs of
               (x::y::[]) => differenceCallback cacheLookup (x, y)
             | _          => raise DoNotPanic
 
-          val commonApply' = commonApply cacheLookup callback
+          val commonApply' = commonApply (intersectionCallback cacheLookup)
+                                         (fn x => x = zero )
+                                         callback
+                                         zero
         in
-          commonApply'( lalpha, ralpha )
+          commonApply' ( lalpha, ralpha )
         end
 
         val diffPart =
