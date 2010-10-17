@@ -510,5 +510,11 @@ structure Hom = HomFun( structure SDD      = SDD
                       ; structure Values   = DiscreteIntValues
                       )
 
+(*structure BoolHom = HomFun( structure SDD      = BoolSDD
+                          ; structure Variable = IntVariable
+                          ; structure Values   = BooleanValues
+                          )*)
+
+
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)

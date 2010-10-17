@@ -1349,5 +1349,9 @@ end (* end functor SDDFun *)
 structure SDD = SDDFun( structure Variable  = IntVariable
                       ; structure Values    = DiscreteIntValues )
 
+(*structure BoolSDD = SDDFun( structure Variable  = IntVariable
+                          ; structure Values    = BooleanValues )*)
+
+
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
