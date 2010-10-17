@@ -6,7 +6,13 @@ $(SML_LIB)/smlnj-lib/smlnj-lib.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
 ./util.sml
+./exceptions.sml
 ./Hash.sml
+
+./storage/signatures/DATA.sml
+./storage/signatures/OPERATION.sml
+./storage/Cache.sml
+./storage/UnicityTable.sml
 
 ./SortedVector.sml
 
@@ -16,12 +22,6 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./parameters/instances/DiscreteIntValues.sml
 ./parameters/instances/IntVariable.sml
 
-./storage/signatures/DATA.sml
-./storage/signatures/OPERATION.sml
-./storage/Cache.sml
-./storage/UnicityTable.sml
-
-./exceptions.sml
 ./unionSDD.sml
 ./SDD.sml
 ./Hom.sml

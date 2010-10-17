@@ -1,25 +1,24 @@
 signature VALUES =
 sig
 
-  type t
+  eqtype unique
+  type plain
 
-  val eq            : t * t -> bool
-  val lt            : t * t -> bool
+  val mkUnique      : plain -> unique
+  val mkPlain       : unique -> plain
 
-  val hash          : t -> Hash.t
+  val lt            : unique * unique -> bool
 
-  (*val unify         : t -> t*)
+  val hash          : unique -> Hash.t
 
-  val length        : t -> int
-  val empty         : t -> bool
-  val mkEmpty       : unit -> t
+  val length        : unique -> int
+  val empty         : unique -> bool
+  val mkEmpty       : unit -> unique
 
-  (*val union         : t list -> t
-  val intersection  : t list -> t*)
-  val union         : t * t -> t
-  val intersection  : t * t -> t
-  val difference    : t * t -> t
+  val union         : unique list -> unique
+  val intersection  : unique list -> unique
+  val difference    : unique * unique -> unique
 
-  val toString      : t -> string
+  val toString      : unique -> string
 
 end

@@ -36,7 +36,8 @@ end
 
 functor HomFun ( structure SDD : SDD
                  and Variable  : VARIABLE where type t = SDD.variable
-                 and Values    : VALUES   where type t = SDD.values
+                 and Values    : VALUES   where type unique = SDD.values'
+                                          where type plain  = SDD.values
                )
   : Hom
 = struct
@@ -53,7 +54,7 @@ functor HomFun ( structure SDD : SDD
 
   type SDD       = SDD.SDD
   type variable  = Variable.t
-  type values    = Values.t
+  type values    = Values.plain
   type valuation = SDD.valuation
 
   (*----------------------------------------------------------------------*)
