@@ -1451,7 +1451,7 @@ functor SDDFun ( structure Variable  : VARIABLE
          String.concat (List.tabulate ( !maxDepth + 1, terminal 1) )
       )
     ^ "\n}\n"
-   end
+   end (* fun toDot *)
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
