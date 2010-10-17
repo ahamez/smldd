@@ -1,5 +1,7 @@
-fun unionSDD alphaNodeToList alphaToList squareUnion commonApply 
-             valUnion valDiff empty nodeAlpha 
+fun unionSDD alphaNodeToList alphaToList
+             squareUnion commonApply
+             valInter valDiff valEmpty
+             nodeAlpha
              xs var
 =
 let
@@ -8,44 +10,68 @@ let
                                 []       => raise DoNotPanic
                               | (y::ys)  => (y,ys)
 
-  fun unionHelper ( lalpha, ralpha ) =
-  let
 
-    val commonPart = commonApply( lalpha, ralpha )
+  fun oneArcOfA a []
+  = ( [a], [] )
 
-    fun diff xalpha yalpha =
+  |   oneArcOfA (aVal,aSuccs) ((bVal,bSuccs)::bAlpha)
+  =
+    if aVal = bVal then
+      ( [( aVal, aSuccs @ bSuccs )], bAlpha )
+
+    else
     let
-      val yUnion = valUnion( map (fn (x,_)=>x) yalpha )
+      val inter = valInter [aVal,bVal]
     in
-      foldl (fn ((xVal,xSuccs),acc) =>
-              let
-                val diff = valDiff(xVal,yUnion)
-              in
-                if empty diff then
-                  acc
-                else
-                  ( diff, xSuccs )::acc
-              end
-            )
-            []
-            xalpha
+
+      if valEmpty inter then
+      let
+        val (res,rem) = oneArcOfA (aVal,aSuccs) bAlpha
+      in
+        ( res, (bVal,bSuccs)::rem )
+      end
+
+      else (* inter not empty *)
+      let
+        val diffba = valDiff (bVal,aVal)
+      in
+
+        if aVal = inter then (* aVal \in bVal *)
+          ( [( aVal, aSuccs @ bSuccs )], (diffba,bSuccs)::bAlpha )
+
+        else
+        let
+          val diffab = valDiff (aVal,bVal)
+        in
+          if valEmpty diffba then
+          let
+            val (res,rem) = oneArcOfA (diffab,aSuccs) bAlpha
+          in
+            ( (inter, aSuccs @ bSuccs)::res, rem )
+          end
+
+          else
+          let
+            val (res,rem) = oneArcOfA (diffab,aSuccs) ((diffba,bSuccs)::bAlpha)
+          in
+            ( (inter, aSuccs @ bSuccs)::res, (diffba,bSuccs)::rem )
+          end
+        end
+      end
     end
 
-    val diffPartAB = diff lalpha ralpha
-    val diffPartBA = diff ralpha lalpha
+  fun partition ( [] , [] )    = []
+  |   partition ( [], bAlpha ) = bAlpha
+  |   partition ( aAlpha, [] ) = aAlpha
+  |   partition ( a::aAlpha, bAlpha ) =
+    let
+      val (res,rem) = oneArcOfA a bAlpha
+    in
+      res @ (partition ( aAlpha, rem ))
+    end
 
-  in
-    alphaToList ( squareUnion (diffPartAB @ commonPart @ diffPartBA) )
-  end
-
-  val alphaList = foldl unionHelper initial operands
-
-  val l = map (fn (vl,succs) => case succs of
-                                  s::[] => (vl,s)
-                                | _     => raise DoNotPanic
-              )
-              alphaList
+  val alpha = squareUnion (foldl partition initial operands)
 
 in
-  nodeAlpha( var, Vector.fromList l )
+  nodeAlpha( var, alpha )
 end

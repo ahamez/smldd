@@ -809,7 +809,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                    alphaToList
                    (flatSquareUnion cacheLookup)
                    (flatCommonApply cacheLookup unionCallback)
-                   valUnion
+                   valIntersection
                    valDifference
                    (Values.empty o !)
                    flatNodeAlpha
@@ -821,7 +821,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                    alphaToList
                    (squareUnion cacheLookup)
                    (commonApply cacheLookup unionCallback)
-                   (unionCallback cacheLookup)
+                   (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
                    (fn x => x = zero)
                    nodeAlpha
