@@ -11,6 +11,15 @@ let
                               | (y::ys)  => (y,ys)
 
 
+  (* Process an arc of the a operand onto the whole alpha of b.
+     When it's done, it return a pair where the first element is the current
+     alpha result, while the second element is what remains to be processed
+     with the next arc of a.
+
+     Successors list is constructed without removing duplicate elements
+     ('aSuccs @ bSuccs') because sqaureUnion will remove these duplicates
+     when it will create a union operation of these successors.
+  *)
   fun oneArcOfA a []
   = ( [a], [] )
 
@@ -70,8 +79,6 @@ let
       res @ (partition ( aAlpha, rem ))
     end
 
-  val alpha = squareUnion (foldl partition initial operands)
-
 in
-  nodeAlpha( var, alpha )
+  nodeAlpha( var, squareUnion (foldl partition initial operands) )
 end
