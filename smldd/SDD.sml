@@ -13,7 +13,6 @@ sig
 
   val zero              : SDD
   val one               : SDD
-  val flatNode          : variable * values    * SDD -> SDD
   val node              : variable * valuation * SDD -> SDD
 
   val union             : SDD list -> SDD
