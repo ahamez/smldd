@@ -73,22 +73,18 @@ functor HomFun ( structure SDD : SDD
                | Func     of ( (values -> values) ref * variable )
 
     fun eq (Hom(x,_),Hom(y,_)) =
-    case x of
-      Id          => (case y of Id => true | _ => false )
-    | Cons(v,s,h) => (case y of
-                        Cons(w,t,i) => Variable.eq(v,w)
-                                       andalso SDD.eqValuation(s,t)
-                                       andalso h=i
-                      | _ => false)
-    | Const(s)    => (case y of Const(t)    => s = t | _ => false)
-    | Union(xs)   => (case y of Union(ys)   => xs = ys | _ =>false)
-    | Compo(a,b)  => (case y of Compo(c,d)  => a=c andalso b=d | _ => false)
-    | Fixpoint(h) => (case y of Fixpoint(i) => h=i | _ => false)
-    | Nested(h,v) => (case y of Nested(i,w) => h=i andalso Variable.eq(v,w)
-                              | _ => false)
-    | Func(f,v)   => (case y of Func(g,w) => Variable.eq(v,w) andalso f = g
-                                | _ => false
-                     )
+      case (x,y) of
+        ( Id, Id )                   => true
+      | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
+                                        andalso h=i
+                                        andalso SDD.eqValuation(s,t)
+      | ( Const(s), Const(t) )       => s = t
+      | ( Union(xs), Union(ys) )     => xs = ys
+      | ( Compo(a,b), Compo(c,d) )   => a = c andalso b = d
+      | ( Fixpoint(h), Fixpoint(i) ) => h = i
+      | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
+      | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
+      | ( _ , _ )                    => false
 
     fun hash (Hom(_,h)) = h
 
