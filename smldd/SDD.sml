@@ -425,13 +425,14 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   local (* SDD manipulation *)
 
-    (* Sort operands of union and intersection, using their hash values *)
-    fun qsort []       = []
-    |   qsort (x::xs)  =
+    (* Sort operands of union and intersection, using their identifiers *)
+    fun sortUnique []       = []
+    |   sortUnique (x::xs)  =
     let
-      val (left,right) = List.partition (fn y => id y < id x) xs
+      val left  = List.filter (fn y => id y < id x ) xs
+      val right = List.filter (fn y => id y > id x ) xs
     in
-        qsort left @ [x] @ qsort right
+        sortUnique left @ [x] @ sortUnique right
     end
 
     (*--------------------------------------------------------------------*)
@@ -546,7 +547,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         case xs' of
           []      => zero   (* No need to cache *)
         | (x::[]) => x      (* No need to cache *)
-        | _       => lookup(Union( qsort xs', lookup ))
+        | _       => lookup(Union( sortUnique xs', lookup ))
       end
 
       (*------------------------------------------------------------------*)
@@ -556,7 +557,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         case xs of
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
-        | _       => lookup(Inter( qsort xs, lookup))
+        | _       => lookup(Inter( sortUnique xs, lookup))
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -1127,7 +1128,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       case xs' of
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
-      | _       => SDDOpCache.lookup(SDDOperations.Union( qsort xs'
+      | _       => SDDOpCache.lookup(SDDOperations.Union( sortUnique xs'
                                                         , cacheLookup ))
     end
 
@@ -1139,8 +1140,8 @@ functor SDDFun ( structure Variable  : VARIABLE
     case xs of
       []      => zero (* No need to cache *)
     | (x::[]) => x    (* No need to cache *)
-    | _       => SDDOpCache.lookup(SDDOperations.Inter( qsort xs
-                                                        , cacheLookup ))
+    | _       => SDDOpCache.lookup(SDDOperations.Inter( sortUnique xs
+                                                      , cacheLookup ))
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
