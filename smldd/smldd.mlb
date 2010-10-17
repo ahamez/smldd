@@ -9,8 +9,8 @@ in
   structure SDD
   structure Hom
 
-  structure BooleanValues
+  (*structure BooleanValues
   structure BoolSDD
-  structure BoolHom
+  structure BoolHom*)
 
 end

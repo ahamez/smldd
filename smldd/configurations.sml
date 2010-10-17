@@ -10,12 +10,12 @@ structure Hom = HomFun( structure SDD      = SDD
 
 (* ------------------------------------------------------------------------ *)
 
-structure BoolSDD = SDDFun( structure Variable  = IntVariable
+(*structure BoolSDD = SDDFun( structure Variable  = IntVariable
                           ; structure Values    = BooleanValues )
 
 structure BoolHom = HomFun( structure SDD      = BoolSDD
                           ; structure Variable = IntVariable
                           ; structure Values   = BooleanValues
-                          )
+                          )*)
 
 (* ------------------------------------------------------------------------ *)
