@@ -190,12 +190,12 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Extract the identifier of an SDD *)
-  fun id (ref(iSDD(_,_,x))) = x
+  fun uid (ref(iSDD(_,_,x))) = x
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
   (* Called by the unicity table to construct an SDD with an id *)
-  fun mkNode n h id = iSDD( n, h, id)
+  fun mkNode n h uid = iSDD( n, h, uid)
 
   (*----------------------------------------------------------------------*)
   (*----------------------------------------------------------------------*)
@@ -693,7 +693,7 @@ functor SDDFun ( structure Variable  : VARIABLE
        fun sortAlpha [] = []
        |   sortAlpha ((arcx as (x,_))::xs) =
        let
-         val (left,right) = List.partition (fn (y,_) => id y < id x) xs
+         val (left,right) = List.partition (fn (y,_) => uid y < uid x) xs
        in
          sortAlpha left @ [arcx] @ sortAlpha right
        end
@@ -1323,7 +1323,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     fun node sdd depth dotHelper =
         "\"node"
-      ^ (Int.toString (id sdd))
+      ^ (Int.toString (uid sdd))
       ^ (depthStr depth)
       ^ "\" [shape=circle,label=\""
       ^ (Variable.toString (variable sdd))
@@ -1335,7 +1335,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     fun hNode sdd depth dotHelper =
         "\"node"
-      ^ (Int.toString (id sdd))
+      ^ (Int.toString (uid sdd))
       ^ (depthStr depth)
       ^ "\" [shape=circle,label=\""
       ^ (Variable.toString (variable sdd))
@@ -1399,16 +1399,16 @@ functor SDDFun ( structure Variable  : VARIABLE
       foldl (fn((values,succ),str) =>
                 str
               ^ "\"node"
-              ^ (Int.toString (id sdd))
+              ^ (Int.toString (uid sdd))
               ^ (depthStr depth)
               ^ "\""
               ^ " -> "
               ^ (case let val ref(iSDD(x,_,_)) = succ in x end of
                   Zero       => raise DoNotPanic
                 | One        => "terminal1" ^ (depthStr depth)
-                | Node{...}  => "\"node" ^ (Int.toString (id succ))
+                | Node{...}  => "\"node" ^ (Int.toString (uid succ))
                                        ^ (depthStr depth) ^ "\""
-                | HNode{...} => "\"node" ^ (Int.toString (id succ))
+                | HNode{...} => "\"node" ^ (Int.toString (uid succ))
                                         ^ (depthStr depth) ^ "\""
                 )
               ^ " [label=\""
@@ -1425,25 +1425,25 @@ functor SDDFun ( structure Variable  : VARIABLE
       foldl (fn((vl,succ),str) =>
             let
               val curr  =   "\"node"
-                          ^ (Int.toString (id sdd))
+                          ^ (Int.toString (uid sdd))
                           ^ (depthStr depth)
                           ^ "\""
               val ghost =   "\"ghost"
-                          ^ (Int.toString(id sdd))
+                          ^ (Int.toString(uid sdd))
                           ^ "_"
-                          ^ (Int.toString(id (nested vl)))
+                          ^ (Int.toString(uid (nested vl)))
                           ^ "_"
-                          ^ (Int.toString(id succ))
+                          ^ (Int.toString(uid succ))
                           ^ (depthStr depth)
                           ^ "\""
               val nst   =   "\"node"
-                          ^ (Int.toString(id (nested vl)))
+                          ^ (Int.toString(uid (nested vl)))
                           ^ (depthStr (depth + 1))
                           ^ "\""
               val nxt   = (case let val ref(iSDD(x,_,_)) = succ in x end of
                             Zero       => raise DoNotPanic
                           | One        => "terminal1" ^ (depthStr depth)
-                          | _          => "\"node" ^ (Int.toString (id succ))
+                          | _          => "\"node" ^ (Int.toString (uid succ))
                                           ^ (depthStr depth) ^ "\""
                           )
             in
