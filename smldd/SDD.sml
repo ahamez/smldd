@@ -680,12 +680,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                             (case !vls of
                               []      => raise DoNotPanic
                             | (x::[]) => x
-                            | (x::xs) =>
-                              foldl (fn (y,acc) =>
-                                     unionCallback cacheLookup [y,acc]
-                                    )
-                                    x
-                                    xs
+                            | xs      => unionCallback cacheLookup xs
                             )
                         in
                           (vl,succ)::acc
