@@ -675,20 +675,20 @@ functor SDDFun ( structure Variable  : VARIABLE
                     )
                     alpha
       val alpha' =
-        HT.foldi (fn ( succ, vls, acc) =>
-                        let
-                          val vl =
-                            (case !vls of
-                              []      => raise DoNotPanic
-                            | (x::[]) => x
-                            | xs      => unionCallback cacheLookup xs
-                            )
-                        in
-                          (vl,succ)::acc
-                        end
-                        )
-                        []
-                        tbl
+        HT.foldi (fn ( succ, vls, acc ) =>
+                     let
+                       val vl =
+                         (case !vls of
+                           []      => raise DoNotPanic
+                         | (x::[]) => x
+                         | xs      => unionCallback cacheLookup xs
+                         )
+                     in
+                       (vl,succ)::acc
+                     end
+                  )
+                  []
+                  tbl
 
        fun sortAlpha [] = []
        |   sortAlpha ((arcx as (x,_))::xs) =
