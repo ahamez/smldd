@@ -23,6 +23,7 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./parameters/instances/DiscreteIntValues.sml
 ./parameters/instances/IntVariable.sml
 
+./squareUnion.sml
 ./unionSDD.sml
 ./SDD.sml
 ./Hom.sml

@@ -353,7 +353,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (* Convert an alpha (a vector) into a more easy to manipulate type
          (a list of values, each one leading to a list of successors).
-         Thus, it make usable by flatSquareUnion.
+         Thus, it make usable by squareUnion.
 
          (values * SDD) Vector.vector
            -> ( values * SDD list ) list
@@ -428,133 +428,6 @@ functor SDDFun ( structure Variable  : VARIABLE
           x
         else
           lookup(Diff( x, y, lookup ))
-
-      (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
-       (* Merge all values that lead to the same successor,
-          using an hash table.
-          Returns an alpha suitable to build a new flat node with
-          flatNodeAlpha.
-
-          alpha : ( values ref * SDD list ) list
-            -> ( values ref * SDD ) Vector.vector
-
-          Warning! Duplicate logic with squareUnion!
-       *)
-       fun flatSquareUnion cacheLookup alpha =
-       let
-         (* This table associates a list of values sets to a single
-            SDD successor *)
-         val tbl :
-           ( ( SDD , values' list ref) HT.hash_table )
-           = (HT.mkTable( fn x => hash(!x) , op = )
-             ( 10000, DoNotPanic ))
-
-         (* Fill the hash table *)
-         val _ = app (fn ( vl, succs ) =>
-                     let
-                       val u = unionCallback cacheLookup succs
-                     in
-                       if Values.empty vl then
-                        ()
-                       else
-                         case HT.find tbl u of
-                           NONE   => HT.insert tbl ( u, ref [vl] )
-                           (* update list of values set *)
-                         | SOME x => x := vl::(!x)
-                     end
-                     )
-                     alpha
-
-       val alpha' =
-         HT.foldi (fn ( succ, vls, acc) =>
-                          let
-                            val vl = (case !vls of
-                                       []      => raise DoNotPanic
-                                     | (x::[]) => x
-                                     | xs      => Values.union xs
-                                     )
-                         in
-                           (vl,succ)::acc
-                         end
-                         )
-                         []
-                         tbl
-
-        fun sortAlpha [] = []
-        |   sortAlpha ((arcx as (x,_))::xs) =
-        let
-          val (left,right) = List.partition (fn (y,_) => Values.lt(y,x)) xs
-        in
-          sortAlpha left @ [arcx] @ sortAlpha right
-        end
-
-       in
-         Vector.fromList (sortAlpha alpha')
-       end
-
-      (*------------------------------------------------------------------*)
-      (*------------------------------------------------------------------*)
-      (* Merge all valuations that lead to the same successor,
-         using an hash table.
-         Returns an alpha suitable to build a new node with nodeAlpha.
-
-         alpha : ( SDD * SDD list ) list
-           -> ( SDD * SDD ) Vector.vector
-
-         Warning! Duplicate logic with flatSquareUnion!
-      *)
-      fun squareUnion cacheLookup alpha =
-      let
-        (* This table associates a list of valuations to a single
-           SDD successor *)
-        val tbl :
-          ( ( SDD , SDD list ref) HT.hash_table )
-          = (HT.mkTable( fn x => hash(!x) , op = )
-            ( 10000, DoNotPanic ))
-
-        (* Fill the hash table *)
-        val _ = app (fn ( vl, succs ) =>
-                    let
-                      val u = unionCallback cacheLookup succs
-                    in
-                      if vl = zero then
-                       ()
-                      else
-                        case HT.find tbl u of
-                          NONE   => HT.insert tbl ( u, ref [vl] )
-                          (* update list of valuations *)
-                        | SOME x => x := vl::(!x)
-                    end
-                    )
-                    alpha
-      val alpha' =
-        HT.foldi (fn ( succ, vls, acc ) =>
-                     let
-                       val vl =
-                         (case !vls of
-                           []      => raise DoNotPanic
-                         | (x::[]) => x
-                         | xs      => unionCallback cacheLookup xs
-                         )
-                     in
-                       (vl,succ)::acc
-                     end
-                  )
-                  []
-                  tbl
-
-       fun sortAlpha [] = []
-       |   sortAlpha ((arcx as (x,_))::xs) =
-       let
-         val (left,right) = List.partition (fn (y,_) => uid y < uid x) xs
-       in
-         sortAlpha left @ [arcx] @ sortAlpha right
-       end
-
-      in
-        Vector.fromList (sortAlpha alpha')
-      end
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -657,7 +530,11 @@ functor SDDFun ( structure Variable  : VARIABLE
         | Node{variable=var,...}  =>
           unionSDD flatAlphaNodeToList
                    alphaToList
-                   (flatSquareUnion cacheLookup)
+                   (squareUnion uid
+                                (unionCallback cacheLookup)
+                                Values.union
+                                Values.lt
+                   )
                    (flatCommonApply cacheLookup unionCallback)
                    Values.intersection
                    Values.difference
@@ -669,7 +546,11 @@ functor SDDFun ( structure Variable  : VARIABLE
         | HNode{variable=var,...} =>
           unionSDD alphaNodeToList
                    alphaToList
-                   (squareUnion cacheLookup)
+                   (squareUnion uid
+                                (unionCallback cacheLookup)
+                                (unionCallback cacheLookup)
+                                (fn (x,y) => uid x < uid y)
+                   )
                    (commonApply cacheLookup unionCallback)
                    (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
@@ -730,12 +611,15 @@ functor SDDFun ( structure Variable  : VARIABLE
           val flatCommonApply'
             = flatCommonApply cacheLookup intersectionCallback
 
-          val flatSquareUnion' = flatSquareUnion cacheLookup
+          val squareUnion' = squareUnion uid
+                                         (unionCallback cacheLookup)
+                                         Values.union
+                                         Values.lt
 
           (* Intersect two operands *)
           fun interHelper (xs,ys) = flatCommonApply'( xs, ys )
 
-          val alpha = flatSquareUnion' ( foldl interHelper initial operands )
+          val alpha = squareUnion' ( foldl interHelper initial operands )
 
         in
           flatNodeAlpha( var, alpha )
@@ -763,7 +647,9 @@ functor SDDFun ( structure Variable  : VARIABLE
           val commonApply'
             = commonApply cacheLookup intersectionCallback
 
-          val squareUnion' = squareUnion cacheLookup
+          val squareUnion' = squareUnion uid (unionCallback cacheLookup)
+                                             (unionCallback cacheLookup)
+                                             (fn (x,y) => uid x < uid y)
 
           (* Intersect two operands *)
           fun interHelper (xs,ys) = commonApply'( xs, ys )
@@ -839,8 +725,12 @@ functor SDDFun ( structure Variable  : VARIABLE
                 lalpha
         end
 
-        val flatSquareUnion' = flatSquareUnion cacheLookup
-        val alpha = flatSquareUnion' ( diffPart @ commonPart )
+        val squareUnion' = squareUnion uid
+                                       (unionCallback cacheLookup)
+                                       Values.union
+                                       Values.lt
+
+        val alpha = squareUnion' ( diffPart @ commonPart )
       in
         flatNodeAlpha( lvr, alpha )
       end
@@ -896,7 +786,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                 lalpha
         end
 
-        val squareUnion' = squareUnion cacheLookup
+        val squareUnion' = squareUnion uid
+                                       (unionCallback cacheLookup)
+                                       (unionCallback cacheLookup)
+                                       (fn (x,y) => uid x < uid y)
         val alpha = squareUnion' ( diffPart @ commonPart )
       in
         nodeAlpha( lvr, alpha )
