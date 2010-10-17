@@ -391,19 +391,26 @@ functor SDDFun ( structure Variable  : VARIABLE
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
+    val sortValues = sortUnique ! (Values.lt) (fn (x,y) =>
+                                                not (Values.lt(x,y))
+                                                andalso not (Values.eq(x,y))
+                                              )
+
+    (*------------------------------------------------------------------*)
+    (*------------------------------------------------------------------*)
     fun valUnion xs =
-      case xs of
+      case sortValues xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
-      | _       => ValOpCache.lookup( ValuesOperations.Union(xs) )
+      | _       => ValOpCache.lookup( ValuesOperations.Union xs )
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
     fun valIntersection xs =
-      case xs of
+      case sortValues xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
-      | _       => ValOpCache.lookup( ValuesOperations.Inter(xs) )
+      | _       => ValOpCache.lookup( ValuesOperations.Inter xs )
 
     (*------------------------------------------------------------------*)
     (*------------------------------------------------------------------*)
@@ -425,15 +432,9 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   local (* SDD manipulation *)
 
-    (* Sort operands of union and intersection, using their identifiers *)
-    fun sortUnique []       = []
-    |   sortUnique (x::xs)  =
-    let
-      val left  = List.filter (fn y => id y < id x ) xs
-      val right = List.filter (fn y => id y > id x ) xs
-    in
-        sortUnique left @ [x] @ sortUnique right
-    end
+    (*--------------------------------------------------------------------*)
+    (*--------------------------------------------------------------------*)
+    val sortSDDs = sortUnique uid (op <) (op >)
 
     (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
@@ -547,7 +548,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         case xs' of
           []      => zero   (* No need to cache *)
         | (x::[]) => x      (* No need to cache *)
-        | _       => lookup(Union( sortUnique xs', lookup ))
+        | _       => lookup(Union( sortSDDs xs', lookup ))
       end
 
       (*------------------------------------------------------------------*)
@@ -557,7 +558,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         case xs of
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
-        | _       => lookup(Inter( sortUnique xs, lookup))
+        | _       => lookup(Inter( sortSDDs xs, lookup))
 
       (*------------------------------------------------------------------*)
       (*------------------------------------------------------------------*)
@@ -1128,7 +1129,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       case xs' of
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
-      | _       => SDDOpCache.lookup(SDDOperations.Union( sortUnique xs'
+      | _       => SDDOpCache.lookup(SDDOperations.Union( sortSDDs xs'
                                                         , cacheLookup ))
     end
 
@@ -1140,7 +1141,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     case xs of
       []      => zero (* No need to cache *)
     | (x::[]) => x    (* No need to cache *)
-    | _       => SDDOpCache.lookup(SDDOperations.Inter( sortUnique xs
+    | _       => SDDOpCache.lookup(SDDOperations.Inter( sortSDDs xs
                                                       , cacheLookup ))
 
     (*------------------------------------------------------------------*)
