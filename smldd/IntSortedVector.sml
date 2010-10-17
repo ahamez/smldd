@@ -1,4 +1,4 @@
-structure SortedVector =
+structure IntSortedVector =
 struct
 
   (*----------------------------------------------------------------------*)
@@ -172,4 +172,4 @@ struct
 
   (*----------------------------------------------------------------------*)
 
-end (* SortedVector *)
+end (* structure IntSortedVector *)

@@ -6,7 +6,7 @@ struct
   open Hom
   open SDD
   open SMLUnit.Assert
-  structure SV = SortedVector
+  structure SV = IntSortedVector
   structure Test = SMLUnit.Test
 
   (* ---------------------------------------------------------------- *)
@@ -508,7 +508,7 @@ struct
 
   fun testFixpoint03 () =
   let
-    val f0 = SortedVector.map (fn x => if x < 4 then x + 1 else x)
+    val f0 = IntSortedVector.map (fn x => if x < 4 then x + 1 else x)
     val h0 = mkFunction (ref f0) 0
     val h2 = mkFixpoint h0
     val s0 = node( 0, values [0,1,2], one)

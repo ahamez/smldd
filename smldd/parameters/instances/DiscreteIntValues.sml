@@ -1,14 +1,14 @@
 structure DiscreteIntValues : VALUES =
 struct
 
-  structure SV = SortedVector
+  structure SV = IntSortedVector
   structure H  = Hash
   structure HT = HashTable
 
   type unique = SV.t ref
   type plain  = SV.t
 
-  structure UT = UnicityTableFun ( structure Data = SortedVector )
+  structure UT = UnicityTableFun ( structure Data = IntSortedVector )
 
   val mkUnique = UT.unify
   val mkPlain  = !
