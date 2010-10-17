@@ -47,7 +47,6 @@ sig
 end
 
 (*--------------------------------------------------------------------------*)
-
 functor SDDFun ( structure Variable  : VARIABLE
                ; structure Values    : VALUES )
   : SDD
@@ -58,7 +57,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   type values'    = Values.unique
 
   (*----------------------------------------------------------------------*)
-
   (* Define an SDD *)
   structure Definition =
   struct
@@ -106,18 +104,15 @@ functor SDDFun ( structure Variable  : VARIABLE
   open Definition
 
   (*----------------------------------------------------------------------*)
-
   type SDD = Definition.t ref
   datatype valuation = Nested of SDD | Values of values
 
   (*----------------------------------------------------------------------*)
-
   structure SDDUT = UnicityTableFunID( structure Data = Definition )
   structure H  = Hash
   structure HT = HashTable
 
   (*----------------------------------------------------------------------*)
-
   exception IncompatibleSDD
   exception NotYetImplemented
   exception IsNotANode
@@ -266,7 +261,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   local (* SDD manipulation *)
 
     (*--------------------------------------------------------------------*)
-
     val sortSDDs = sortUnique uid (op <) (op >)
 
     (*--------------------------------------------------------------------*)
@@ -786,20 +780,18 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (* Return the variable of an SDD. Needed by HomFun*)
   fun variable (ref (iSDD(x,_,_))) =
-  case x of
-    Node{variable=var,...}  => var
-  | HNode{variable=var,...} => var
-  | _                       => raise IsNotANode
+    case x of
+      Node{variable=var,...}  => var
+    | HNode{variable=var,...} => var
+    | _                       => raise IsNotANode
 
   (*----------------------------------------------------------------------*)
-  fun values x = case x of
-                   Nested _ => raise IsNotNested
-                 | Values v => v
+  fun values x = case x of Nested _ => raise IsNotNested
+                         | Values v => v
 
   (*----------------------------------------------------------------------*)
-  fun nested x = case x of
-                   Values v => raise IsNotValues
-                 | Nested s => s
+  fun nested x = case x of Values v => raise IsNotValues
+                         | Nested s => s
 
   (*----------------------------------------------------------------------*)
   fun alpha (x as (ref (iSDD(sdd,_,_)))) =
@@ -1100,7 +1092,6 @@ functor SDDFun ( structure Variable  : VARIABLE
    end (* fun toDot *)
 
   (*----------------------------------------------------------------------*)
-
   fun stats () = SDDOpCache.stats()
 
   (*----------------------------------------------------------------------*)
