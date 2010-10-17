@@ -1,5 +1,5 @@
 fun unionSDD alphaNodeToList alphaToList
-             squareUnion commonApply
+             squareUnion
              valInter valDiff valEmpty
              nodeAlpha
              xs var

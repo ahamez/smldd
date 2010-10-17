@@ -535,7 +535,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                                 Values.union
                                 Values.lt
                    )
-                   (flatCommonApply cacheLookup unionCallback)
                    Values.intersection
                    Values.difference
                    Values.empty
@@ -551,7 +550,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                                 (unionCallback cacheLookup)
                                 (fn (x,y) => uid x < uid y)
                    )
-                   (commonApply cacheLookup unionCallback)
                    (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
                    (fn x => x = zero)
