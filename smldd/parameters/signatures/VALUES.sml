@@ -4,8 +4,8 @@ sig
   eqtype stored
   type user
 
-  val mkStorable      : user -> stored
-  val mkUsable        : stored -> user
+  val mkStorable    : user -> stored
+  val mkUsable      : stored -> user
 
   val lt            : stored * stored -> bool
 
