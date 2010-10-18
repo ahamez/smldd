@@ -753,9 +753,11 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Count the number of distinct paths in an SDD *)
   fun nbPaths x =
     let
+      
       val cache : (( SDD, IntInf.int ) HT.hash_table) ref
           = ref ( HT.mkTable( fn x => hash x , op = )
                            ( 10000, DoNotPanic ) )
+      
       fun pathsHelper (x as (ref(iSDD(sdd,_,_)))) =
         let
           fun nodeHelper vlLength arcs =
@@ -764,7 +766,7 @@ functor SDDFun ( structure Variable  : VARIABLE
               (IntInf.fromInt 0)
               arcs
         in
-            case sdd of
+          case sdd of
             Zero  =>  IntInf.fromInt 0
           | One   =>  IntInf.fromInt 1
           | Node{alpha=(arcs),...} =>
