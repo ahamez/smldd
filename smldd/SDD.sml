@@ -790,6 +790,12 @@ functor SDDFun ( structure Variable  : VARIABLE
       fun pathsHelper x =
         let
           val iSDD(sdd,_,_) = !x
+          fun nodeHelper valuesLength arcs =
+            Vector.foldl ( fn ((v,succ), n ) =>
+                           n + ( (valuesLength v) * pathsHelper succ )
+                         )
+                         (IntInf.fromInt 0)
+                         arcs
         in
             case sdd of
             Zero  =>  IntInf.fromInt 0
@@ -799,16 +805,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                 SOME r => r
               | NONE   =>
                 let
-                  val value = Vector.foldl
-                                    ( fn ((v,succ), n ) =>
-                                      n +
-                                      (
-                                        IntInf.fromInt(Values.length v)
-                                      * pathsHelper succ
-                                      )
-                                    )
-                                    0
-                                    arcs
+                  val value = nodeHelper (IntInf.fromInt o Values.length) arcs
                   val _     = HT.insert (!cache) ( x, value )
                 in
                   value
@@ -820,16 +817,7 @@ functor SDDFun ( structure Variable  : VARIABLE
                 SOME r => r
               | NONE   =>
                 let
-                  val value = Vector.foldl
-                                    ( fn ((v,succ), n ) =>
-                                      n +
-                                      (
-                                        pathsHelper v
-                                      * pathsHelper succ
-                                      )
-                                    )
-                                    0
-                                    arcs
+                  val value = nodeHelper pathsHelper arcs
                   val _     = HT.insert (!cache) ( x, value )
                 in
                   value
