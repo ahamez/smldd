@@ -319,9 +319,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* Convert an alpha (a vector) into a more easy to manipulate type
          (a list of values, each one leading to a list of successors).
          Thus, it make usable by squareUnion.
-
-         (storedValues * SDD) Vector.vector
-           -> ( storedValues * SDD list ) list
       *)
       fun alphaToList( alpha ) =
       Vector.foldr
