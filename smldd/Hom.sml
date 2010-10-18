@@ -378,8 +378,6 @@ functor HomFun ( structure SDD : SDD
     fun nested lookup h var sdd =
     if sdd = SDD.one then
       SDD.one
-    else if sdd = SDD.zero then
-      SDD.zero
     else (* skipVariable made nested propagated to the correct variable *)
     let
       val res = foldl
@@ -405,8 +403,6 @@ functor HomFun ( structure SDD : SDD
     fun function lookup f var sdd =
     if sdd = SDD.one then
       SDD.one
-    else if sdd = SDD.zero then
-      SDD.zero
     else
     let
       val res = foldl
