@@ -5,13 +5,13 @@ struct
   structure H  = Hash
   structure HT = HashTable
 
-  type unique = SV.t ref
-  type plain  = SV.t
+  type stored = SV.t ref
+  type user   = SV.t
 
   structure UT = UnicityTableFun ( structure Data = IntSortedVector )
 
-  val mkUnique = UT.unify
-  val mkPlain  = !
+  val mkStorable = UT.unify
+  val mkUsable   = !
 
   fun lt (x,y) = SV.lt( !x, !y)
   val hash     = SV.hash o !
@@ -30,10 +30,10 @@ struct
 
       val name = "Values"
 
-      type result        = unique
-      datatype operation = Union of unique list
-                         | Inter of unique list
-                         | Diff  of unique * unique
+      type result        = stored
+      datatype operation = Union of stored list
+                         | Inter of stored list
+                         | Diff  of stored * stored
 
       fun eq (l,r) =
         case (l,r) of

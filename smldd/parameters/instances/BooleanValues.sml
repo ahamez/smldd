@@ -9,11 +9,12 @@ struct
      {1}   => 2
      {0,1} => 3
   *)
-  type unique = int 
-  type plain  = int
 
-  val mkUnique = id
-  val mkPlain  = id
+  type stored = int
+  type user   = int
+
+  val mkStorable = id
+  val mkUsable   = id
 
   val lt =  op <
   val hash = H.const

@@ -1,24 +1,24 @@
 signature VALUES =
 sig
 
-  eqtype unique
-  type plain
+  eqtype stored
+  type user
 
-  val mkUnique      : plain -> unique
-  val mkPlain       : unique -> plain
+  val mkStorable      : user -> stored
+  val mkUsable        : stored -> user
 
-  val lt            : unique * unique -> bool
+  val lt            : stored * stored -> bool
 
-  val hash          : unique -> Hash.t
+  val hash          : stored -> Hash.t
 
-  val length        : unique -> int
-  val empty         : unique -> bool
-  val mkEmpty       : unit -> unique
+  val length        : stored -> int
+  val empty         : stored -> bool
+  val mkEmpty       : unit -> stored
 
-  val union         : unique list -> unique
-  val intersection  : unique list -> unique
-  val difference    : unique * unique -> unique
+  val union         : stored list -> stored
+  val intersection  : stored list -> stored
+  val difference    : stored * stored -> stored
 
-  val toString      : unique -> string
+  val toString      : stored -> string
 
 end

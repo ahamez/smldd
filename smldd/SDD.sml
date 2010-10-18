@@ -5,11 +5,11 @@ sig
 
   eqtype SDD
   type variable
-  type values
-  eqtype values'
+  type userValues
+  eqtype storedValues
 
   datatype valuation    = Nested of SDD
-                        | Values of values
+                        | Values of userValues
 
   val zero              : SDD
   val one               : SDD
@@ -23,7 +23,7 @@ sig
   val alpha             : SDD -> (valuation * SDD) list
   val hash              : SDD -> Hash.t
 
-  val values            : valuation -> values
+  val values            : valuation -> userValues
   val nested            : valuation -> SDD
   val hashValuation     : valuation -> Hash.t
   val eqValuation       : (valuation * valuation) -> bool
@@ -52,9 +52,9 @@ functor SDDFun ( structure Variable  : VARIABLE
   : SDD
 = struct
 
-  type variable   = Variable.t
-  type values     = Values.plain
-  type values'    = Values.unique
+  type variable     = Variable.t
+  type userValues   = Values.user
+  type storedValues = Values.stored
 
   (*----------------------------------------------------------------------*)
   (* Define an SDD *)
@@ -65,7 +65,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     and sdd       = Zero
                   | One
                   | Node of  { variable : variable
-                             , alpha : (values' * t ref) Vector.vector
+                             , alpha : (storedValues * t ref) Vector.vector
                              }
                   | HNode of { variable : variable
                              , alpha : ( t ref * t ref ) Vector.vector
@@ -105,7 +105,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   type SDD = Definition.t ref
-  datatype valuation = Nested of SDD | Values of values
+  datatype valuation = Nested of SDD | Values of userValues
 
   (*----------------------------------------------------------------------*)
   structure SDDUT = UnicityTableFunID( structure Data = Definition )
@@ -190,7 +190,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (* Construct a flat node with an pre-computed alpha. Internal use only! *)
   fun flatNodeAlpha ( var   : Variable.t
-                    , alpha : (values' * SDD ) Vector.vector )
+                    , alpha : (storedValues * SDD ) Vector.vector )
   =
   if Vector.length alpha = 0 then
     zero
@@ -252,7 +252,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Return a node *)
   fun node ( vr : Variable.t, vl : valuation , next : SDD ) =
   case vl of
-    Values(values) => flatNode( vr, Values.mkUnique values, next )
+    Values(values) => flatNode( vr, Values.mkStorable values, next )
   | Nested(nested) => hierNode( vr, nested,           next )
 
 
@@ -322,8 +322,8 @@ functor SDDFun ( structure Variable  : VARIABLE
          (a list of values, each one leading to a list of successors).
          Thus, it make usable by squareUnion.
 
-         (values * SDD) Vector.vector
-           -> ( values * SDD list ) list
+         (storedValues * SDD) Vector.vector
+           -> ( storedValues * SDD list ) list
       *)
       fun alphaToList( alpha ) =
       Vector.foldr
@@ -334,7 +334,7 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* Apply alphaToList to a node
 
          SDD
-           -> ( values * SDD list ) list
+           -> ( storedValues * SDD list ) list
 
          Warning! Duplicate logic with alphaNodeToList!
       *)
@@ -476,13 +476,13 @@ functor SDDFun ( structure Variable  : VARIABLE
           val _ = check xs
 
           (* Transform the alpha of each node into :
-             (values',SDD list) list.
+             (storedValues,SDD list) list.
              This type is also used as the accumulator for the foldl
              on the list of operands, as it will be given to the
              square union operation.
 
-             initial  : (values' * SDD list) list
-             operands : (values' * SDD list) list list
+             initial  : (storedValues * SDD list) list
+             operands : (storedValues * SDD list) list list
           *)
           val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                         []       => raise DoNotPanic
@@ -793,7 +793,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         a
   in
     case sdd of
-      Node{alpha=a,...}  => alphaHelper a (fn x => Values (Values.mkPlain x))
+      Node{alpha=a,...}  => alphaHelper a (fn x => Values (Values.mkUsable x))
     | HNode{alpha=a,...} => alphaHelper a (fn x => Nested x)
     | _                  => raise IsNotANode
   end
@@ -807,14 +807,15 @@ functor SDDFun ( structure Variable  : VARIABLE
   fun hashValuation x =
   case x of
     Nested(nested) => Definition.hash (!nested)
-  | Values(values) => Values.hash (Values.mkUnique values)
+  | Values(values) => Values.hash (Values.mkStorable values)
 
   (*----------------------------------------------------------------------*)
   (* Compare two valuations. Needed by HomFun*)
   fun eqValuation (x,y) =
   case (x,y) of
     ( Nested(nx), Nested(ny) ) => nx = ny
-  | ( Values(vx), Values(vy) ) => (Values.mkUnique vx) = (Values.mkUnique vy)
+  | ( Values(vx), Values(vy) ) => (Values.mkStorable vx)
+                                  = (Values.mkStorable vy)
   | ( _ , _ )                  => false
 
   (*----------------------------------------------------------------------*)
@@ -822,7 +823,7 @@ functor SDDFun ( structure Variable  : VARIABLE
   fun valuationToString x =
   case x of
     Nested(nested) => toString nested
-  | Values(values) => Values.toString (Values.mkUnique values)
+  | Values(values) => Values.toString (Values.mkStorable values)
 
   (*----------------------------------------------------------------------*)
   (* Count the number of distinct paths in an SDD *)
@@ -1003,7 +1004,7 @@ functor SDDFun ( structure Variable  : VARIABLE
               ^ " [label=\""
               ^ (case values of
                   Nested _ => raise DoNotPanic
-                | Values v => Values.toString (Values.mkUnique v)
+                | Values v => Values.toString (Values.mkStorable v)
                 )
               ^ "\"];\n"
              )
