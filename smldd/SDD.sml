@@ -19,10 +19,11 @@ sig
   val intersection      : SDD list -> SDD
   val difference        : SDD * SDD -> SDD
 
-  val uid               : SDD -> int
   val variable          : SDD -> variable
   val alpha             : SDD -> (valuation * SDD) list
   val hash              : SDD -> Hash.t
+
+  val insert            : SDD list -> SDD -> SDD list
 
   val values            : valuation -> userValues
   val nested            : valuation -> SDD
@@ -145,6 +146,17 @@ functor SDDFun ( structure Variable  : VARIABLE
   fun uid (ref(iSDD(_,_,x))) = x
 
   (*----------------------------------------------------------------------*)
+  (* Help construct sorted operands of SDDs *)
+    fun insert [] x = [x]
+    |   insert (L as (l::ls)) x =
+    if x = l then
+      L
+    else if uid x < uid l then
+      x::L
+    else
+      l::(insert ls x)
+
+  (*----------------------------------------------------------------------*)
   (* Called by the unicity table to construct an SDD with an id *)
   fun mkNode node hsh uid = iSDD( node, hsh, uid)
 
@@ -242,9 +254,6 @@ functor SDDFun ( structure Variable  : VARIABLE
   local (* SDD manipulation *)
 
     (*--------------------------------------------------------------------*)
-    val sortSDDs = sortUnique uid (op <) (op >)
-
-    (*--------------------------------------------------------------------*)
     (* Operations to manipulate SDD. Used by the cache. *)
     structure SDDOperations (* : OPERATION *) =
     struct
@@ -328,20 +337,24 @@ functor SDDFun ( structure Variable  : VARIABLE
       | _ => raise DoNotPanic
 
       (*------------------------------------------------------------------*)
-      (* Warning: duplicate code with SDD.union! Keep in sync! *)
+      (* Warning: duplicate code with SDD.union! Keep in sync!
+         Operands should be sorted by caller.
+      *)
       fun unionCallback lookup xs =
         case List.filter (fn x => x <> zero ) xs of
           []      => zero   (* No need to cache *)
         | (x::[]) => x      (* No need to cache *)
-        | xs'     => lookup(Union( sortSDDs xs', lookup ))
+        | xs'     => lookup(Union( xs', lookup ))
 
       (*------------------------------------------------------------------*)
-      (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
+      (* Warning: duplicate code with SDD.intersection! Keep in sync!
+         Operands should be sorted by caller.
+      *)
       fun intersectionCallback lookup xs =
         case xs of
           []      => zero (* No need to cache *)
         | (x::[]) => x    (* No need to cache *)
-        | _       => lookup(Inter( sortSDDs xs, lookup))
+        | _       => lookup(Inter( xs, lookup))
 
       (*------------------------------------------------------------------*)
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
@@ -373,6 +386,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         | Node{variable=var,...}  =>
           unionSDD flatAlphaNodeToList
                    alphaToList
+                   uid
                    (squareUnion uid
                                 (unionCallback cacheLookup)
                                 Values.union
@@ -388,6 +402,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         | HNode{variable=var,...} =>
           unionSDD alphaNodeToList
                    alphaToList
+                   uid
                    (squareUnion uid
                                 (unionCallback cacheLookup)
                                 (unionCallback cacheLookup)
@@ -662,22 +677,24 @@ functor SDDFun ( structure Variable  : VARIABLE
     val cacheLookup = SDDOpCache.lookup
 
     (*------------------------------------------------------------------*)
-    (* Warning! Duplicate code with SDD.SDDOperations.unionCallback! *)
+    (* Warning! Duplicate code with SDD.SDDOperations.unionCallback!
+       Operands should be sorted by caller.
+    *)
     fun union xs =
       case List.filter (fn x => x <> zero ) xs of
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
-      | xs'     => SDDOpCache.lookup(SDDOperations.Union( sortSDDs xs'
-                                                        , cacheLookup ))
+      | xs'     => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
 
     (*------------------------------------------------------------------*)
-    (* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback! *)
+    (* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback!
+       Operands should be sorted by caller.
+    *)
     fun intersection xs =
      case xs of
        []      => zero (* No need to cache *)
      | (x::[]) => x    (* No need to cache *)
-     | _       => SDDOpCache.lookup(SDDOperations.Inter( sortSDDs xs
-                                                       , cacheLookup ))
+     | _       => SDDOpCache.lookup(SDDOperations.Inter( xs, cacheLookup ))
 
     (*------------------------------------------------------------------*)
     (* Warning! Duplicate code with SDD.SDDOperations.differenceCallback! *)

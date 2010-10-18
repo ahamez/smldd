@@ -10,6 +10,7 @@
    foldl). 'bAlpha' is initialized by the alpha of the first operand.
 *)
 fun unionSDD alphaNodeToList alphaToList
+             uid
              squareUnion
              valInter valDiff valEmpty
              nodeAlpha
@@ -21,6 +22,23 @@ let
                                 []       => raise DoNotPanic
                               | (y::ys)  => (y,ys)
 
+
+  fun mergeSuccs [] [] = []
+  |   mergeSuccs xs [] = xs
+  |   mergeSuccs [] ys = ys
+  |   mergeSuccs (x::xs) ys =
+    let
+      fun mergeHelper [] x = [x]
+      |   mergeHelper (L as (l::ls)) x =
+        if x = l then
+          L
+        else if uid x < uid l then
+          x::L
+        else
+          l::(mergeHelper ls x)
+    in
+      mergeSuccs xs (mergeHelper ys x)
+    end
 
   (* Process an arc of the a operand onto the whole alpha of b.
      When it's done, it return a pair where the first element is the current
@@ -37,7 +55,7 @@ let
   |   oneArcOfA (aVal,aSuccs) ((bVal,bSuccs)::bAlpha)
   =
     if aVal = bVal then
-      ( [( aVal, aSuccs @ bSuccs )], bAlpha )
+      ( [( aVal, mergeSuccs aSuccs bSuccs )], bAlpha )
 
     else
     let
@@ -57,7 +75,7 @@ let
       in
 
         if aVal = inter then (* aVal \in bVal *)
-          ( [( aVal, aSuccs @ bSuccs )], (diffba,bSuccs)::bAlpha )
+          ( [( aVal, mergeSuccs aSuccs bSuccs )], (diffba,bSuccs)::bAlpha )
 
         else
         let
@@ -67,14 +85,14 @@ let
           let
             val (res,rem) = oneArcOfA (diffab,aSuccs) bAlpha
           in
-            ( (inter, aSuccs @ bSuccs)::res, rem )
+            ( (inter, mergeSuccs aSuccs bSuccs)::res, rem )
           end
 
           else
           let
             val (res,rem) = oneArcOfA (diffab,aSuccs) ((diffba,bSuccs)::bAlpha)
           in
-            ( (inter, aSuccs @ bSuccs)::res, (diffba,bSuccs)::rem )
+            ( (inter, mergeSuccs aSuccs bSuccs)::res, (diffba,bSuccs)::rem )
           end
         end
       end

@@ -304,16 +304,24 @@ functor HomFun ( structure SDD : SDD
 
     fun union lookup xs sdd =
     if sdd = SDD.one then
-      SDD.union (map (fn x => evalCallback lookup x sdd ) xs)
+      SDD.union (foldl (fn (x,acc) =>
+                          SDD.insert acc (evalCallback lookup x sdd)
+                       )
+                       []
+                       xs
+                )
     else
     let
-      (*val res = map (fn x => evalCallback lookup x sdd ) xs*)
       val var = SDD.variable sdd
       val (F,G) = List.partition (skipVariable var) xs
-      val fRes = evalCallback lookup (mkUnion F) sdd
-      val gRes = map (fn x => evalCallback lookup x sdd ) G
+      val gRes = foldl (fn (x,acc) =>
+                         SDD.insert acc (evalCallback lookup x sdd)
+                       )
+                       []
+                       G
+      val res = SDD.insert gRes (evalCallback lookup (mkUnion F) sdd)
     in
-      SDD.union (fRes::gRes)
+      SDD.union (res)
     end
 
     (*--------------------------------------------------------------------*)
@@ -376,17 +384,18 @@ functor HomFun ( structure SDD : SDD
       SDD.zero
     else (* skipVariable made nested propagated to the correct variable *)
     let
-      val res = map
-                (fn (vl,succ) =>
+      val res = foldl
+                (fn ( (vl,succ), acc ) =>
                   case vl of
                     SDD.Values(_)   => raise NestedHomOnValues
                   | SDD.Nested(nvl) =>
                     let
                       val nvl' = evalCallback lookup h nvl
                     in
-                      SDD.node( var, SDD.Nested nvl', succ)
+                      SDD.insert acc (SDD.node( var, SDD.Nested nvl', succ))
                     end
                 )
+                []
                 (SDD.alpha sdd)
     in
       SDD.union res
@@ -402,17 +411,18 @@ functor HomFun ( structure SDD : SDD
       SDD.zero
     else
     let
-      val res = map
-                (fn (vl,succ) =>
+      val res = foldl
+                (fn ( (vl,succ), acc ) =>
                 case vl of
                   SDD.Nested(_)      => raise FunctionHomOnNested
                 | SDD.Values(values) =>
                 let
                   val values' = !f values
                 in
-                  SDD.node( var, SDD.Values values', succ)
+                  SDD.insert acc (SDD.node( var, SDD.Values values', succ))
                 end
                 )
+                []
                 (SDD.alpha sdd)
     in
       SDD.union res
@@ -432,14 +442,15 @@ functor HomFun ( structure SDD : SDD
         let
           val var = SDD.variable sdd
           val res =
-            map
-            (fn (vl, succ) =>
+            foldl
+            (fn ( (vl, succ), acc ) =>
             let
               val succ' = evalCallback lookup h succ
             in
-              SDD.node( var, vl, succ')
+              SDD.insert acc (SDD.node( var, vl, succ'))
             end
             )
+            []
             (SDD.alpha sdd)
         in
           SDD.union res
