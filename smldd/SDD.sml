@@ -746,9 +746,8 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (* Export a valuation to a string. Needed by HomFun*)
   fun valuationToString x =
-  case x of
-    Nested(nested) => toString nested
-  | Values(values) => Values.toString (Values.mkStorable values)
+   case x of Nested(nested) => toString nested
+           | Values(values) => Values.toString (Values.mkStorable values)
 
   (*----------------------------------------------------------------------*)
   (* Count the number of distinct paths in an SDD *)
@@ -757,15 +756,13 @@ functor SDDFun ( structure Variable  : VARIABLE
       val cache : (( SDD, IntInf.int ) HT.hash_table) ref
           = ref ( HT.mkTable( fn x => hash x , op = )
                            ( 10000, DoNotPanic ) )
-      fun pathsHelper x =
+      fun pathsHelper (x as (ref(iSDD(sdd,_,_)))) =
         let
-          val iSDD(sdd,_,_) = !x
-          fun nodeHelper valuesLength arcs =
-            Vector.foldl ( fn ((v,succ), n ) =>
-                           n + ( (valuesLength v) * pathsHelper succ )
-                         )
-                         (IntInf.fromInt 0)
-                         arcs
+          fun nodeHelper vlLength arcs =
+            Vector.foldl
+              (fn ((v,succ), n ) => n + (vlLength v) * pathsHelper succ)
+              (IntInf.fromInt 0)
+              arcs
         in
             case sdd of
             Zero  =>  IntInf.fromInt 0
