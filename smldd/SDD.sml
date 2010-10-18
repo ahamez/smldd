@@ -672,23 +672,23 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback! *)
     fun intersection xs =
-    case xs of
-      []      => zero (* No need to cache *)
-    | (x::[]) => x    (* No need to cache *)
-    | _       => SDDOpCache.lookup(SDDOperations.Inter( sortSDDs xs
-                                                      , cacheLookup ))
+     case xs of
+       []      => zero (* No need to cache *)
+     | (x::[]) => x    (* No need to cache *)
+     | _       => SDDOpCache.lookup(SDDOperations.Inter( sortSDDs xs
+                                                       , cacheLookup ))
 
     (*------------------------------------------------------------------*)
     (* Warning! Duplicate code with SDD.SDDOperations.differenceCallback! *)
     fun difference(x,y) =
-    if x = y then          (* No need to cache *)
-      zero
-    else if x = zero then  (* No need to cache *)
-      zero
-    else if y = zero then  (* No need to cache *)
-      x
-    else
-      SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
+     if x = y then          (* No need to cache *)
+       zero
+     else if x = zero then  (* No need to cache *)
+       zero
+     else if y = zero then  (* No need to cache *)
+       x
+     else
+       SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
 
     (*------------------------------------------------------------------*)
 
