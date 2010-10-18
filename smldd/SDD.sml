@@ -387,7 +387,6 @@ functor SDDFun ( structure Variable  : VARIABLE
         (* Check operands compatibility *)
         val _ = check xs
       in
-
         case let val ref(iSDD(x,_,_)) = hd xs in x end of
 
         (* All operands are |1| *)
