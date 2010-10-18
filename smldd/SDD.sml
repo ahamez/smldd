@@ -147,8 +147,8 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (* Help construct sorted operands of SDDs *)
-    fun insert [] x = [x]
-    |   insert (L as (l::ls)) x =
+  fun insert [] x = [x]
+  |   insert (L as (l::ls)) x =
     if x = l then
       L
     else if uid x < uid l then
@@ -158,7 +158,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (* Called by the unicity table to construct an SDD with an id *)
-  fun mkNode node hsh uid = iSDD( node, hsh, uid)
+  fun mkNode node hsh uid = iSDD( node, hsh, uid )
 
   (*----------------------------------------------------------------------*)
   (* Return the |0| ("zero") terminal *)
