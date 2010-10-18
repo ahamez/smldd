@@ -362,9 +362,10 @@ functor HomFun ( structure SDD : SDD
         val (F,G) = List.partition (skipVariable var) (valOf(xs))
         fun loop sdd =
         let
+          (* Propagate evaluation of F on successors *)
           val resF = evalCallback lookup (mkFixpoint (mkUnion (id::F))) sdd
         in
-          foldl (fn (g,sdd) => SDD.union[sdd,evalCallback lookup g sdd])
+          foldl (fn (g,sdd) => SDD.union[ sdd, evalCallback lookup g sdd ])
                 resF
                 G
         end
