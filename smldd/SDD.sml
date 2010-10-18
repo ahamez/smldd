@@ -212,9 +212,9 @@ functor SDDFun ( structure Variable  : VARIABLE
   fun hierNode ( vr, rnested as (ref (iSDD(nested,hashNested,_)))
                    , rnext as (ref (iSDD(next,hashNext,_))) )
   = case ( next, nested ) of
-      ( Zero, _  ) => zero
+      ( Zero , _ ) => zero
     | ( _ , Zero ) => zero
-    | ( _ , _    ) =>
+    | ( _ , _ )    =>
       let
         val h = H.hashCombine( Variable.hash vr
                              , H.hashCombine( hashNext, hashNested ) )
