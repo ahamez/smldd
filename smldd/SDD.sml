@@ -189,9 +189,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (* Construct a flat node with an pre-computed alpha. Internal use only! *)
-  fun flatNodeAlpha ( var   : Variable.t
-                    , alpha : (storedValues * SDD ) Vector.vector )
-  =
+  fun flatNodeAlpha ( var, alpha ) =
   if Vector.length alpha = 0 then
     zero
   else
@@ -212,26 +210,26 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (* Return an hierarchical node. Not exported *)
   fun hierNode ( vr, rnested as (ref (iSDD(nested,hashNested,_)))
-                   , rnext as (ref (iSDD(next,hashNext,_))) ) =
-  case next of
-    Zero => zero
-  | _    =>
-  ( case nested of
+                   , rnext as (ref (iSDD(next,hashNext,_))) )
+  = case next of
       Zero => zero
     | _    =>
-      let
-        val h = H.hashCombine( Variable.hash vr
-                             , H.hashCombine( hashNext, hashNested ) )
-        val alpha = Vector.fromList [( rnested, rnext )]
-      in
-        SDDUT.unify ( mkNode (HNode{ variable=vr, alpha=alpha}) h )
-      end
-  )
+    ( case nested of
+        Zero => zero
+      | _    =>
+        let
+          val h = H.hashCombine( Variable.hash vr
+                               , H.hashCombine( hashNext, hashNested ) )
+          val alpha = Vector.fromList [( rnested, rnext )]
+        in
+          SDDUT.unify ( mkNode (HNode{ variable=vr, alpha=alpha}) h )
+        end
+    )
 
   (*----------------------------------------------------------------------*)
   (* Construct a node with an pre-computed alpha. Internal use only! *)
-  fun nodeAlpha ( vr : Variable.t , alpha : (SDD * SDD) Vector.vector )
-  = if Vector.length alpha = 0 then
+  fun nodeAlpha ( vr , alpha ) =
+  if Vector.length alpha = 0 then
     zero
   else
   let
@@ -250,10 +248,10 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (* Return a node *)
-  fun node ( vr : Variable.t, vl : valuation , next : SDD ) =
-  case vl of
-    Values(values) => flatNode( vr, Values.mkStorable values, next )
-  | Nested(nested) => hierNode( vr, nested,           next )
+  fun node ( vr , vl , next ) =
+    case vl of
+      Values(values) => flatNode( vr, Values.mkStorable values, next )
+    | Nested(nested) => hierNode( vr, nested,           next )
 
 
   (*----------------------------------------------------------------------*)
@@ -436,16 +434,9 @@ functor SDDFun ( structure Variable  : VARIABLE
       (* N-ary intersection of SDDs *)
       fun intersection cacheLookup xs =
       let
-
-        (* Test if there are any zero in operands *)
-        val hasZero = case List.find (fn x => case !x of
-                                                iSDD(Zero,_,_) => true
-                                              | _              => false
-                                     )
-                                     xs
-                       of
-                         NONE    => false
-                       | SOME _  => true
+        val hasZero = case List.find (fn x => x = zero ) xs of
+                        NONE    => false
+                      | SOME _  => true
       in
 
         (* Intersection of anything with |0| is always |0| *)
