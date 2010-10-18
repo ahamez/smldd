@@ -145,7 +145,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
   (*----------------------------------------------------------------------*)
   (* Called by the unicity table to construct an SDD with an id *)
-  fun mkNode n h uid = iSDD( n, h, uid)
+  fun mkNode node hsh uid = iSDD( node, hsh, uid)
 
   (*----------------------------------------------------------------------*)
   (* Return the |0| ("zero") terminal *)
