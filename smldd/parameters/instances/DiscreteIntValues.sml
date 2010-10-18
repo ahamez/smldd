@@ -110,16 +110,16 @@ struct
     (* Cache of operations *)
     structure cache = CacheFun(structure Operation = Operations )
 
-    val sortValues = sortUnique uid (op <) (op >)
-
+    (* Operands should be sorted by caller *)
     fun union xs =
-      case sortValues xs of
+      case xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
       | _       => cache.lookup( Operations.Union xs )
 
+    (* Operands should be sorted by caller *)
     fun intersection xs =
-      case sortValues xs of
+      case xs of
         []      => raise DoNotPanic
       | (x::[]) => x (* No need to cache *)
       | _       => cache.lookup( Operations.Inter xs )

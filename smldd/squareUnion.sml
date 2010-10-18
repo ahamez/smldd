@@ -16,12 +16,26 @@ let
 
     fun insert [] (succ,vl) = [ (succ, [vl]) ]
     |   insert (X as ((xsucc,xvls)::xs)) (succ,vl) =
+    let
+
+      (* Insert sort of valuations *)
+      fun insertHelper  [] x = [x]
+      |   insertHelper (L as (l::ls)) x =
+      if x = l then
+        L
+      else if valLt(x,l) then
+        x::L
+      else
+        l::(insertHelper ls x)
+
+    in
       if uid succ = uid xsucc then
-        ( succ, vl::xvls )::xs
+        ( succ, insertHelper xvls vl )::xs
       else if uid succ < uid xsucc then
         ( succ, [vl] )::X
       else
         (xsucc,xvls)::(insert xs (succ,vl))
+    end
 
   in
     insert acc (succ,vl)
