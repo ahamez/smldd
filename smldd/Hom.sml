@@ -53,7 +53,7 @@ functor HomFun ( structure SDD : SDD
   structure Definition =
   struct
 
-    datatype t = Hom of ( hom * Hash.t )
+    datatype t = Hom of ( hom * Hash.t * int )
     and hom    = Id
                | Cons     of ( variable * valuation * t ref )
                | Const    of SDD
@@ -63,7 +63,7 @@ functor HomFun ( structure SDD : SDD
                | Nested   of ( t ref * variable )
                | Func     of ( (values -> values) ref * variable )
 
-    fun eq (Hom(x,_),Hom(y,_)) =
+    fun eq (Hom(x,_,_),Hom(y,_,_)) =
       case (x,y) of
         ( Id, Id )                   => true
       | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
@@ -77,9 +77,9 @@ functor HomFun ( structure SDD : SDD
       | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
       | ( _ , _ )                    => false
 
-    fun hash (Hom(_,h)) = h
+    fun hash (Hom(_,h,_)) = h
 
-    fun toString (Hom(h,hsh)) =
+    fun toString (Hom(h,hsh,_)) =
     case h of
         Id          => "Id"
       | Cons(v,s,h) => "Cons(" ^ (Variable.toString v)
@@ -95,19 +95,26 @@ functor HomFun ( structure SDD : SDD
       | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                  ^ (Variable.toString v) ^ ")"
       | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
-      )
+
   end (* structure Definition *)
   open Definition
 
   (*----------------------------------------------------------------------*)
   type hom     = Definition.t ref
 
-  structure UT = UnicityTableFun( structure Data = Definition )
+  structure UT = UnicityTableFunID( structure Data = Definition )
   structure H  = Hash
   structure HT = HashTable
 
   (*----------------------------------------------------------------------*)
-  val id = UT.unify( Hom(Id,H.const 1) )
+  (* Called by the unicity table to construct an homomorphism with an id *)
+  fun mkHom hom hsh uid = Hom( hom, hsh, uid )
+
+  (*----------------------------------------------------------------------*)
+  fun uid (ref(Hom(_,_,x))) = x
+
+  (*----------------------------------------------------------------------*)
+  val id = UT.unify( mkHom Id (H.const 1) )
 
   (*----------------------------------------------------------------------*)
   fun mkCons var vl next =
@@ -115,7 +122,7 @@ functor HomFun ( structure SDD : SDD
     val hsh = H.hashCombine( Variable.hash var
                 , H.hashCombine( SDD.hashValuation vl, hash (!next) ) )
   in
-    UT.unify( Hom( Cons(var,vl,next), hsh ))
+    UT.unify( mkHom (Cons(var,vl,next)) hsh )
   end
 
   (*----------------------------------------------------------------------*)
@@ -123,7 +130,7 @@ functor HomFun ( structure SDD : SDD
   let
     val hash = H.hashCombine( SDD.hash sdd, H.const 149199441 )
   in
-    UT.unify( Hom( Const(sdd), hash ))
+    UT.unify( mkHom (Const(sdd)) hash )
   end
 
   (*----------------------------------------------------------------------*)
@@ -131,42 +138,33 @@ functor HomFun ( structure SDD : SDD
   if h = id then
     id
   else
-    UT.unify( Hom( Nested(h,vr), H.hashCombine(hash (!h), Variable.hash vr )))
+    UT.unify( mkHom (Nested(h,vr))
+                    (H.hashCombine(hash (!h), Variable.hash vr ))
+            )
 
   (*----------------------------------------------------------------------*)
-  fun mkUnion xs =
+  fun mkUnion' xs =
   case xs of
     []    => mkConst SDD.zero
   | x::[] => x
   | _     =>
     let
 
-      val locals : (( variable, hom list ref ) HT.hash_table) ref
-          = ref (HT.mkTable( fn x => Variable.hash x , Variable.eq )
-                          ( 10000, DoNotPanic ))
-
       fun unionHelper ( h, operands ) =
-      case let val ref(Hom(x,_)) = h in x end of
+      case let val ref(Hom(x,_,_)) = h in x end of
         Union(ys)     => (foldl unionHelper [] ys) @ operands
-      | Nested(i,var) =>
-        (case HT.find (!locals) var of
-          NONE       => HT.insert (!locals) ( var, ref [i] )
-        | SOME hList => hList := h::(!hList);
-        operands
-        )
-      | _ => h::operands
+      | _             => h::operands
 
-      val unionLocals = map (fn (var,xs) => mkNested (mkUnion (!xs)) var)
-                            (HT.listItemsi(!locals))
-
-      val operands = (foldl unionHelper [] xs) @ unionLocals
+      val operands = foldl unionHelper [] xs
 
       val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                             (H.const 16564717)
                             operands
     in
-      UT.unify( Hom( Union(operands), unionHash ) )
+      UT.unify( mkHom (Union(operands)) unionHash )
     end
+
+  val mkUnion = mkUnion' o (sortUnique uid (op<) (op>))
 
   (*----------------------------------------------------------------------*)
   fun mkComposition x y =
@@ -177,18 +175,18 @@ functor HomFun ( structure SDD : SDD
   else
   let
     val hsh = H.hashCombine( H.const 539351353
-                  , H.hashCombine( hash (!x), hash(!y) ) )
+                           , H.hashCombine( hash (!x), hash(!y) ) )
   in
-    UT.unify( Hom( Compo( x, y ), hsh ) )
+    UT.unify( mkHom (Compo( x, y )) hsh  )
   end
 
   (*----------------------------------------------------------------------*)
-  fun mkFixpoint (rh as (ref (Hom(h,hsh)))) =
+  fun mkFixpoint (rh as (ref (Hom(h,hsh,_)))) =
   case h of
     Id          => rh
   | Fixpoint(_) => rh
-  | _           => UT.unify( Hom( Fixpoint(rh)
-                                , H.hashCombine( hsh, H.const 5959527) )
+  | _           => UT.unify( mkHom (Fixpoint(rh))
+                                   (H.hashCombine( hsh, H.const 5959527))
                            )
 
   (*----------------------------------------------------------------------*)
@@ -196,7 +194,7 @@ functor HomFun ( structure SDD : SDD
   let
     val hsh = H.hashCombine( H.const 7837892, Variable.hash var )
   in
-    UT.unify( Hom( Func(f,var), hsh ) )
+    UT.unify( mkHom (Func(f,var)) hsh )
   end
 
   (*----------------------------------------------------------------------*)
@@ -220,7 +218,7 @@ functor HomFun ( structure SDD : SDD
       H.hashCombine( Definition.hash(!h), SDD.hash s )
 
     (*--------------------------------------------------------------------*)
-    fun skipVariable var (ref (Hom(h,_))) =
+    fun skipVariable var (ref (Hom(h,_,_))) =
     case h of
       Id          => true
     | Const(_)    => false
@@ -239,7 +237,7 @@ functor HomFun ( structure SDD : SDD
     if sdd = SDD.zero then
       SDD.zero
     else
-      case let val ref(Hom(x,_)) = h in x end of
+      case let val ref(Hom(x,_,_)) = h in x end of
         Id                => sdd
       | Const(c)          => c
       | Cons(var,vl,next) => if next = id then
@@ -270,7 +268,7 @@ functor HomFun ( structure SDD : SDD
                        )
                        []
                        G
-      val res = SDD.insert gRes (evalCallback lookup (mkUnion F) sdd)
+      val res = SDD.insert gRes (evalCallback lookup (mkUnion' F) sdd)
     in
       SDD.union (res)
     end
@@ -285,8 +283,8 @@ functor HomFun ( structure SDD : SDD
 
       val (saturate,xs) =
         case !h of
-          Hom(Union(xs),_) => ( List.exists (fn x => x = id) xs, SOME xs )
-        | _ => ( false, NONE )
+          Hom(Union(xs),_,_) => ( List.exists (fn x => x = id) xs, SOME xs )
+        | _                  => ( false, NONE )
 
       fun fixpointHelper f sdd =
       let
@@ -308,7 +306,7 @@ functor HomFun ( structure SDD : SDD
         fun loop sdd =
         let
           (* Propagate evaluation of F on successors *)
-          val resF = evalCallback lookup (mkFixpoint (mkUnion (id::F))) sdd
+          val resF = evalCallback lookup (mkFixpoint (mkUnion' (id::F))) sdd
         in
           foldl (fn (g,sdd) => SDD.union[ sdd, evalCallback lookup g sdd ])
                 resF
@@ -392,7 +390,7 @@ functor HomFun ( structure SDD : SDD
           SDD.union res
         end
       else
-        case let val ref(Hom(x,_)) = h in x end of
+        case let val ref(Hom(x,_,_)) = h in x end of
 
           Id                    => raise DoNotPanic
         | Const(_)              => raise DoNotPanic
@@ -421,7 +419,7 @@ functor HomFun ( structure SDD : SDD
   if sdd = SDD.zero then
     SDD.zero
   else
-    case let val ref(Hom(x,_)) = h in x end of
+    case let val ref(Hom(x,_,_)) = h in x end of
       Id                => sdd
     | Const(c)          => c
     | Cons(var,vl,next) =>
