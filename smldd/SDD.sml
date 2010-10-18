@@ -19,6 +19,7 @@ sig
   val intersection      : SDD list -> SDD
   val difference        : SDD * SDD -> SDD
 
+  val uid               : SDD -> int
   val variable          : SDD -> variable
   val alpha             : SDD -> (valuation * SDD) list
   val hash              : SDD -> Hash.t
