@@ -822,14 +822,15 @@ functor SDDFun ( structure Variable  : VARIABLE
       ^ "\"];\n"
 
     fun node sdd depth dotHelper =
-        "\"node"
+      [ "\"node"
       ^ (Int.toString (uid sdd))
       ^ (depthStr depth)
       ^ "\" [shape=circle,label=\""
       ^ (Variable.toString (variable sdd))
       ^ "\"];\n"
-      ^ (foldl (fn ((_,succ),str) => str ^ (dotHelper succ depth))
-               ""
+      ]
+      @ (foldl (fn ((_,succ),str) => str @ (dotHelper succ depth))
+               []
                (alpha sdd)
         )
 
@@ -840,17 +841,12 @@ functor SDDFun ( structure Variable  : VARIABLE
       ^ "\" [shape=circle,label=\""
       ^ (Variable.toString (variable sdd))
       ^ "\"];\n"
-      ^ (foldl (fn ((nested,succ),str) =>
+      :: (foldl (fn ((vl,succ),str) =>
                   str
-                ^ (dotHelper (case nested of
-                               Values _ => raise DoNotPanic
-                             | Nested n => n
-                             )
-                             (depth +1)
-                  )
-                ^ (dotHelper succ depth)
+                @ (dotHelper (nested vl) (depth +1) )
+                @ (dotHelper succ depth)
                )
-               ""
+               []
                (alpha sdd)
         )
 
@@ -891,34 +887,35 @@ functor SDDFun ( structure Variable  : VARIABLE
       case !sdd of
         iSDD(Node{...},_,_)  => node sdd depth dotHelper
       | iSDD(HNode{...},_,_) => hNode sdd depth dotHelper
-      | _ => ""
+      | _ => []
     end
 
     fun nodeArc sdd depth =
       foldl (fn((values,succ),str) =>
                 str
-              ^ "\"node"
-              ^ (Int.toString (uid sdd))
-              ^ (depthStr depth)
-              ^ "\""
-              ^ " -> "
-              ^ (case let val ref(iSDD(x,_,_)) = succ in x end of
-                  Zero       => raise DoNotPanic
-                | One        => "terminal1" ^ (depthStr depth)
-                | Node{...}  => "\"node" ^ (Int.toString (uid succ))
-                                       ^ (depthStr depth) ^ "\""
-                | HNode{...} => "\"node" ^ (Int.toString (uid succ))
-                                        ^ (depthStr depth) ^ "\""
-                )
-              ^ " [label=\""
-              ^ (case values of
-                  Nested _ => raise DoNotPanic
-                | Values v => Values.toString (Values.mkStorable v)
-                )
-              ^ "\"];\n"
-             )
-             ""
-             (alpha sdd)
+              @ [ "\"node"
+                ^ (Int.toString (uid sdd))
+                ^ (depthStr depth)
+                ^ "\""
+                ^ " -> "
+                ^ (case let val ref(iSDD(x,_,_)) = succ in x end of
+                    Zero       => raise DoNotPanic
+                  | One        => "terminal1" ^ (depthStr depth)
+                  | Node{...}  => "\"node" ^ (Int.toString (uid succ))
+                                         ^ (depthStr depth) ^ "\""
+                  | HNode{...} => "\"node" ^ (Int.toString (uid succ))
+                                          ^ (depthStr depth) ^ "\""
+                  )
+                ^ " [label=\""
+                ^ (case values of
+                    Nested _ => raise DoNotPanic
+                  | Values v => Values.toString (Values.mkStorable v)
+                  )
+                ^ "\"];\n"
+                ]
+            )
+            []
+            (alpha sdd)
 
     fun hNodeArc sdd depth =
       foldl (fn((vl,succ),str) =>
@@ -947,48 +944,52 @@ functor SDDFun ( structure Variable  : VARIABLE
                           )
             in
                 str
-              ^ ghost ^ " [shape=point,label=\"\",height=0,width=0];\n"
-              ^ curr  ^ " -> " ^ ghost ^ " [arrowhead=none];\n"
-              ^ ghost ^ " -> " ^ nxt ^ ";\n"
-              ^ ghost ^ " -> " ^ nst ^ " [style=dashed,weight=0];\n"
+              @ [ ghost ^ " [shape=point,label=\"\",height=0,width=0];\n"
+                ^ curr  ^ " -> " ^ ghost ^ " [arrowhead=none];\n"
+                ^ ghost ^ " -> " ^ nxt ^ ";\n"
+                ^ ghost ^ " -> " ^ nst ^ " [style=dashed,weight=0];\n"
+                ]
             end
             )
-            ""
+            []
             (alpha sdd)
 
     fun dotArcHelper () =
       HT.foldi (fn (sdd, ref depths, str) =>
-                 str ^
+                 str @
                  (case let val ref(iSDD(s,_,_)) = sdd in s end of
                     Node{...} =>
-                      foldl (fn (depth,str) => str ^ (nodeArc sdd depth))
-                            ""
+                      foldl (fn (depth,str) => str @ (nodeArc sdd depth))
+                            []
                             depths
                   | HNode{...} =>
-                      foldl (fn (depth,str) => str ^ (hNodeArc sdd depth))
-                            ""
+                      foldl (fn (depth,str) => str @ (hNodeArc sdd depth))
+                            []
                             depths
-                  | _ => ""
+                  | _ => []
                   )
                )
-               ""
+               []
                nodes
 
+   val _ = print "\n**************\n"
+   val l = if x = one then
+             [terminal 1 0]
+           else if x = zero then
+             [terminal 0 0]
+           else
+               ["digraph sdd {\n\n"]
+             @ (dotHelper x 0)
+             @ (dotArcHelper ())
+             @ (if maxShare then
+                  [terminal 1 0]
+                else
+                  List.tabulate ( !maxDepth + 1, terminal 1)
+               )
+             @ ["\n}\n"]
+   val _ = print "\n**************\n"
    in
-     if x = one then
-      terminal 1 0
-     else if x = zero then
-      terminal 0 0
-     else
-      "digraph sdd {\n\n"
-    ^ (dotHelper x 0)
-    ^ (dotArcHelper ())
-    ^ (if maxShare then
-         terminal 1 0
-       else
-         String.concat (List.tabulate ( !maxDepth + 1, terminal 1) )
-      )
-    ^ "\n}\n"
+     String.concat l
    end (* fun toDot *)
 
   (*----------------------------------------------------------------------*)
