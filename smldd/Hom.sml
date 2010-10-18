@@ -1,6 +1,4 @@
 (*--------------------------------------------------------------------------*)
-(*--------------------------------------------------------------------------*)
-
 signature Hom =
 sig
 
@@ -32,8 +30,6 @@ sig
 end
 
 (*--------------------------------------------------------------------------*)
-(*--------------------------------------------------------------------------*)
-
 functor HomFun ( structure SDD : SDD
                  and Variable  : VARIABLE where type t = SDD.variable
                  and Values    : VALUES   where type stored = SDD.storedValues
@@ -43,23 +39,17 @@ functor HomFun ( structure SDD : SDD
 = struct
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   exception NotYetImplemented
   exception NestedHomOnValues
   exception FunctionHomOnNested
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   type SDD       = SDD.SDD
   type variable  = Variable.t
   type values    = Values.user
   type valuation = SDD.valuation
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   structure Definition =
   struct
 
@@ -90,11 +80,7 @@ functor HomFun ( structure SDD : SDD
     fun hash (Hom(_,h)) = h
 
     fun toString (Hom(h,hsh)) =
-      (*"#"
-         ^ (H.toString hsh)
-         ^ " [ "
-         ^ *)
-    (case h of
+    case h of
         Id          => "Id"
       | Cons(v,s,h) => "Cons(" ^ (Variable.toString v)
                                ^ ", "
@@ -110,13 +96,10 @@ functor HomFun ( structure SDD : SDD
                                  ^ (Variable.toString v) ^ ")"
       | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
       )
-    (*^ " ] "*)
   end (* structure Definition *)
   open Definition
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   type hom     = Definition.t ref
 
   structure UT = UnicityTableFun( structure Data = Definition )
@@ -124,13 +107,9 @@ functor HomFun ( structure SDD : SDD
   structure HT = HashTable
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   val id = UT.unify( Hom(Id,H.const 1) )
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun mkCons var vl next =
   let
     val hsh = H.hashCombine( Variable.hash var
@@ -140,8 +119,6 @@ functor HomFun ( structure SDD : SDD
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun mkConst sdd =
   let
     val hash = H.hashCombine( SDD.hash sdd, H.const 149199441 )
@@ -150,8 +127,6 @@ functor HomFun ( structure SDD : SDD
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun mkNested h vr =
   if h = id then
     id
@@ -159,8 +134,6 @@ functor HomFun ( structure SDD : SDD
     UT.unify( Hom( Nested(h,vr), H.hashCombine(hash (!h), Variable.hash vr )))
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun mkUnion xs =
   case xs of
     []    => mkConst SDD.zero
@@ -196,8 +169,6 @@ functor HomFun ( structure SDD : SDD
     end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-  
   fun mkComposition x y =
   if x = id then
     y
@@ -212,8 +183,6 @@ functor HomFun ( structure SDD : SDD
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun mkFixpoint (rh as (ref (Hom(h,hsh)))) =
   case h of
     Id          => rh
@@ -223,8 +192,6 @@ functor HomFun ( structure SDD : SDD
                            )
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun mkFunction f var =
   let
     val hsh = H.hashCombine( H.const 7837892, Variable.hash var )
@@ -233,8 +200,6 @@ functor HomFun ( structure SDD : SDD
   end
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   local (* Homomorphisms evaluation *)
 
   structure Evaluation (* : OPERATION *) =
@@ -243,26 +208,18 @@ functor HomFun ( structure SDD : SDD
     val name = "Hom"
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     type result        = SDD
     datatype operation = Op of hom * SDD * (operation -> result)
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun eq ( Op(xh,xsdd,_), Op(yh,ysdd,_) ) =
       xh = yh andalso xsdd = ysdd
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun hash (Op(h,s,_)) =
       H.hashCombine( Definition.hash(!h), SDD.hash s )
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun skipVariable var (ref (Hom(h,_))) =
     case h of
       Id          => true
@@ -275,8 +232,6 @@ functor HomFun ( structure SDD : SDD
     | Func(_,v)   => not (Variable.eq (var,v))
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     (* Evaluate an homomorphism on an SDD.
        Warning! Duplicate logic with Hom.eval!
     *)
@@ -294,14 +249,10 @@ functor HomFun ( structure SDD : SDD
       | _                 => lookup( Op( h, sdd, lookup ) )
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun cons lookup (var, vl, next) sdd =
       SDD.node( var, vl, evalCallback lookup next sdd )
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun union lookup xs sdd =
     if sdd = SDD.one then
       SDD.union (foldl (fn (x,acc) =>
@@ -325,14 +276,10 @@ functor HomFun ( structure SDD : SDD
     end
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun composition lookup a b sdd =
       evalCallback lookup a (evalCallback lookup b sdd)
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun fixpoint lookup h sdd =
     let
 
@@ -373,8 +320,6 @@ functor HomFun ( structure SDD : SDD
     end
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun nested lookup h var sdd =
     if sdd = SDD.one then
       SDD.one
@@ -398,8 +343,6 @@ functor HomFun ( structure SDD : SDD
     end
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
-
     fun function lookup f var sdd =
     if sdd = SDD.one then
       SDD.one
@@ -422,7 +365,6 @@ functor HomFun ( structure SDD : SDD
       SDD.union res
     end
 
-    (*--------------------------------------------------------------------*)
     (*--------------------------------------------------------------------*)
     (* Dispatch the evaluation of an homomorphism to the corresponding
        function. Used by CacheFun.
@@ -464,7 +406,6 @@ functor HomFun ( structure SDD : SDD
     end
 
     (*--------------------------------------------------------------------*)
-    (*--------------------------------------------------------------------*)
 
   end (* structure Evaluation *)
 
@@ -493,19 +434,12 @@ functor HomFun ( structure SDD : SDD
   end (* local Homomorphisms evaluation *)
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun toString x = Definition.toString (!x)
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
   fun stats () = cache.stats()
 
   (*----------------------------------------------------------------------*)
-  (*----------------------------------------------------------------------*)
-
 end (* functor HomFun *)
 
-(*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
