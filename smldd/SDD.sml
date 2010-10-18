@@ -664,10 +664,10 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (* Apply an SDD operation. Called by CacheFun. *)
       fun apply x =
-      case x of
-        Union( xs, cacheLookup)  => union        cacheLookup xs
-      | Inter( xs, cacheLookup)  => intersection cacheLookup xs
-      | Diff( x,y, cacheLookup)  => difference   cacheLookup (x,y)
+        case x of
+          Union( xs, cacheLookup)  => union        cacheLookup xs
+        | Inter( xs, cacheLookup)  => intersection cacheLookup xs
+        | Diff( x,y, cacheLookup)  => difference   cacheLookup (x,y)
 
       (*------------------------------------------------------------------*)
       (* Hash an SDD operation *)
