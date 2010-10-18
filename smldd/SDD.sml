@@ -614,7 +614,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
           val diffPart =
           let
-            val bUnion = unionCallback cacheLookup  (map (fn (x,_)=>x) ralpha)
+            val bUnion = unionCallback cacheLookup (map (fn (x,_)=>x) ralpha)
           in
             foldl (fn ((aVal,aSuccs),acc) =>
                     let
