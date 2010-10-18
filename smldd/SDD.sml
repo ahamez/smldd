@@ -971,7 +971,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                []
                nodes
 
-   val _ = print "\n**************\n"
    val l = if x = one then
              [terminal 1 0]
            else if x = zero then
@@ -986,7 +985,6 @@ functor SDDFun ( structure Variable  : VARIABLE
                   List.tabulate ( !maxDepth + 1, terminal 1)
                )
              @ ["\n}\n"]
-   val _ = print "\n**************\n"
    in
      String.concat l
    end (* fun toDot *)
