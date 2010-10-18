@@ -385,7 +385,6 @@ functor SDDFun ( structure Variable  : VARIABLE
         (* Flat node case *)
         | Node{variable=var,...}  =>
           unionSDD flatAlphaNodeToList
-                   alphaToList
                    uid
                    (squareUnion uid
                                 (unionCallback cacheLookup)
@@ -401,7 +400,6 @@ functor SDDFun ( structure Variable  : VARIABLE
         (* Hierarchical node case *)
         | HNode{variable=var,...} =>
           unionSDD alphaNodeToList
-                   alphaToList
                    uid
                    (squareUnion uid
                                 (unionCallback cacheLookup)

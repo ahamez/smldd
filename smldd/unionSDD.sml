@@ -9,7 +9,7 @@
    while 'aAlpha' is the head of the remaining operands (thus we use a
    foldl). 'bAlpha' is initialized by the alpha of the first operand.
 *)
-fun unionSDD alphaNodeToList alphaToList
+fun unionSDD alphaNodeToList
              uid
              squareUnion
              valInter valDiff valEmpty
