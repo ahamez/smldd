@@ -526,9 +526,10 @@ functor SDDFun ( structure Variable  : VARIABLE
                                          (intersectionCallback cacheLookup)
                                          zero
 
-          val squareUnion' = squareUnion uid (unionCallback cacheLookup)
-                                             (unionCallback cacheLookup)
-                                             (fn (x,y) => uid x < uid y)
+          val squareUnion' = squareUnion uid
+                                         (unionCallback cacheLookup)
+                                         (unionCallback cacheLookup)
+                                         (fn (x,y) => uid x < uid y)
         in
           nodeAlpha( var
                    , squareUnion' ( foldl commonApply' initial operands ) )
