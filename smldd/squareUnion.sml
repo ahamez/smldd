@@ -41,7 +41,9 @@ let
     insert acc (succ,vl)
   end
 
-
+  (* Perform the union of all valuations pointing to the same successor.
+     Sort resultant alpha on the fly.
+  *)
   fun mergeVls ( (succ,vls), acc ) =
   let
 
