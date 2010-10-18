@@ -122,36 +122,22 @@ functor SDDFun ( structure Variable  : VARIABLE
   (*----------------------------------------------------------------------*)
   (* Export an SDD to a string *)
   fun toString (ref (iSDD(sdd,_,h))) =
+  let
+    fun nodeHelper vlToString vr alpha =
+     "(" ^ (Variable.toString vr) ^ ")" ^ " [ " ^
+     (String.concatWith " + "
+         (VectorToList (Vector.map
+          (fn (vl,succ) => (vlToString vl) ^ " --> "  ^ (toString succ))
+          alpha )
+         )
+     ) ^ " ]"
+  in
   case sdd of
     Zero  => "|0|"
   | One   => "|1|"
-  | Node{ variable=vr, alpha=alpha} =>
-      "(" ^ (Variable.toString vr) ^ ")"
-    (*^ " #" ^ (H.toString h) ^ "#"*)
-    ^ " [ "
-    ^ String.concatWith " + "
-                        (VectorToList
-                        (Vector.map (fn (values,succ) =>
-                                      (Values.toString values)
-                                    ^ " --> "
-                                    ^ (toString succ)
-                                    )
-                                    alpha
-                        ))
-    ^ " ]"
-  | HNode{ variable=vr, alpha=alpha} =>
-    (Variable.toString vr)
-    ^ " [ "
-    ^ String.concatWith " + "
-                        (VectorToList
-                        (Vector.map (fn (nested,succ) =>
-                                      (toString nested)
-                                    ^ " --> "
-                                    ^ (toString succ)
-                                    )
-                                    alpha
-                        ))
-    ^ " ]"
+  | Node{ variable=vr, alpha=alpha}  => (nodeHelper Values.toString vr alpha)
+  | HNode{ variable=vr, alpha=alpha} => (nodeHelper toString vr alpha)
+   end
 
   (*----------------------------------------------------------------------*)
   (* Extract the identifier of an SDD *)
