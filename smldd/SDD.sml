@@ -358,19 +358,10 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (* Warning: duplicate code with SDD.union! Keep in sync! *)
       fun unionCallback lookup xs =
-      let
-        (* Remove all |0| *)
-        val xs' = List.filter (fn x => case !x of
-                                        iSDD(Zero,_,_) => false
-                                      | _              => true
-                              )
-                              xs
-      in
-        case xs' of
+        case List.filter (fn x => x <> zero ) xs of
           []      => zero   (* No need to cache *)
         | (x::[]) => x      (* No need to cache *)
-        | _       => lookup(Union( sortSDDs xs', lookup ))
-      end
+        | xs'     => lookup(Union( sortSDDs xs', lookup ))
 
       (*------------------------------------------------------------------*)
       (* Warning: duplicate code with SDD.intersection! Keep in sync! *)
@@ -711,20 +702,11 @@ functor SDDFun ( structure Variable  : VARIABLE
     (*------------------------------------------------------------------*)
     (* Warning! Duplicate code with SDD.SDDOperations.unionCallback! *)
     fun union xs =
-    let
-      (* Remove all |0| *)
-      val xs' = List.filter (fn x => case !x of
-                                       iSDD(Zero,_,_) => false
-                                     | _              => true
-                            )
-                            xs
-    in
-      case xs' of
+      case List.filter (fn x => x <> zero ) xs of
         []      => zero (* No need to cache *)
       | (x::[]) => x    (* No need to cache *)
-      | _       => SDDOpCache.lookup(SDDOperations.Union( sortSDDs xs'
+      | xs'     => SDDOpCache.lookup(SDDOperations.Union( sortSDDs xs'
                                                         , cacheLookup ))
-    end
 
     (*------------------------------------------------------------------*)
     (* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback! *)
