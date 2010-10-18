@@ -3,11 +3,17 @@ sig
 
   eqtype stored
   type user
+  eqtype value
+
+  val discrete      : bool
+  val toList        : stored -> value list
+  val fromList      : value list -> stored
 
   val mkStorable    : user -> stored
   val mkUsable      : stored -> user
 
   val lt            : stored * stored -> bool
+  val valueLt       : value * value -> bool
 
   val hash          : stored -> Hash.t
 

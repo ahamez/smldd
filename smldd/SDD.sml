@@ -384,18 +384,27 @@ functor SDDFun ( structure Variable  : VARIABLE
 
         (* Flat node case *)
         | Node{variable=var,...}  =>
-          unionSDD flatAlphaNodeToList
-                   uid
-                   (squareUnion uid
-                                (unionCallback cacheLookup)
-                                Values.union
-                                Values.lt
-                   )
-                   Values.intersection
-                   Values.difference
-                   Values.empty
-                   flatNodeAlpha
-                   xs var
+          if Values.discrete then
+            unionFlatDiscreteSDD flatAlphaNodeToList
+                                 Values.toList Values.fromList Values.lt
+                                 Values.valueLt
+                                 uid
+                                 (unionCallback cacheLookup)
+                                 flatNodeAlpha
+                                 xs var
+          else
+            unionSDD flatAlphaNodeToList
+                     uid
+                     (squareUnion uid
+                                  (unionCallback cacheLookup)
+                                  Values.union
+                                  Values.lt
+                     )
+                     Values.intersection
+                     Values.difference
+                     Values.empty
+                     flatNodeAlpha
+                     xs var
 
         (* Hierarchical node case *)
         | HNode{variable=var,...} =>

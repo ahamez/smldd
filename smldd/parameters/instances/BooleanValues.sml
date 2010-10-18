@@ -10,6 +10,15 @@ struct
      {0,1} => 3
   *)
 
+  val discrete = false
+
+  type value  = unit
+
+  exception NotDiscrete
+  fun toList _   = raise NotDiscrete
+  fun fromList _ = raise NotDiscrete
+  fun valueLt _  = raise NotDiscrete
+
   type stored = int
   type user   = int
 

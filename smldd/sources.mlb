@@ -26,6 +26,7 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./squareUnion.sml
 ./commonApply.sml
 ./unionSDD.sml
+./unionFlatDiscreteSDD.sml
 ./SDD.sml
 ./Hom.sml
 

@@ -14,8 +14,12 @@ struct
 
   end
 
+  val discrete = true
+
   type stored = Definition.t ref
   type user   = SV.t
+  type value  = int
+
 
   structure UT = UnicityTableFunID ( structure Data = Definition )
 
@@ -24,6 +28,16 @@ struct
 
   fun mkStorable v        = UT.unify (mkValues v (SV.hash v))
   fun mkUsable (ref(v,_,_)) = v
+
+  fun toList (ref(v,_,_)) = IntVectorToList v
+  fun fromList xs =
+  let
+    val v = (SV.fromList xs)
+  in
+    UT.unify ( mkValues v (SV.hash v) )
+  end
+
+  val valueLt  = (op <)
 
   fun lt (x,y)               = uid x < uid y
   fun hash (ref(x,_,_))      = SV.hash x
