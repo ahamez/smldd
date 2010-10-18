@@ -31,6 +31,9 @@ struct
   fun empty (ref(x,_,_))     = SV.empty x
   fun toString (ref(x,_,_))  = SV.toString x
 
+  val hashUsable = SV.hash
+  val eqUsable   = SV.eq
+
   val e = mkStorable( SV.mkEmpty() )
   fun mkEmpty() = e
 

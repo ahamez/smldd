@@ -21,4 +21,7 @@ sig
 
   val toString      : stored -> string
 
+  val hashUsable    : user -> Hash.t
+  val eqUsable      : user * user -> bool
+
 end

@@ -733,14 +733,13 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Return the hash value of a valuation. Needed by HomFun*)
   fun hashValuation x =
     case x of Nested(nested) => Definition.hash (!nested)
-            | Values(values) => Values.hash (Values.mkStorable values)
+            | Values(values) => Values.hashUsable values
 
   (*----------------------------------------------------------------------*)
   (* Compare two valuations. Needed by HomFun*)
   fun eqValuation (x,y) =
     case (x,y) of ( Nested(nx), Nested(ny) ) => nx = ny
-                | ( Values(vx), Values(vy) ) => (Values.mkStorable vx)
-                                                = (Values.mkStorable vy)
+                | ( Values(vx), Values(vy) ) => Values.eqUsable( vx, vy )
                 | ( _ , _ )                  => false
 
   (*----------------------------------------------------------------------*)

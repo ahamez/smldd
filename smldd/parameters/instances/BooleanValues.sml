@@ -36,6 +36,9 @@ struct
 
   fun mkEmpty () = 0
 
+  val hashUsable = H.const
+  val eqUsable   = (op =)
+
   fun union []      = 0
   |   union (x::[]) = x
   |   union (x::xs) =
