@@ -540,141 +540,124 @@ functor SDDFun ( structure Variable  : VARIABLE
       (*------------------------------------------------------------------*)
       (* Compute the difference of two SDDs *)
       fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
-      case l of
+      case (l,r) of
 
-        Zero => raise DoNotPanic
+        (Zero,_)  => raise DoNotPanic
+      | (_,Zero)  => raise DoNotPanic
+      | (One,One) => raise DoNotPanic
+      | (One,_  ) => raise IncompatibleSDD
 
-      | One  => (case r of
-                  Zero => raise DoNotPanic
-                | One  => zero
-                | _           => raise IncompatibleSDD
-                )
-
-      | Node{variable=lvr,alpha=la} =>
-
-      (case r of
-        Zero       => raise DoNotPanic
-      | One        => raise IncompatibleSDD
-      | HNode{...} => raise IncompatibleSDD
-
-      (* Difference of two flat nodes *)
-      | Node{variable=rvr,alpha=ra} =>
-      if not( Variable.eq(lvr,rvr) ) then
-        raise IncompatibleSDD
-      else
-      let
-
-        val lalpha = alphaToList la
-        val ralpha = alphaToList ra
-
-        val commonPart =
+      | ( Node{variable=lvr,alpha=la}, Node{variable=rvr,alpha=ra} ) =>
+        if not( Variable.eq(lvr,rvr) ) then
+          raise IncompatibleSDD
+        else
         let
-          (* Difference is a binary operation, while commonApply
-             expects an n-ary operation *)
-          fun callback xs =
-            case xs of
-              (x::y::[]) => differenceCallback cacheLookup (x, y)
-            | _          => raise DoNotPanic
 
-          val commonApply' = commonApply Values.intersection
-                                         Values.empty
-                                         callback
-                                         zero
+          val lalpha = alphaToList la
+          val ralpha = alphaToList ra
+
+          val commonPart =
+          let
+            (* Difference is a binary operation, while commonApply
+               expects an n-ary operation *)
+            fun callback xs =
+              case xs of
+                (x::y::[]) => differenceCallback cacheLookup (x, y)
+              | _          => raise DoNotPanic
+
+            val commonApply' = commonApply Values.intersection
+                                           Values.empty
+                                           callback
+                                           zero
+          in
+            commonApply' ( lalpha, ralpha )
+          end
+
+          val diffPart =
+          let
+            val bUnion = Values.union( map (fn (x,_)=>x) ralpha )
+          in
+            foldl (fn ((aVal,aSuccs),acc) =>
+                    let
+                      val diff = Values.difference(aVal,bUnion)
+                    in
+                      if Values.empty diff then
+                        acc
+                      else
+                        ( diff, aSuccs)::acc
+                    end
+                  )
+                  []
+                  lalpha
+          end
+
+          val squareUnion' = squareUnion uid
+                                         (unionCallback cacheLookup)
+                                         Values.union
+                                         Values.lt
+
+          val alpha = squareUnion' ( diffPart @ commonPart )
         in
-          commonApply' ( lalpha, ralpha )
+          flatNodeAlpha( lvr, alpha )
         end
 
-        val diffPart =
-        let
-          val bUnion = Values.union( map (fn (x,_)=>x) ralpha )
-        in
-          foldl (fn ((aVal,aSuccs),acc) =>
-                  let
-                    val diff = Values.difference(aVal,bUnion)
-                  in
-                    if Values.empty diff then
-                      acc
-                    else
-                      ( diff, aSuccs)::acc
-                  end
-                )
-                []
-                lalpha
-        end
-
-        val squareUnion' = squareUnion uid
-                                       (unionCallback cacheLookup)
-                                       Values.union
-                                       Values.lt
-
-        val alpha = squareUnion' ( diffPart @ commonPart )
-      in
-        flatNodeAlpha( lvr, alpha )
-      end
-      )
+      | ( Node{...}, _ ) => raise IncompatibleSDD
 
       (* Difference of two hierarchical nodes *)
-      | HNode{variable=lvr,alpha=la} =>
-
-      (case r of
-        Zero       => raise DoNotPanic
-      | One        => raise IncompatibleSDD
-      | Node{...}  => raise IncompatibleSDD
-
-      (* Difference of two hiearchical nodes *)
-      | HNode{variable=rvr,alpha=ra} =>
-      if not( Variable.eq(lvr,rvr) ) then
-        raise IncompatibleSDD
-      else
-      let
-
-        val lalpha = alphaToList la
-        val ralpha = alphaToList ra
-
-        val commonPart =
+      | ( HNode{variable=lvr,alpha=la}, HNode{variable=rvr,alpha=ra} ) =>
+        if not( Variable.eq(lvr,rvr) ) then
+          raise IncompatibleSDD
+        else
         let
-          (* Difference is a binary operation, while commonApply
-             expects an n-ary operation *)
-          fun callback xs =
-            case xs of
-              (x::y::[]) => differenceCallback cacheLookup (x, y)
-            | _          => raise DoNotPanic
 
-          val commonApply' = commonApply (intersectionCallback cacheLookup)
-                                         (fn x => x = zero )
-                                         callback
-                                         zero
+          val lalpha = alphaToList la
+          val ralpha = alphaToList ra
+
+          val commonPart =
+          let
+            (* Difference is a binary operation, while commonApply
+               expects an n-ary operation *)
+            fun callback xs =
+              case xs of
+                (x::y::[]) => differenceCallback cacheLookup (x, y)
+              | _          => raise DoNotPanic
+
+            val commonApply' = commonApply (intersectionCallback cacheLookup)
+                                           (fn x => x = zero )
+                                           callback
+                                           zero
+          in
+            commonApply' ( lalpha, ralpha )
+          end
+
+          val diffPart =
+          let
+            val bUnion = unionCallback cacheLookup  (map (fn (x,_)=>x) ralpha)
+          in
+            foldl (fn ((aVal,aSuccs),acc) =>
+                    let
+                      val diff = differenceCallback cacheLookup (aVal,bUnion)
+                    in
+                      if diff = zero then
+                        acc
+                      else
+                        ( diff, aSuccs)::acc
+                    end
+                  )
+                  []
+                  lalpha
+          end
+
+          val squareUnion' = squareUnion uid
+                                         (unionCallback cacheLookup)
+                                         (unionCallback cacheLookup)
+                                         (fn (x,y) => uid x < uid y)
+          val alpha = squareUnion' ( diffPart @ commonPart )
         in
-          commonApply' ( lalpha, ralpha )
+          nodeAlpha( lvr, alpha )
         end
 
-        val diffPart =
-        let
-          val bUnion = unionCallback cacheLookup  (map (fn (x,_)=>x) ralpha)
-        in
-          foldl (fn ((aVal,aSuccs),acc) =>
-                  let
-                    val diff = differenceCallback cacheLookup (aVal,bUnion)
-                  in
-                    if diff = zero then
-                      acc
-                    else
-                      ( diff, aSuccs)::acc
-                  end
-                )
-                []
-                lalpha
-        end
-
-        val squareUnion' = squareUnion uid
-                                       (unionCallback cacheLookup)
-                                       (unionCallback cacheLookup)
-                                       (fn (x,y) => uid x < uid y)
-        val alpha = squareUnion' ( diffPart @ commonPart )
-      in
-        nodeAlpha( lvr, alpha )
-      end
-      )
+      | ( HNode{...}, _ ) => raise IncompatibleSDD
 
       (* end fun difference *)
 
