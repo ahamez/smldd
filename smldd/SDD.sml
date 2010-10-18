@@ -393,9 +393,7 @@ functor SDDFun ( structure Variable  : VARIABLE
         (* All operands are |1| *)
           One        => one
 
-        (* There shouldn't be any |0|, they should have been filtered
-           before querying the cache.
-        *)
+        (* There shouldn't be any |0|, they should have been filtered *)
         | Zero       => raise DoNotPanic
 
         (* Flat node case *)
