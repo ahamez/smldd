@@ -10,14 +10,25 @@ struct
      {0,1} => 3
   *)
 
-  val discrete = false
+  val discrete = true
 
-  type value  = unit
+  type value  = int
 
-  exception NotDiscrete
-  fun toList _   = raise NotDiscrete
-  fun fromList _ = raise NotDiscrete
-  fun valueLt _  = raise NotDiscrete
+  fun toList v   = case v of
+                     0 => []
+                   | 1 => [0]
+                   | 2 => [1]
+                   | 3 => [0,1]
+                   | _ => (print (Int.toString v);raise DoNotPanic)
+
+  fun fromList xs =
+    case ( List.exists (fn x => x = 0) xs, List.exists (fn x => x = 1) xs ) of
+      ( false, false ) => 0
+    | ( true , false ) => 1
+    | ( false, true  ) => 2
+    | ( true , true  ) => 3
+
+  val valueLt = op <
 
   type stored = int
   type user   = int
