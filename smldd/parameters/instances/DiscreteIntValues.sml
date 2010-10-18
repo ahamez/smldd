@@ -5,21 +5,33 @@ struct
   structure H  = Hash
   structure HT = HashTable
 
-  type stored = SV.t ref
+  structure Definition = struct
+
+    type t = ( SV.t * H.t * int )
+
+    fun eq   ((x,_,_),(y,_,_)) = SV.eq(x,y)
+    fun hash (x,_,_) = SV.hash x
+
+  end
+
+  type stored = Definition.t ref
   type user   = SV.t
 
-  structure UT = UnicityTableFun ( structure Data = IntSortedVector )
+  structure UT = UnicityTableFunID ( structure Data = Definition )
 
-  val mkStorable = UT.unify
-  val mkUsable   = !
+  fun uid (ref(_,_,x)) = x
+  fun mkValues v hsh uid = ( v, hsh, uid )
 
-  fun lt (x,y) = SV.lt( !x, !y)
-  val hash     = SV.hash o !
-  val length   = SV.length o !
-  val empty    = SV.empty o !
-  val toString = SV.toString o !
+  fun mkStorable v        = UT.unify (mkValues v (SV.hash v))
+  fun mkUsable (ref(v,_,_)) = v
 
-  val e = UT.unify (SV.mkEmpty())
+  fun lt (x,y)               = uid x < uid y
+  fun hash (ref(x,_,_))      = SV.hash x
+  fun length (ref(x,_,_))    = SV.length x
+  fun empty (ref(x,_,_))     = SV.empty x
+  fun toString (ref(x,_,_))  = SV.toString x
+
+  val e = mkStorable( SV.mkEmpty() )
   fun mkEmpty() = e
 
   local
@@ -44,19 +56,16 @@ struct
 
       fun hash x =
         let
-          (* Values.hash(!x) -> problem: we have to compute again
-             the hash value of the valuation... Maybe we should store
-             this hash alongside of the valuation? *)
           fun hashOperands( h0, xs ) =
-            foldl (fn(x,h) => H.hashCombine( SV.hash(!x), h)) h0 xs
+            foldl (fn ( ref(_,hv,_), h ) => H.hashCombine( hv, h)) h0 xs
         in
           case x of
             Union(xs) => hashOperands( H.const 15411567, xs)
           | Inter(xs) => hashOperands( H.const 78995947, xs)
-          | Diff(l,r) => H.hashCombine( H.const 94165961
-                                      , H.hashCombine( SV.hash(!l)
-                                                     , SV.hash(!r))
-                                      )
+          | Diff(ref(l,hl,_),ref(r,hr,_)) =>
+              H.hashCombine( H.const 94165961
+                           , H.hashCombine( hl, hr )
+                           )
         end
 
       (* Evaluation an operation on valuations. Called by CacheFun. *)
@@ -65,20 +74,31 @@ struct
         case operation of
 
           Union []     => raise DoNotPanic
-        | Union(x::xs) =>
-            UT.unify(foldl ( fn (x,res) => SV.union(!x,res) )
-                              (!x)
-                              xs
-                        )
+        | Union(ref(x,_,_)::xs) =>
+            let
+              val v   = foldl (fn (ref(v,_,_),res) => SV.union(v,res)) x xs
+              val hsh = SV.hash v
+            in
+              UT.unify (mkValues v hsh)
+            end
 
         | Inter []     => raise DoNotPanic
-        | Inter(x::xs) =>
-            UT.unify(foldl ( fn (x,res) => SV.intersection(!x,res) )
-                              (!x)
-                              xs
-                        )
+        | Inter(ref(x,_,_)::xs) =>
+            let
+              val v = foldl (fn (ref(v,_,_),res) => SV.intersection(v,res))
+                            x xs
+              val hsh = SV.hash v
+            in
+              UT.unify (mkValues v hsh)
+            end
 
-        | Diff(x,y)    => UT.unify( SV.difference( !x, !y) )
+        | Diff( ref(l,_,_), ref(r,_,_) ) =>
+            let
+              val v   = SV.difference( l, r )
+              val hsh = SV.hash v
+            in
+              UT.unify (mkValues v hsh)
+            end
 
     end (* end structure Operations *)
 
@@ -87,10 +107,7 @@ struct
     (* Cache of operations *)
     structure cache = CacheFun(structure Operation = Operations )
 
-    val sortValues = sortUnique ! (SV.lt) (fn (x,y) =>
-                                            not (SV.lt(x,y))
-                                            andalso not (SV.eq(x,y))
-                                          )
+    val sortValues = sortUnique uid (op <) (op >)
 
     fun union xs =
       case sortValues xs of
