@@ -329,11 +329,8 @@ functor SDDFun ( structure Variable  : VARIABLE
         []
         alpha
 
-      (* Apply alphaToList to a node
-
-         SDD
-           -> ( storedValues * SDD list ) list
-
+      (* Apply alphaToList to a node:
+           SDD -> ( storedValues * SDD list ) list
          Warning! Duplicate logic with alphaNodeToList!
       *)
       fun flatAlphaNodeToList n =
@@ -341,11 +338,8 @@ functor SDDFun ( structure Variable  : VARIABLE
         iSDD(Node{alpha=alpha,...},_,_) => alphaToList alpha
       | _ => raise DoNotPanic
 
-      (* Apply alphaToList to a node
-
-         SDD
-           -> ( SDD * SDD list ) list
-
+      (* Apply alphaToList to a node:
+           SDD -> ( SDD * SDD list ) list
          Warning! Duplicate logic with flatAlphaNodeToList!
       *)
       fun alphaNodeToList n =
