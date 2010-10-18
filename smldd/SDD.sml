@@ -253,7 +253,6 @@ functor SDDFun ( structure Variable  : VARIABLE
       Values(values) => flatNode( vr, Values.mkStorable values, next )
     | Nested(nested) => hierNode( vr, nested,           next )
 
-
   (*----------------------------------------------------------------------*)
 
   local (* SDD manipulation *)
