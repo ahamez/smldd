@@ -3,7 +3,8 @@ struct
 
   structure H  = Hash
 
-  (* {}    => 0
+  (* Different possible sets are encoded as follow:
+     {}    => 0
      {0}   => 1
      {1}   => 2
      {0,1} => 3
