@@ -211,20 +211,17 @@ functor SDDFun ( structure Variable  : VARIABLE
   (* Return an hierarchical node. Not exported *)
   fun hierNode ( vr, rnested as (ref (iSDD(nested,hashNested,_)))
                    , rnext as (ref (iSDD(next,hashNext,_))) )
-  = case next of
-      Zero => zero
-    | _    =>
-    ( case nested of
-        Zero => zero
-      | _    =>
-        let
-          val h = H.hashCombine( Variable.hash vr
-                               , H.hashCombine( hashNext, hashNested ) )
-          val alpha = Vector.fromList [( rnested, rnext )]
-        in
-          SDDUT.unify ( mkNode (HNode{ variable=vr, alpha=alpha}) h )
-        end
-    )
+  = case ( next, nested ) of
+      ( Zero, _  ) => zero
+    | ( _ , Zero ) => zero
+    | ( _ , _    ) =>
+      let
+        val h = H.hashCombine( Variable.hash vr
+                             , H.hashCombine( hashNext, hashNested ) )
+        val alpha = Vector.fromList [( rnested, rnext )]
+      in
+        SDDUT.unify ( mkNode (HNode{ variable=vr, alpha=alpha}) h )
+      end
 
   (*----------------------------------------------------------------------*)
   (* Construct a node with an pre-computed alpha. Internal use only! *)
