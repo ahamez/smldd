@@ -864,9 +864,8 @@ functor SDDFun ( structure Variable  : VARIABLE
                 NONE        => HT.insert nodes ( sdd, ref [depth] )
               | SOME depths =>
                 if maxShare then
-                  (* Insert only for the first time, as
-                     in real sharing mode, we don't care
-                     about depth
+                  (* Insert only for the first time, as in real sharing mode,
+                     we don't care about depth
                   *)
                   ()
                 else
