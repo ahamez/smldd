@@ -352,10 +352,8 @@ functor HomFun ( structure SDD : SDD
       end
 
     in
-
       if sdd = SDD.one orelse not saturate then
         fixpointHelper (evalCallback lookup h) sdd
-
       else
       let
         val var = SDD.variable sdd
@@ -372,7 +370,6 @@ functor HomFun ( structure SDD : SDD
       in
         fixpointHelper loop sdd
       end
-
     end
 
     (*--------------------------------------------------------------------*)
