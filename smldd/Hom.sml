@@ -161,25 +161,25 @@ fun mkNested h vr =
 
 (*--------------------------------------------------------------------------*)
 fun mkUnion' xs =
-case xs of
-  []    => id
-| x::[] => x
-| _     =>
-  let
+  case xs of
+    []    => id
+  | x::[] => x
+  | _     =>
+    let
 
-    fun unionHelper ( h, operands ) =
-    case let val ref(Hom(x,_,_)) = h in x end of
-      Union(ys)     => (foldl unionHelper [] ys) @ operands
-    | _             => h::operands
+      fun unionHelper ( h, operands ) =
+      case let val ref(Hom(x,_,_)) = h in x end of
+        Union(ys)     => (foldl unionHelper [] ys) @ operands
+      | _             => h::operands
 
-    val operands = foldl unionHelper [] xs
+      val operands = foldl unionHelper [] xs
 
-    val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                          (H.const 16564717)
-                          operands
-  in
-    UT.unify( mkHom (Union(operands)) unionHash )
-  end
+      val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                            (H.const 16564717)
+                            operands
+    in
+      UT.unify( mkHom (Union(operands)) unionHash )
+    end
 
 (*--------------------------------------------------------------------------*)
 (* A sorting wrapper for mkUnion' which does the real job.
