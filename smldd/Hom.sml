@@ -297,6 +297,10 @@ functor HomFun ( structure SDD : SDD
       | _                 => lookup( Op( h, sdd, lookup ) )
 
     (*--------------------------------------------------------------------*)
+    val rewritten = ref 0
+    val eligible  = ref 0
+    val processed = ref 0
+
     structure Rewrite (* : OPERATION *) =
     struct
 
@@ -328,7 +332,10 @@ functor HomFun ( structure SDD : SDD
         if length F = 0 andalso length L = 0 then
           orig
         else
+          (
+          rewritten := !rewritten + 1;
           mkSatUnion v (mkUnion' F) G (mkNested (mkUnion' L) v)
+          )
       end
 
       (* ------------------------------------------------ *)
@@ -342,10 +349,13 @@ functor HomFun ( structure SDD : SDD
                 if length F = 0 andalso length L = 0 then
                   orig
                 else
+                  (
+                  rewritten := !rewritten + 1;
                   mkSatFixpoint v
                                 (mkFixpoint(mkUnion' F))
                                 G
                                 (mkNested (mkFixpoint (mkUnion' (id::L))) v)
+                  )
               end
             else
               orig
@@ -363,10 +373,14 @@ functor HomFun ( structure SDD : SDD
     structure rewriteCache = CacheFun(structure Operation = Rewrite)
 
     fun rewrite h v =
+    let
+      val _ = processed := !processed + 1
+    in
       case let val ref(Hom(x,_,_)) = h in x end of
-        Union(xs)   => rewriteCache.lookup (h,v)
-      | Fixpoint(f) => rewriteCache.lookup (h,v)
+        Union(xs)   => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+      | Fixpoint(f) => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
       | _           => h
+    end
 
     (*--------------------------------------------------------------------*)
     fun cons lookup (var, vl, next) sdd =
@@ -478,16 +492,21 @@ functor HomFun ( structure SDD : SDD
     end
 
     (*--------------------------------------------------------------------*)
+    val evals   = ref 0
+    val skipped = ref 0
+
     (* Dispatch the evaluation of an homomorphism to the corresponding
        function. Used by CacheFun.
     *)
     fun apply ( Op( h, sdd, lookup) ) =
     let
+      val _ = evals := !evals + 1
       val skip = let val v = SDD.variable sdd in skipVariable v h end
                  handle SDD.IsNotANode => false
     in
       if skip then
         let
+          val _ = skipped := !skipped + 1
           val var = SDD.variable sdd
           val res =
             foldl
@@ -552,6 +571,15 @@ functor HomFun ( structure SDD : SDD
 
   (*----------------------------------------------------------------------*)
   fun stats () = (cache.stats()) ^ (Evaluation.rewriteCache.stats())
+                 ^ "\n-----------------\n"
+                 ^ "Homomorphisms\n"
+                 ^ "processed: " ^ (Int.toString (!Evaluation.processed))
+                 ^ " | eligible: " ^ (Int.toString (!Evaluation.eligible))
+                 ^ " | rewritten: " ^ (Int.toString (!Evaluation.rewritten))
+                 ^ "\n"
+                 ^ "evals: " ^ (Int.toString (!Evaluation.evals))
+                 ^ " | skipped: " ^ (Int.toString (!Evaluation.skipped))
+                 ^ "\n"
 
   (*----------------------------------------------------------------------*)
 end (* functor HomFun *)
