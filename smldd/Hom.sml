@@ -343,7 +343,7 @@ functor HomFun ( structure SDD : SDD
                   orig
                 else
                   mkSatFixpoint v
-                                (mkFixpoint(mkUnion' (id::F)))
+                                (mkFixpoint(mkUnion' F))
                                 G
                                 (mkNested (mkFixpoint (mkUnion' (id::L))) v)
               end
