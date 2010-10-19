@@ -50,14 +50,14 @@ functor SDDFun ( structure Variable  : VARIABLE
   : SDD
 = struct
 
+(*--------------------------------------------------------------------------*)
 type variable     = Variable.t
 type userValues   = Values.user
 type storedValues = Values.stored
 
 (*--------------------------------------------------------------------------*)
 (* Define an SDD *)
-structure Definition =
-struct
+structure Definition = struct
 
   datatype t    = iSDD of ( sdd * Hash.t * int )
   and sdd       = Zero
@@ -305,7 +305,7 @@ fun check []     = raise DoNotPanic
 (*--------------------------------------------------------------------------*)
 (* Convert an alpha (a vector) into a more easy to manipulate type
    (a list of values, each one leading to a list of successors).
-   Thus, it make usable by squareUnion.
+   Thus, it makes it usable by squareUnion.
 *)
 fun alphaToList( alpha ) =
 Vector.foldr
