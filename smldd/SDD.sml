@@ -128,7 +128,7 @@ functor SDDFun ( structure Variable  : VARIABLE
     fun nodeHelper vlToString vr alpha =
      "(" ^ (Variable.toString vr) ^ ")" ^ " [ " ^
      (String.concatWith " + "
-         (VectorToList (Vector.map
+         (Util.VectorToList (Vector.map
           (fn (vl,succ) => (vlToString vl) ^ " --> "  ^ (toString succ))
           alpha )
          )

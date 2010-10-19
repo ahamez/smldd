@@ -186,7 +186,7 @@ functor HomFun ( structure SDD : SDD
       UT.unify( mkHom (Union(operands)) unionHash )
     end
 
-  val mkUnion = mkUnion' o (sortUnique uid (op<) (op>))
+  val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
   (*----------------------------------------------------------------------*)
   fun mkComposition x y =

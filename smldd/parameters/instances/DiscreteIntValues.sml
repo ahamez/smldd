@@ -29,7 +29,7 @@ struct
   fun mkStorable v        = UT.unify (mkValues v (SV.hash v))
   fun mkUsable (ref(v,_,_)) = v
 
-  fun toList (ref(v,_,_)) = IntVectorToList v
+  fun toList (ref(v,_,_)) = Util.IntVectorToList v
   fun fromList xs =
   let
     val v = (SV.fromList xs)

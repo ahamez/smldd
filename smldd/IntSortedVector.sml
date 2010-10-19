@@ -21,7 +21,7 @@ struct
 
     fun insert vec x =
     let
-      val L = IntVectorToList vec
+      val L = Util.IntVectorToList vec
     in
       IntVector.fromList (insertHelper L x)
     end
@@ -35,7 +35,7 @@ struct
       vec
     else
     let
-      val L = IntVectorToList vec
+      val L = Util.IntVectorToList vec
     in
       IntVector.fromList( foldl (fn (x,xs) => insertHelper xs (f x)) [] L )
     end
@@ -45,7 +45,7 @@ struct
       vec
     else
     let
-      val L = IntVectorToList vec
+      val L = Util.IntVectorToList vec
     in
       IntVector.fromList( foldl (fn (x,xs) =>
                                   case f x of
@@ -101,7 +101,7 @@ struct
   (*----------------------------------------------------------------------*)
   fun toString vec =
   let
-    val l = List.map (fn x => Int32.toString x ) (IntVectorToList vec)
+    val l = List.map (fn x => Int32.toString x ) (Util.IntVectorToList vec)
     val s = String.concatWith "," l
   in
     "{" ^ s ^ "}"
@@ -132,7 +132,9 @@ struct
                        l::(unionHelper(ls,rs))
 
   fun union (s1,s2) =
-    IntVector.fromList (unionHelper (IntVectorToList s1, IntVectorToList s2))
+    IntVector.fromList (unionHelper ( Util.IntVectorToList s1
+                                    , Util.IntVectorToList s2)
+                       )
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
@@ -150,7 +152,9 @@ struct
                        interHelper(L,rs)
 
   fun intersection (s1,s2) =
-    IntVector.fromList (interHelper (IntVectorToList s1, IntVectorToList s2))
+    IntVector.fromList (interHelper ( Util.IntVectorToList s1
+                                    , Util.IntVectorToList s2)
+                       )
 
   (*----------------------------------------------------------------------*)
   (* s1 and s2 MUST already be sorted *)
@@ -168,7 +172,9 @@ struct
                        diffHelper(L,rs)
 
   fun difference (s1,s2) =
-    IntVector.fromList (diffHelper (IntVectorToList s1, IntVectorToList s2))
+    IntVector.fromList (diffHelper ( Util.IntVectorToList s1
+                                   , Util.IntVectorToList s2)
+                       )
 
   (*----------------------------------------------------------------------*)
 
