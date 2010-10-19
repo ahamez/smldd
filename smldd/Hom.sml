@@ -22,7 +22,6 @@ signature Hom = sig
 
   val stats           : unit -> string
 
-  exception NotYetImplemented
   exception NestedHomOnValues
   exception FunctionHomOnNested
 
@@ -37,7 +36,6 @@ functor HomFun ( structure SDD : SDD
 = struct
 
 (*--------------------------------------------------------------------------*)
-exception NotYetImplemented
 exception NestedHomOnValues
 exception FunctionHomOnNested
 

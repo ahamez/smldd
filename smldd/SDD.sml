@@ -38,7 +38,6 @@ signature SDD = sig
   val stats             : unit -> string
 
   exception IncompatibleSDD
-  exception NotYetImplemented
   exception IsNotANode
   exception IsNotValues
   exception IsNotNested
@@ -113,7 +112,6 @@ structure HT = HashTable
 
 (*--------------------------------------------------------------------------*)
 exception IncompatibleSDD
-exception NotYetImplemented
 exception IsNotANode
 exception IsNotValues
 exception IsNotNested
