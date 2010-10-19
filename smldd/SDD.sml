@@ -72,8 +72,7 @@ structure Definition = struct
   (* Compare two SDDs.
      At this point, we can't use the identifier to know if two SDDs are
      equals because this equality is called by the unicity table which is
-     responsible for the generation of this id.=
-  *)
+     responsible for the generation of this id.= *)
   fun eq ( iSDD(lsdd,lh,_), iSDD(rsdd,rh,_) ) =
     if lh <> rh then
       false
@@ -245,14 +244,13 @@ fun node ( vr , vl , next ) =
   | Nested(nested) => hierNode( vr, nested,           next )
 
 (*--------------------------------------------------------------------------*)
-
 local (* SDD manipulation *)
 
 (*--------------------------------------------------------------------*)
 (* Operations to manipulate SDD. Used by the cache. *)
-structure SDDOperations (* : OPERATION *) =
-struct
+structure SDDOperations (* : OPERATION *) = struct
 
+(*--------------------------------------------------------------------------*)
 val name = "SDD"
 
 (*--------------------------------------------------------------------------*)
@@ -305,36 +303,32 @@ fun check []     = raise DoNotPanic
 (*--------------------------------------------------------------------------*)
 (* Convert an alpha (a vector) into a more easy to manipulate type
    (a list of values, each one leading to a list of successors).
-   Thus, it makes it usable by squareUnion.
-*)
+   Thus, it makes it usable by squareUnion. *)
 fun alphaToList( alpha ) =
 Vector.foldr
   (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
   []
   alpha
 
-(* Apply alphaToList to a node:
-     SDD -> ( storedValues * SDD list ) list
-   Warning! Duplicate logic with alphaNodeToList!
-*)
+(*--------------------------------------------------------------------------*)
+(* Apply alphaToList to a node: SDD -> ( storedValues * SDD list ) list
+   Warning! Duplicate logic with alphaNodeToList! *)
 fun flatAlphaNodeToList n =
-case !n of
-  iSDD(Node{alpha=alpha,...},_,_) => alphaToList alpha
-| _ => raise DoNotPanic
+  case !n of
+    iSDD(Node{alpha=alpha,...},_,_) => alphaToList alpha
+  | _ => raise DoNotPanic
 
-(* Apply alphaToList to a node:
-     SDD -> ( SDD * SDD list ) list
-   Warning! Duplicate logic with flatAlphaNodeToList!
-*)
+(*--------------------------------------------------------------------------*)
+(* Apply alphaToList to a node: SDD -> ( SDD * SDD list ) list
+   Warning! Duplicate logic with flatAlphaNodeToList! *)
 fun alphaNodeToList n =
 case !n of
   iSDD(HNode{alpha=alpha,...},_,_) => alphaToList alpha
 | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
-(* Warning: duplicate code with SDD.union! Keep in sync!
-   Operands should be sorted by caller.
-*)
+(* Warning: duplicate with SDD.union!
+   Operands should be sorted by caller. *)
 fun unionCallback lookup xs =
   case List.filter (fn x => x <> zero ) xs of
     []      => zero   (* No need to cache *)
@@ -342,9 +336,8 @@ fun unionCallback lookup xs =
   | xs'     => lookup(Union( xs', lookup ))
 
 (*--------------------------------------------------------------------------*)
-(* Warning: duplicate code with SDD.intersection! Keep in sync!
-   Operands should be sorted by caller.
-*)
+(* Warning: duplicate with SDD.intersection!
+   Operands should be sorted by caller. *)
 fun intersectionCallback lookup xs =
   case xs of
     []      => zero (* No need to cache *)
@@ -352,7 +345,7 @@ fun intersectionCallback lookup xs =
   | _       => lookup(Inter( xs, lookup))
 
 (*--------------------------------------------------------------------------*)
-(* Warning: duplicate code with SDD.intersection! Keep in sync! *)
+(* Warning: duplicate with SDD.intersection! *)
 fun differenceCallback lookup ( x, y ) =
   if x = y then          (* No need to cache *)
     zero
@@ -452,8 +445,7 @@ in
        square union operation.
 
        initial  : (storedValues * SDD list) list
-       operands : (storedValues * SDD list) list list
-    *)
+       operands : (storedValues * SDD list) list list *)
     val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                   []       => raise DoNotPanic
                                 | (y::ys)  => (y,ys)
@@ -485,8 +477,7 @@ in
        square union operation.
 
        initial  : (SDD * SDD list) list
-       operands : (SDD * SDD list) list list
-    *)
+       operands : (SDD * SDD list) list list *)
     val ( initial, operands ) = case map alphaNodeToList xs of
                                   []       => raise DoNotPanic
                                 | (y::ys)  => (y,ys)
@@ -504,7 +495,6 @@ in
     nodeAlpha( var
              , squareUnion' ( foldl commonApply' initial operands ) )
   end (* Hierachical node case *)
-
 end (* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
@@ -679,9 +669,8 @@ structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
 val cacheLookup = SDDOpCache.lookup
 
 (*--------------------------------------------------------------------------*)
-(* Warning! Duplicate code with SDD.SDDOperations.unionCallback!
-   Operands should be sorted by caller.
-*)
+(* Warning! Duplicate with SDD.SDDOperations.unionCallback!
+   Operands should be sorted by caller. *)
 fun union xs =
   case List.filter (fn x => x <> zero ) xs of
     []      => zero (* No need to cache *)
@@ -689,9 +678,8 @@ fun union xs =
   | xs'     => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
 
 (*--------------------------------------------------------------------------*)
-(* Warning! Duplicate code with SDD.SDDOperations.intersectionCallback!
-   Operands should be sorted by caller.
-*)
+(* Warning! Duplicate with SDD.SDDOperations.intersectionCallback!
+   Operands should be sorted by caller. *)
 fun intersection xs =
  case xs of
    []      => zero (* No need to cache *)
@@ -699,7 +687,7 @@ fun intersection xs =
  | _       => SDDOpCache.lookup(SDDOperations.Inter( xs, cacheLookup ))
 
 (*--------------------------------------------------------------------------*)
-(* Warning! Duplicate code with SDD.SDDOperations.differenceCallback! *)
+(* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
 fun difference(x,y) =
  if x = y then          (* No need to cache *)
    zero
@@ -881,8 +869,7 @@ let
             | SOME depths =>
               if maxShare then
                 (* Insert only for the first time, as in real sharing mode,
-                   we don't care about depth
-                *)
+                   we don't care about depth *)
                 ()
               else
               let
