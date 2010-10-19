@@ -8,14 +8,14 @@ type t  = IntVector.vector
 local (* fromList, map, mapPartial *)
 
 (*--------------------------------------------------------------------------*)
-  fun insertHelper [] x             = [x]
-  |   insertHelper (L as (l::ls)) x =
-  if x = l then
-    L
-  else if x < l then
-    x::L
-  else
-    l::(insertHelper ls x)
+fun insertHelper [] x             = [x]
+|   insertHelper (L as (l::ls)) x =
+if x = l then
+  L
+else if x < l then
+  x::L
+else
+  l::(insertHelper ls x)
 
 (*--------------------------------------------------------------------------*)
 in (* local fromList, map, mapPartial *)
@@ -46,21 +46,21 @@ fun map f vec =
 
 (*--------------------------------------------------------------------------*)
 fun mapPartial f vec =
-if IntVector.length vec = 0 then
-  vec
-else
-let
-  val L = Util.IntVectorToList vec
-in
-  IntVector.fromList( foldl (fn (x,xs) =>
-                              case f x of
-                                NONE    => xs
-                              | SOME x' => insertHelper xs x'
-                            )
-                            []
-                            L
-                    )
-end
+  if IntVector.length vec = 0 then
+    vec
+  else
+  let
+    val L = Util.IntVectorToList vec
+  in
+    IntVector.fromList( foldl (fn (x,xs) =>
+                                case f x of
+                                  NONE    => xs
+                                | SOME x' => insertHelper xs x'
+                              )
+                              []
+                              L
+                      )
+  end
 
 (*--------------------------------------------------------------------------*)
 end (* local fromList, map, mapPartial *)
