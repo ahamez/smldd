@@ -183,8 +183,7 @@ case xs of
 
 (*--------------------------------------------------------------------------*)
 (* A sorting wrapper for mkUnion' which does the real job.
-   Prefer mkUnion' for internal work.
-*)
+   Prefer mkUnion' for internal work. *)
 val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
 (*--------------------------------------------------------------------------*)
