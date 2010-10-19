@@ -26,7 +26,7 @@ fun toList v   = case v of
                  | 1 => [0]
                  | 2 => [1]
                  | 3 => [0,1]
-                 | _ => (print (Int.toString v);raise DoNotPanic)
+                 | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
 fun fromList xs =
