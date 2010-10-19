@@ -29,8 +29,6 @@ signature SDD = sig
   val valuationToString : valuation -> string
   val valuesLength      : userValues -> int
 
-  val nbPaths           : SDD -> IntInf.int
-
   val toString          : SDD -> string
 
   datatype dotMode      = ShowSharing | ShowHierarchy
@@ -742,75 +740,27 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-(* Return the hash value of an SDD. Needed by HomFun*)
+(* Return the hash value of an SDD. Needed by HomFun *)
 fun hash x = Definition.hash (!x)
 
 (*--------------------------------------------------------------------------*)
-(* Return the hash value of a valuation. Needed by HomFun*)
+(* Return the hash value of a valuation. Needed by HomFun *)
 fun hashValuation x =
   case x of Nested(nested) => Definition.hash (!nested)
           | Values(values) => Values.hashUsable values
 
 (*--------------------------------------------------------------------------*)
-(* Compare two valuations. Needed by HomFun*)
+(* Compare two valuations. Needed by HomFun *)
 fun eqValuation (x,y) =
   case (x,y) of ( Nested(nx), Nested(ny) ) => nx = ny
               | ( Values(vx), Values(vy) ) => Values.eqUsable( vx, vy )
               | ( _ , _ )                  => false
 
 (*--------------------------------------------------------------------------*)
-(* Export a valuation to a string. Needed by HomFun*)
+(* Export a valuation to a string. Needed by HomFun *)
 fun valuationToString x =
  case x of Nested(nested) => toString nested
          | Values(values) => Values.toString (Values.mkStorable values)
-
-(*--------------------------------------------------------------------------*)
-(* Count the number of distinct paths in an SDD *)
-fun nbPaths x =
-let
-  
-  val cache : (( SDD, IntInf.int ) HT.hash_table) ref
-      = ref ( HT.mkTable( fn x => hash x , op = )
-                       ( 10000, DoNotPanic ) )
-  
-  fun pathsHelper (x as (ref(iSDD(sdd,_,_)))) =
-    let
-      fun nodeHelper vlLength arcs =
-        Vector.foldl
-          (fn ((v,succ), n ) => n + (vlLength v) * pathsHelper succ)
-          (IntInf.fromInt 0)
-          arcs
-    in
-      case sdd of
-        Zero  =>  IntInf.fromInt 0
-      | One   =>  IntInf.fromInt 1
-      | Node{alpha=(arcs),...} =>
-          (case HT.find (!cache) x of
-            SOME r => r
-          | NONE   =>
-            let
-              val value = nodeHelper (IntInf.fromInt o Values.length) arcs
-              val _     = HT.insert (!cache) ( x, value )
-            in
-              value
-            end
-          )
-
-      | HNode{alpha=(arcs),...} =>
-          (case HT.find (!cache) x of
-            SOME r => r
-          | NONE   =>
-            let
-              val value = nodeHelper pathsHelper arcs
-              val _     = HT.insert (!cache) ( x, value )
-            in
-              value
-            end
-          )
-    end
-in
-  pathsHelper x
-end (* end fun paths *)
 
 (*--------------------------------------------------------------------------*)
 val valuesLength = Values.length o Values.mkStorable

@@ -960,7 +960,7 @@ struct
 
     val s8 = union [s0,s1,s2,s3,s4,s5,s6,s7]
 
-    val nb = nbPaths s8
+    val nb = Tools.nbPaths s8
   in
     assertTrue( nb = 8 )
   end

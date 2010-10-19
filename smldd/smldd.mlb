@@ -4,13 +4,16 @@ in
 
   functor SDDFun
   functor HomFun
+  functor ToolsFun
 
   structure IntSortedVector
   structure SDD
   structure Hom
+  structure Tools
 
   (*structure BooleanValues
   structure BoolSDD
-  structure BoolHom*)
+  structure BoolHom
+  structure BoolTools*)
 
 end

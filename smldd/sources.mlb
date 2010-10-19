@@ -29,6 +29,7 @@ $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 ./unionFlatDiscreteSDD.sml
 ./SDD.sml
 ./Hom.sml
+./Tools.sml
 
 ./configurations.sml
 
