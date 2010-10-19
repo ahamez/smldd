@@ -6,7 +6,6 @@ sig
   eqtype SDD
   type variable
   type userValues
-  eqtype storedValues
 
   datatype valuation    = Nested of SDD
                         | Values of userValues
