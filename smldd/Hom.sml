@@ -55,13 +55,15 @@ functor HomFun ( structure SDD : SDD
 
     datatype t = Hom of ( hom * Hash.t * int )
     and hom    = Id
-               | Cons     of ( variable * valuation * t ref )
-               | Const    of SDD
-               | Union    of t ref list
-               | Compo    of ( t ref * t ref )
-               | Fixpoint of ( t ref )
-               | Nested   of ( t ref * variable )
-               | Func     of ( (values -> values) ref * variable )
+               | Cons        of ( variable * valuation * t ref )
+               | Const       of SDD
+               | Union       of t ref list
+               | Compo       of ( t ref * t ref )
+               | Fixpoint    of ( t ref )
+               | Nested      of ( t ref * variable )
+               | Func        of ( (values -> values) ref * variable )
+               | SatUnion    of ( variable * t ref * t ref list * t ref )
+               | SatFixpoint of ( variable * t ref * t ref list * t ref )
 
     fun eq (Hom(x,_,_),Hom(y,_,_)) =
       case (x,y) of
@@ -75,6 +77,12 @@ functor HomFun ( structure SDD : SDD
       | ( Fixpoint(h), Fixpoint(i) ) => h = i
       | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
       | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
+      | ( SatUnion(v, F, G, L)
+        , SatUnion(v',F',G',L'))     => F = F' andalso G = G' andalso L = L'
+                                        andalso Variable.eq(v,v')
+      | ( SatFixpoint(v, F, G, L)
+        , SatFixpoint(v',F',G',L'))  => F = F' andalso G = G' andalso L = L'
+                                        andalso Variable.eq(v,v')
       | ( _ , _ )                    => false
 
     fun hash (Hom(_,h,_)) = h
@@ -89,13 +97,27 @@ functor HomFun ( structure SDD : SDD
                                ^ (toString (!h))
                                ^ ")"
       | Const(s)    => "Const(" ^ (SDD.toString s) ^ ")"
-      | Union(hs)   => String.concatWith " + " (map (fn h => toString (!h)) hs)
+      | Union(hs)   => String.concatWith " + "
+                                         (map (fn h => toString (!h)) hs)
       | Compo(a,b)  => (toString (!a)) ^ " o " ^ (toString (!b))
       | Fixpoint(h) => "(" ^ (toString (!h)) ^ ")*"
       | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                  ^ (Variable.toString v) ^ ")"
       | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
-
+      | SatUnion(_, F, G, L) =>    "F(" ^ (toString (!F)) ^ ") + "
+                                  ^ "G("
+                                  ^ (String.concatWith " + "
+                                          (map (fn h => toString (!h)) G))
+                                  ^ ") + "
+                                  ^	"L(" ^ (toString (!L)) ^ ")"
+      | SatFixpoint(_, F, G, L) =>  "("  
+                                  ^ "F(" ^ (toString (!F)) ^ ") + "
+                                  ^ "G("
+                                  ^ (String.concatWith " + "
+                                          (map (fn h => toString (!h)) G))
+                                  ^ ") + "
+                                  ^	"L(" ^ (toString (!L)) ^ ") )*"
+                                  
   end (* structure Definition *)
   open Definition
 
@@ -145,7 +167,7 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
   fun mkUnion' xs =
   case xs of
-    []    => mkConst SDD.zero
+    []    => id
   | x::[] => x
   | _     =>
     let
@@ -198,8 +220,34 @@ functor HomFun ( structure SDD : SDD
   end
 
   (*----------------------------------------------------------------------*)
-  local (* Homomorphisms evaluation *)
+  fun mkSatUnion var F G L =
+  let
+    val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                     (H.const 59489417)
+                     G
+    val hsh = H.hashCombine( H.const 48511341
+                , H.hashCombine( hash(!F)
+                   , H.hashCombine( hshG,
+                       H.hashCombine(hash(!L), Variable.hash var ))))
+  in
+    UT.unify( mkHom (SatUnion(var, F, G, L)) hsh )
+  end
 
+  (*----------------------------------------------------------------------*)
+  fun mkSatFixpoint var F G L =
+  let
+    val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                     (H.const 19592927)
+                     G
+    val hsh = H.hashCombine( H.const 99495913
+                , H.hashCombine( hash(!F)
+                   , H.hashCombine( hshG,
+                       H.hashCombine(hash(!L), Variable.hash var ))))
+  in
+    UT.unify( mkHom (SatFixpoint(var, F, G, L)) hsh )
+  end
+
+  (*----------------------------------------------------------------------*)
   structure Evaluation (* : OPERATION *) =
   struct
 
@@ -220,14 +268,16 @@ functor HomFun ( structure SDD : SDD
     (*--------------------------------------------------------------------*)
     fun skipVariable var (ref (Hom(h,_,_))) =
     case h of
-      Id          => true
-    | Const(_)    => false
-    | Cons(_,_,_) => false
-    | Nested(_,v) => not (Variable.eq (var,v))
-    | Union(xs)   => List.all (fn x => skipVariable var x) xs
-    | Compo(a,b)  => skipVariable var a andalso skipVariable var b
-    | Fixpoint(f) => skipVariable var f
-    | Func(_,v)   => not (Variable.eq (var,v))
+      Id                   => true
+    | Const(_)             => false
+    | Cons(_,_,_)          => false
+    | Nested(_,v)          => not (Variable.eq (var,v))
+    | Union(xs)            => List.all (fn x => skipVariable var x) xs
+    | Compo(a,b)           => skipVariable var a andalso skipVariable var b
+    | Fixpoint(f)          => skipVariable var f
+    | Func(_,v)            => not (Variable.eq (var,v))
+    | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
+    | SatFixpoint(v,_,_,_) => not (Variable.eq (var,v))
 
     (*--------------------------------------------------------------------*)
     (* Evaluate an homomorphism on an SDD.
@@ -247,30 +297,105 @@ functor HomFun ( structure SDD : SDD
       | _                 => lookup( Op( h, sdd, lookup ) )
 
     (*--------------------------------------------------------------------*)
+    structure Rewrite (* : OPERATION *) =
+    struct
+
+      val name = "Rewrite"
+
+      type operation = ( hom * variable )
+      type result    = hom
+
+      fun eq ((hx,vx),(hy,vy)) = hx = hy andalso Variable.eq(vx,vy)
+      fun hash (h,v) = H.hashCombine( Definition.hash(!h), Variable.hash v )
+
+      (* ------------------------------------------------ *)
+      fun partition v ( x, (F,G,L) ) =
+        case let val ref(Hom(h,_,_)) = x in h end of
+          Nested(y,_) => if skipVariable v x then
+                           ( x::F, G, L )
+                         else
+                           ( F, G, y::L )
+        | _           => if skipVariable v x then
+                           ( x::F, G, L )
+                         else
+                           ( F, x::G, L )
+
+      (* ------------------------------------------------ *)
+      fun rewriteUnion orig v xs =
+      let
+        val (F,G,L) = foldr (partition v) ([],[],[]) xs
+      in
+        if length F = 0 andalso length L = 0 then
+          orig
+        else
+          mkSatUnion v (mkUnion' F) G (mkNested (mkUnion' L) v)
+      end
+
+      (* ------------------------------------------------ *)
+      fun rewriteFixpoint orig v f =
+        case let val ref(Hom(h,_,_)) = f in h end of
+          Union(xs) =>
+            if List.exists (fn x => x = id) xs then
+              let
+                val (F,G,L) = foldr (partition v) ([],[],[]) xs
+              in
+                if length F = 0 andalso length L = 0 then
+                  orig
+                else
+                  mkSatFixpoint v
+                                (mkFixpoint(mkUnion' (id::F)))
+                                G
+                                (mkNested (mkFixpoint (mkUnion' (id::L))) v)
+              end
+            else
+              orig
+        | _ => orig
+
+      (* ------------------------------------------------ *)
+      fun apply ( h, v ) =
+        case let val ref(Hom(x,_,_)) = h in x end of
+          Union(xs)   => rewriteUnion h v xs
+        | Fixpoint(f) => rewriteFixpoint h v f
+        | _           => raise DoNotPanic
+
+    end (* structure Rewrite *)
+
+    structure rewriteCache = CacheFun(structure Operation = Rewrite)
+
+    fun rewrite h v =
+      case let val ref(Hom(x,_,_)) = h in x end of
+        Union(xs)   => rewriteCache.lookup (h,v)
+      | Fixpoint(f) => rewriteCache.lookup (h,v)
+      | _           => h
+
+    (*--------------------------------------------------------------------*)
     fun cons lookup (var, vl, next) sdd =
       SDD.node( var, vl, evalCallback lookup next sdd )
 
     (*--------------------------------------------------------------------*)
     fun union lookup xs sdd =
-    if sdd = SDD.one then
       SDD.union (foldl (fn (x,acc) =>
-                          SDD.insert acc (evalCallback lookup x sdd)
+                         SDD.insert acc (evalCallback lookup x sdd)
                        )
                        []
                        xs
                 )
+
+    (*--------------------------------------------------------------------*)
+    fun satUnion lookup F G L sdd =
+    if sdd = SDD.one then
+      raise DoNotPanic
     else
     let
-      val var = SDD.variable sdd
-      val (F,G) = List.partition (skipVariable var) xs
-      val gRes = foldl (fn (x,acc) =>
-                         SDD.insert acc (evalCallback lookup x sdd)
+      val FRes = evalCallback lookup F sdd
+      val GRes = foldl (fn (g,acc) =>
+                         SDD.insert acc (evalCallback lookup g sdd)
                        )
-                       []
+                       [FRes]
                        G
-      val res = SDD.insert gRes (evalCallback lookup (mkUnion' F) sdd)
+      val LRes = SDD.insert GRes (evalCallback lookup L sdd)
     in
-      SDD.union (res)
+      SDD.union (LRes)
     end
 
     (*--------------------------------------------------------------------*)
@@ -278,43 +403,32 @@ functor HomFun ( structure SDD : SDD
       evalCallback lookup a (evalCallback lookup b sdd)
 
     (*--------------------------------------------------------------------*)
-    fun fixpoint lookup h sdd =
+    fun fixpointHelper f sdd =
     let
-
-      val (saturate,xs) =
-        case !h of
-          Hom(Union(xs),_,_) => ( List.exists (fn x => x = id) xs, SOME xs )
-        | _                  => ( false, NONE )
-
-      fun fixpointHelper f sdd =
-      let
-        val res = f sdd
-      in
-        if res = sdd then
-          res
-        else
-          fixpointHelper f res
-      end
-
+      val res = f sdd
     in
-      if sdd = SDD.one orelse not saturate then
-        fixpointHelper (evalCallback lookup h) sdd
+      if res = sdd then
+        res
       else
+        fixpointHelper f res
+    end
+
+    (*--------------------------------------------------------------------*)
+    fun fixpoint lookup h sdd =
+      fixpointHelper (evalCallback lookup h) sdd
+
+    (*--------------------------------------------------------------------*)
+    fun satFixpoint lookup F G L sdd =
+    let
+      fun loop sdd =
       let
-        val var = SDD.variable sdd
-        val (F,G) = List.partition (skipVariable var) (valOf(xs))
-        fun loop sdd =
-        let
-          (* Propagate evaluation of F on successors *)
-          val resF = evalCallback lookup (mkFixpoint (mkUnion' (id::F))) sdd
-        in
-          foldl (fn (g,sdd) => SDD.union[ sdd, evalCallback lookup g sdd ])
-                resF
-                G
-        end
+        val r  = evalCallback lookup F sdd
+        val r' = evalCallback lookup L r
       in
-        fixpointHelper loop sdd
+        foldl (fn (g,sdd) => SDD.union[ sdd, evalCallback lookup g sdd ]) r' G
       end
+    in
+      fixpointHelper loop sdd
     end
 
     (*--------------------------------------------------------------------*)
@@ -390,8 +504,11 @@ functor HomFun ( structure SDD : SDD
           SDD.union res
         end
       else
-        case let val ref(Hom(x,_,_)) = h in x end of
-
+      let
+        val h' = rewrite h (SDD.variable sdd)
+                 handle SDD.IsNotANode => h
+      in
+        case let val ref(Hom(x,_,_)) = h' in x end of
           Id                    => raise DoNotPanic
         | Const(_)              => raise DoNotPanic
         | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
@@ -400,14 +517,15 @@ functor HomFun ( structure SDD : SDD
         | Fixpoint(g)           => fixpoint lookup g sdd
         | Nested( g, var )      => nested lookup g var sdd
         | Func( f, var )        => function lookup f var sdd
+        | SatUnion( _, F, G, L) => satUnion lookup F G L sdd
+        | SatFixpoint(_,F,G,L)  => satFixpoint lookup F G L sdd
+      end
 
     end
 
     (*--------------------------------------------------------------------*)
 
   end (* structure Evaluation *)
-
-  in (* local Homomorphisms evaluation *)
 
   structure cache = CacheFun(structure Operation = Evaluation)
   val cacheLookup = cache.lookup
@@ -429,13 +547,11 @@ functor HomFun ( structure SDD : SDD
         cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
     | _ => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
 
-  end (* local Homomorphisms evaluation *)
-
   (*----------------------------------------------------------------------*)
   fun toString x = Definition.toString (!x)
 
   (*----------------------------------------------------------------------*)
-  fun stats () = cache.stats()
+  fun stats () = (cache.stats()) ^ (Evaluation.rewriteCache.stats())
 
   (*----------------------------------------------------------------------*)
 end (* functor HomFun *)
