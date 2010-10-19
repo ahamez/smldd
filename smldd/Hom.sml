@@ -186,6 +186,9 @@ functor HomFun ( structure SDD : SDD
       UT.unify( mkHom (Union(operands)) unionHash )
     end
 
+  (* A sorting wrapper for mkUnion' which does the real job.
+     Prefer mkUnion' for internal work.
+  *)
   val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
   (*----------------------------------------------------------------------*)
@@ -584,4 +587,4 @@ functor HomFun ( structure SDD : SDD
   (*----------------------------------------------------------------------*)
 end (* functor HomFun *)
 
-(*--------------------------------------------------------------------------*)
+(* ------------------------------------------------------------------------ *)
