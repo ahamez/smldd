@@ -965,85 +965,235 @@ struct
     assertTrue( nb = 8 )
   end
 
+  fun testVisitor00 () =
+  let
+
+    (* Count the number of distinct paths in an SDD *)
+    fun visitNbPaths x =
+    let
+
+      fun zero () = IntInf.fromInt 0
+      fun one  () = IntInf.fromInt 1
+
+      fun node _ alpha =
+        foldl (fn ( (vl,succ) , nb) =>
+                case vl of
+                  SDD.Values v => nb +   (IntInf.fromInt (SDD.valuesLength v))
+                                       * visit zero one node succ
+                | SDD.Nested n => nb +   visit zero one node n
+                                       * visit zero one node succ
+              )
+              (IntInf.fromInt 0)
+              alpha
+
+    in
+      visit zero one node x
+    end (* end fun visitNbPaths *)
+
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val s1 = node( 0, values [0],
+              node( 1, values [0],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s2 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val s3 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+    val s4 = node( 0, values [1],
+              node( 1, values [0],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s5 = node( 0, values [0],
+              node( 1, values [2],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val s6 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val s7 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+
+    val s8 = union [s0,s1,s2,s3,s4,s5,s6,s7]
+
+    val nb = visitNbPaths s8
+  in
+    assertTrue( nb = 8 )
+  end
+
+  fun testCachedVisitor00 () =
+  let
+
+    (* Count the number of distinct paths in an SDD *)
+    fun visitNbPaths x =
+    let
+
+      val visit = SDD.mkCachedVisitor (IntInf.fromInt 0)
+
+      fun zero () = IntInf.fromInt 0
+      fun one  () = IntInf.fromInt 1
+
+      fun node _ alpha =
+        foldl (fn ( (vl,succ) , nb) =>
+                case vl of
+                  SDD.Values v => nb +   (IntInf.fromInt (SDD.valuesLength v))
+                                       * visit zero one node succ
+                | SDD.Nested n => nb +   visit zero one node n
+                                       * visit zero one node succ
+              )
+              (IntInf.fromInt 0)
+              alpha
+
+    in
+      visit zero one node x
+    end (* end fun visitNbPaths *)
+
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val s1 = node( 0, values [0],
+              node( 1, values [0],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s2 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val s3 = node( 0, values [0],
+              node( 1, values [1],
+               node( 2, values [1],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+    val s4 = node( 0, values [1],
+              node( 1, values [0],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [1], one)))))
+    val s5 = node( 0, values [0],
+              node( 1, values [2],
+               node( 2, values [1],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val s6 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [1], one)))))
+    val s7 = node( 0, values [1],
+              node( 1, values [1],
+               node( 2, values [0],
+                node( 3, values [1],
+                 node( 4, values [0], one)))))
+
+    val s8 = union [s0,s1,s2,s3,s4,s5,s6,s7]
+
+    val nb = visitNbPaths s8
+  in
+    assertTrue( nb = 8 )
+  end
+
   (* ---------------------------------------------------------------- *)
 
   fun suite () =
       Test.labelTests
-      [ ("Terminals00"       , testTerminal00      )
-      , ("Makenode00"        , testMknode00    )
-      , ("Makenode01"        , testMknode01    )
-      , ("Makenode02"        , testMknode02    )
-      , ("FlatUnion00"       , testFlatUnion00     )
-      , ("FlatUnion01"       , testFlatUnion01     )
-      , ("FlatUnion02"       , testFlatUnion02     )
-      , ("FlatUnion03"       , testFlatUnion03     )
-      , ("FlatUnion04"       , testFlatUnion04     )
-      , ("FlatUnion05"       , testFlatUnion05     )
-      , ("FlatUnion06"       , testFlatUnion06     )
-      , ("FlatUnion07"       , testFlatUnion07     )
-      , ("FlatUnion08"       , testFlatUnion08     )
-      , ("FlatUnion09"       , testFlatUnion09     )
-      , ("FlatUnion10"       , testFlatUnion10     )
-      , ("FlatUnion11"       , testFlatUnion11     )
-      , ("FlatUnion12"       , testFlatUnion12     )
-      , ("FlatUnion13"       , testFlatUnion13     )
-      , ("FlatUnion14"       , testFlatUnion14     )
-      , ("FlatInter00"       , testFlatInter00     )
-      , ("FlatInter01"       , testFlatInter01     )
-      , ("FlatInter02"       , testFlatInter02     )
-      , ("FlatInter03"       , testFlatInter03     )
-      , ("FlatInter04"       , testFlatInter04     )
-      , ("FlatInter05"       , testFlatInter05     )
-      , ("FlatInter06"       , testFlatInter06     )
-      , ("FlatInter07"       , testFlatInter07     )
-      , ("FlatInter08"       , testFlatInter08     )
-      , ("FlatInter09"       , testFlatInter09     )
-      , ("FlatInter10"       , testFlatInter10     )
-      , ("FlatInter11"       , testFlatInter11     )
-      , ("FlatInter12"       , testFlatInter12     )
-      , ("FlatInter13"       , testFlatInter13     )
-      , ("FlatInter14"       , testFlatInter14     )
-      , ("FlatInter15"       , testFlatInter15     )
-      , ("testFlatDiff00"    , testFlatDiff00      )
-      , ("testFlatDiff01"    , testFlatDiff01      )
-      , ("testFlatDiff02"    , testFlatDiff02      )
-      , ("testFlatDiff03"    , testFlatDiff03      )
-      , ("testFlatDiff04"    , testFlatDiff04      )
-      , ("testFlatDiff05"    , testFlatDiff05      )
-      , ("testFlatDiff06"    , testFlatDiff06      )
-      , ("testFlatDiff07"    , testFlatDiff07      )
-      , ("testFlatDiff08"    , testFlatDiff08      )
-      , ("testFlatDiff09"    , testFlatDiff09      )
-      , ("testFlatDiff10"    , testFlatDiff10      )
-      , ("testFlatDiff11"    , testFlatDiff11      )
-      , ("testFlatDiff12"    , testFlatDiff12      )
-      , ("testFlatDiff13"    , testFlatDiff13      )
-      , ("testFlatDiff14"    , testFlatDiff14      )
-      , ("testFlatDiff15"    , testFlatDiff15      )
-      , ("testFlatDiff16"    , testFlatDiff16      )
-      , ("testFlatDiff17"    , testFlatDiff17      )
-      , ("testFlatDiff18"    , testFlatDiff18      )
-      , ("testFlatDiff19"    , testFlatDiff19      )
-      , ("testFlatDiff20"    , testFlatDiff20      )
-      , ("testFlatDiff21"    , testFlatDiff21      )
-      , ("testFlatDiff23"    , testFlatDiff23      )
-      , ("testFlatDiff24"    , testFlatDiff24      )
-      , ("testFlatDiff25"    , testFlatDiff25      )
-      , ("testMkNode00"      , testMkNode00        )
-      , ("testMkNode01"      , testMkNode01        )
-      , ("testMkNode02"      , testMkNode02        )
-      , ("testMkNode03"      , testMkNode03        )
-      , ("testMkNode04"      , testMkNode04        )
-      , ("testMkNode05"      , testMkNode05        )
-      , ("testUnion00"       , testUnion00         )
-      , ("testUnion01"       , testUnion01         )
-      , ("testUnion02"       , testUnion02         )
-      , ("testUnion03"       , testUnion03         )
-      , ("testUnion04"       , testUnion04         )
-      , ("testUnion05"       , testUnion05         )
-      , ("testUnion06"       , testUnion06         )
-      , ("testUnion07"       , testUnion07         )
-      , ("testPaths00"       , testPaths00         )
+      [ ("Terminals00"           , testTerminal00      )
+      , ("Makenode00"            , testMknode00        )
+      , ("Makenode01"            , testMknode01        )
+      , ("Makenode02"            , testMknode02        )
+      , ("FlatUnion00"           , testFlatUnion00     )
+      , ("FlatUnion01"           , testFlatUnion01     )
+      , ("FlatUnion02"           , testFlatUnion02     )
+      , ("FlatUnion03"           , testFlatUnion03     )
+      , ("FlatUnion04"           , testFlatUnion04     )
+      , ("FlatUnion05"           , testFlatUnion05     )
+      , ("FlatUnion06"           , testFlatUnion06     )
+      , ("FlatUnion07"           , testFlatUnion07     )
+      , ("FlatUnion08"           , testFlatUnion08     )
+      , ("FlatUnion09"           , testFlatUnion09     )
+      , ("FlatUnion10"           , testFlatUnion10     )
+      , ("FlatUnion11"           , testFlatUnion11     )
+      , ("FlatUnion12"           , testFlatUnion12     )
+      , ("FlatUnion13"           , testFlatUnion13     )
+      , ("FlatUnion14"           , testFlatUnion14     )
+      , ("FlatInter00"           , testFlatInter00     )
+      , ("FlatInter01"           , testFlatInter01     )
+      , ("FlatInter02"           , testFlatInter02     )
+      , ("FlatInter03"           , testFlatInter03     )
+      , ("FlatInter04"           , testFlatInter04     )
+      , ("FlatInter05"           , testFlatInter05     )
+      , ("FlatInter06"           , testFlatInter06     )
+      , ("FlatInter07"           , testFlatInter07     )
+      , ("FlatInter08"           , testFlatInter08     )
+      , ("FlatInter09"           , testFlatInter09     )
+      , ("FlatInter10"           , testFlatInter10     )
+      , ("FlatInter11"           , testFlatInter11     )
+      , ("FlatInter12"           , testFlatInter12     )
+      , ("FlatInter13"           , testFlatInter13     )
+      , ("FlatInter14"           , testFlatInter14     )
+      , ("FlatInter15"           , testFlatInter15     )
+      , ("testFlatDiff00"        , testFlatDiff00      )
+      , ("testFlatDiff01"        , testFlatDiff01      )
+      , ("testFlatDiff02"        , testFlatDiff02      )
+      , ("testFlatDiff03"        , testFlatDiff03      )
+      , ("testFlatDiff04"        , testFlatDiff04      )
+      , ("testFlatDiff05"        , testFlatDiff05      )
+      , ("testFlatDiff06"        , testFlatDiff06      )
+      , ("testFlatDiff07"        , testFlatDiff07      )
+      , ("testFlatDiff08"        , testFlatDiff08      )
+      , ("testFlatDiff09"        , testFlatDiff09      )
+      , ("testFlatDiff10"        , testFlatDiff10      )
+      , ("testFlatDiff11"        , testFlatDiff11      )
+      , ("testFlatDiff12"        , testFlatDiff12      )
+      , ("testFlatDiff13"        , testFlatDiff13      )
+      , ("testFlatDiff14"        , testFlatDiff14      )
+      , ("testFlatDiff15"        , testFlatDiff15      )
+      , ("testFlatDiff16"        , testFlatDiff16      )
+      , ("testFlatDiff17"        , testFlatDiff17      )
+      , ("testFlatDiff18"        , testFlatDiff18      )
+      , ("testFlatDiff19"        , testFlatDiff19      )
+      , ("testFlatDiff20"        , testFlatDiff20      )
+      , ("testFlatDiff21"        , testFlatDiff21      )
+      , ("testFlatDiff23"        , testFlatDiff23      )
+      , ("testFlatDiff24"        , testFlatDiff24      )
+      , ("testFlatDiff25"        , testFlatDiff25      )
+      , ("testMkNode00"          , testMkNode00        )
+      , ("testMkNode01"          , testMkNode01        )
+      , ("testMkNode02"          , testMkNode02        )
+      , ("testMkNode03"          , testMkNode03        )
+      , ("testMkNode04"          , testMkNode04        )
+      , ("testMkNode05"          , testMkNode05        )
+      , ("testUnion00"           , testUnion00         )
+      , ("testUnion01"           , testUnion01         )
+      , ("testUnion02"           , testUnion02         )
+      , ("testUnion03"           , testUnion03         )
+      , ("testUnion04"           , testUnion04         )
+      , ("testUnion05"           , testUnion05         )
+      , ("testUnion06"           , testUnion06         )
+      , ("testUnion07"           , testUnion07         )
+      , ("testPaths00"           , testPaths00         )
+      , ("testVisitor00"         , testVisitor00       )
+      , ("testCachedVisitor00"   , testCachedVisitor00 )
       ]
 
   (* ---------------------------------------------------------------- *)
