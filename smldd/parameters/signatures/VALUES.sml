@@ -29,5 +29,6 @@ sig
 
   val hashUsable    : user -> Hash.t
   val eqUsable      : user * user -> bool
+  val usableLength  : user -> int
 
 end

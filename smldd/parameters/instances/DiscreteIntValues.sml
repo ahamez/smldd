@@ -76,6 +76,9 @@ val hashUsable = SV.hash
 val eqUsable   = SV.eq
 
 (*--------------------------------------------------------------------------*)
+val usableLength   = SV.length
+
+(*--------------------------------------------------------------------------*)
 val e = mkStorable( SV.mkEmpty() )
 fun mkEmpty() = e
 
