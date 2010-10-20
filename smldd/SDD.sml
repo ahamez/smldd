@@ -311,10 +311,10 @@ fun check []     = raise DoNotPanic
    (a list of values, each one leading to a list of successors).
    Thus, it makes it usable by squareUnion. *)
 fun alphaToList( alpha ) =
-Vector.foldr
-  (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
-  []
-  alpha
+  Vector.foldr
+    (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
+    []
+    alpha
 
 (*--------------------------------------------------------------------------*)
 (* Apply alphaToList to a node: SDD -> ( storedValues * SDD list ) list
