@@ -7,7 +7,10 @@ signature TOOLS = sig
 end (* signature TOOLS *)
 
 (*--------------------------------------------------------------------------*)
-functor ToolsFun ( structure SDD : SDD )
+functor ToolsFun ( structure SDD : SDD
+                   and Variable  : VARIABLE where type t    = SDD.variable
+                   and Values    : VALUES   where type user = SDD.userValues
+                 )
   : TOOLS
 = struct
 
@@ -27,7 +30,7 @@ let
   fun node _ alpha =
     foldl (fn ( (vl,succ) , nb) =>
             case vl of
-              SDD.Values v => nb +   (IntInf.fromInt (SDD.valuesLength v))
+              SDD.Values v => nb +   (IntInf.fromInt (Values.usableLength v))
                                    * visit zero one node succ
             | SDD.Nested n => nb +   visit zero one node n
                                    * visit zero one node succ

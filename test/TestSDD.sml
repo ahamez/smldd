@@ -6,6 +6,7 @@ struct
   open SDD
   open SMLUnit.Assert
   structure Test = SMLUnit.Test
+  structure DIV = DiscreteIntValues
 
   (* ---------------------------------------------------------------- *)
 
@@ -978,7 +979,7 @@ struct
       fun node _ alpha =
         foldl (fn ( (vl,succ) , nb) =>
                 case vl of
-                  SDD.Values v => nb +   (IntInf.fromInt (SDD.valuesLength v))
+                  SDD.Values v => nb +   (IntInf.fromInt (DIV.usableLength v))
                                        * visit zero one node succ
                 | SDD.Nested n => nb +   visit zero one node n
                                        * visit zero one node succ
@@ -1053,7 +1054,7 @@ struct
       fun node _ alpha =
         foldl (fn ( (vl,succ) , nb) =>
                 case vl of
-                  SDD.Values v => nb +   (IntInf.fromInt (SDD.valuesLength v))
+                  SDD.Values v => nb +   (IntInf.fromInt (DIV.usableLength v))
                                        * visit zero one node succ
                 | SDD.Nested n => nb +   visit zero one node n
                                        * visit zero one node succ
