@@ -28,7 +28,23 @@ fun lt (x:Word32.word,y:Word32.word) = x < y
 val hash = Hash.hashWord
 
 (*--------------------------------------------------------------------------*)
-val toString = Word32.toString
+fun toString x =
+let
+
+  fun loop x i =
+    if x = Word32.fromInt 0 then
+      []
+    else
+      if Word32.andb( x, Word32.fromInt 1) <> Word32.fromInt 0 then
+        Int.toString(i) :: (loop (Word32.>>( x, Word32.fromInt 1)) (i + 1))
+      else
+        (loop (Word32.>>( x, Word32.fromInt 1)) (i + 1))
+
+in
+  "{"
+^ (String.concatWith "," (loop x 0))
+^ "}"
+end
 
 (*--------------------------------------------------------------------------*)
 fun length x =
