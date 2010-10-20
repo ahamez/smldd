@@ -169,6 +169,21 @@ val zero = SDDUT.unify (mkNode Zero (H.const 0))
 val one = SDDUT.unify (mkNode One (H.const 1))
 
 (*--------------------------------------------------------------------------*)
+fun hashNode vlHash var alpha =
+let
+  val hsh =
+    Vector.foldl (fn ( ( vl, succ), acc ) =>
+                   H.hashCombine( acc
+                                , H.hashCombine( vlHash vl, hash (!succ) )
+                                )
+                 )
+                 (H.const 0)
+                 alpha
+in
+  H.hashCombine( Variable.hash var, hsh)
+end
+
+(*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
 fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) ) =
   case ( Values.storedEmpty values , next ) of
@@ -176,12 +191,10 @@ fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) ) =
   | (true,_) => zero
   | _        =>
     let
-      val hashValues = Values.storedHash values
-      val h = H.hashCombine( Variable.hash var
-                           , H.hashCombine( hashNext, hashValues ))
       val alpha = Vector.fromList [( values, rnext )]
+      val hsh = hashNode Values.storedHash var alpha
     in
-      SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) h )
+      SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) hsh )
     end
 
 (*--------------------------------------------------------------------------*)
@@ -191,53 +204,36 @@ fun flatNodeAlpha ( var, alpha ) =
     zero
   else
   let
-    val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
-                                    H.hashCombine( Values.storedHash vl
-                                               , H.hashCombine( hash(!succ),h)
-                                               )
-                                  )
-                     (H.const 0)
-                     alpha
-
-    val h = H.hashCombine( Variable.hash var, hashAlpha )
+    val hsh = hashNode Values.storedHash var alpha
   in
-    SDDUT.unify ( mkNode (Node{variable=var,alpha=alpha}) h )
+    SDDUT.unify ( mkNode (Node{variable=var,alpha=alpha}) hsh )
   end
 
 (*--------------------------------------------------------------------------*)
 (* Return an hierarchical node. Not exported *)
-fun hierNode ( vr, rnested as (ref (iSDD(nested,hashNested,_)))
-                 , rnext as (ref (iSDD(next,hashNext,_))) )
+fun hierNode ( var, rnested as (ref (iSDD(nested,hashNested,_)))
+                  , rnext as (ref (iSDD(next,hashNext,_))) )
 = case ( next, nested ) of
     ( Zero , _ ) => zero
   | ( _ , Zero ) => zero
   | ( _ , _ )    =>
     let
-      val h = H.hashCombine( Variable.hash vr
-                           , H.hashCombine( hashNext, hashNested ) )
       val alpha = Vector.fromList [( rnested, rnext )]
+      val hsh = hashNode (hash o !) var alpha
     in
-      SDDUT.unify ( mkNode (HNode{ variable=vr, alpha=alpha}) h )
+      SDDUT.unify ( mkNode (HNode{ variable=var, alpha=alpha}) hsh )
     end
 
 (*--------------------------------------------------------------------------*)
 (* Construct a node with an pre-computed alpha. Internal use only! *)
-fun nodeAlpha ( vr , alpha ) =
+fun nodeAlpha ( var , alpha ) =
   if Vector.length alpha = 0 then
     zero
   else
   let
-    val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
-                                    H.hashCombine( hash (!vl)
-                                               , H.hashCombine( hash(!succ),h)
-                                               )
-                                  )
-                     (H.const 0)
-                     alpha
-
-    val h = H.hashCombine( Variable.hash vr, hashAlpha )
+    val hsh = hashNode (hash o !) var alpha
   in
-    SDDUT.unify ( mkNode (HNode{variable=vr,alpha=alpha}) h )
+    SDDUT.unify ( mkNode (HNode{variable=var,alpha=alpha}) hsh )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -245,7 +241,7 @@ fun nodeAlpha ( vr , alpha ) =
 fun node ( vr , vl , next ) =
   case vl of
     Values(values) => flatNode( vr, Values.mkStorable values, next )
-  | Nested(nested) => hierNode( vr, nested,           next )
+  | Nested(nested) => hierNode( vr, nested, next )
 
 (*--------------------------------------------------------------------------*)
 local (* SDD manipulation *)
@@ -411,7 +407,6 @@ let
                   NONE    => false
                 | SOME _  => true
 in
-
   (* Intersection of anything with |0| is always |0| *)
   if hasZero then
     zero
