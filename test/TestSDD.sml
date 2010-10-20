@@ -969,6 +969,8 @@ struct
   fun testVisitor00 () =
   let
 
+    val visit = SDD.mkVisitor NonCached
+
     (* Count the number of distinct paths in an SDD *)
     fun visitNbPaths x =
     let
@@ -1046,7 +1048,7 @@ struct
     fun visitNbPaths x =
     let
 
-      val visit = SDD.mkCachedVisitor (IntInf.fromInt 0)
+      val visit = SDD.mkVisitor SDD.Cached
 
       fun zero () = IntInf.fromInt 0
       fun one  () = IntInf.fromInt 1

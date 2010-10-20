@@ -22,7 +22,7 @@ type SDD = SDD.SDD
 fun nbPaths x =
 let
 
-  val visit = SDD.mkCachedVisitor (IntInf.fromInt 0)
+  val visit = SDD.mkVisitor SDD.Cached
 
   fun zero () = IntInf.fromInt 0
   fun one  () = IntInf.fromInt 1

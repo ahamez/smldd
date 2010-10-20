@@ -33,15 +33,15 @@ signature SDD = sig
   datatype dotMode      = ShowSharing | ShowHierarchy
   val toDot             : dotMode -> SDD -> string
 
-  val stats             : unit -> string
-
+  datatype visitorMode  = Cached | NonCached
   type 'a visitor       =    (unit -> 'a)
                           -> (unit -> 'a)
                           -> (variable -> (valuation * SDD) list -> 'a)
                           -> SDD
                           -> 'a
-  val mkCachedVisitor   : 'a -> 'a visitor
-  val visit             : 'a visitor
+  val mkVisitor         : visitorMode -> 'a visitor
+
+  val stats             : unit -> string
 
   exception IncompatibleSDD
   exception IsNotANode
@@ -769,41 +769,43 @@ type 'a visitor       =    (unit -> 'a)
                         -> 'a
 
 (*--------------------------------------------------------------------------*)
-fun visit zero one node s =
-  case let val ref(iSDD(x,_,_)) = s in x end of
-    Zero                        => zero ()
-  | One                         => one ()
-  | Node  {variable=v,alpha=a}  => node v (alpha s)
-  | HNode {variable=v,alpha=a}  => node v (alpha s)
+datatype visitorMode  = Cached | NonCached
 
 (*--------------------------------------------------------------------------*)
-fun mkCachedVisitor (dummy : 'a) =
+fun mkVisitor (mode:visitorMode) : 'a visitor =
 let
 
-  val cache : (( SDD, 'a ) HT.hash_table) ref
-      = ref ( HT.mkTable( fn x => hash x , op = )
-                        ( 10000, DoNotPanic ) )
-
-  fun visitor cache zero one node s =
-    case HT.find (!cache) s of
-      NONE  =>
-        let
-          val res = case let val ref(iSDD(x,_,_)) = s in x end of
-                      Zero                        => zero ()
-                    | One                         => one ()
-                    | Node  {variable=v,alpha=a}  => node v (alpha s)
-                    | HNode {variable=v,alpha=a}  => node v (alpha s)
-
-        in
-        (
-          HT.insert (!cache) ( s, res );
-          res
-        )
-        end
-    | SOME v => v
+  fun visitBase zero one node s =
+    case let val ref(iSDD(x,_,_)) = s in x end of
+      Zero                        => zero ()
+    | One                         => one ()
+    | Node  {variable=v,alpha=a}  => node v (alpha s)
+    | HNode {variable=v,alpha=a}  => node v (alpha s)
 
 in
-  visitor cache
+    case mode of
+      NonCached => visitBase
+    | Cached =>
+      let
+        val cache : (( SDD, 'a ) HT.hash_table) ref
+            = ref ( HT.mkTable( fn x => hash x , op = )
+                              ( 10000, DoNotPanic ) )
+
+        fun visit cache zero one node s =
+          case HT.find (!cache) s of
+            NONE  =>
+              let
+                val res = visitBase zero one node s
+              in
+              (
+                HT.insert (!cache) ( s, res );
+                res
+              )
+              end
+          | SOME v => v
+      in
+        visit cache
+      end
 end
 (*--------------------------------------------------------------------------*)
 (* Indicate if the dot output emphasizes on hierarchy or sharing *)
