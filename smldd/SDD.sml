@@ -37,7 +37,7 @@ signature SDD = sig
   datatype visitorMode  = Cached | NonCached
   type 'a visitor       =    (unit -> 'a)
                           -> (unit -> 'a)
-                          -> (variable -> (valuation * SDD) list -> 'a)
+                          -> (int -> variable -> (valuation * SDD) list -> 'a)
                           -> SDD
                           -> 'a
   val mkVisitor         : visitorMode -> 'a visitor
@@ -768,7 +768,7 @@ fun valuationToString x =
 (*--------------------------------------------------------------------------*)
 type 'a visitor       =    (unit -> 'a)
                         -> (unit -> 'a)
-                        -> (variable -> (valuation * SDD) list -> 'a)
+                        -> (int -> variable -> (valuation * SDD) list -> 'a)
                         -> SDD
                         -> 'a
 
@@ -780,11 +780,15 @@ fun mkVisitor mode : 'a visitor =
 let
 
   fun visitBase zero one node s =
-    case let val ref(iSDD(x,_,_)) = s in x end of
+  let
+    val ref(iSDD(x,_,uid)) = s
+  in
+    case x of
       Zero                        => zero ()
     | One                         => one ()
-    | Node  {variable=v,alpha=a}  => node v (alpha s)
-    | HNode {variable=v,alpha=a}  => node v (alpha s)
+    | Node  {variable=v,alpha=a}  => node uid v (alpha s)
+    | HNode {variable=v,alpha=a}  => node uid v (alpha s)
+  end
 
 in
     case mode of

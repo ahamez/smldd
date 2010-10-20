@@ -27,7 +27,7 @@ let
   fun zero () = IntInf.fromInt 0
   fun one  () = IntInf.fromInt 1
 
-  fun node _ alpha =
+  fun node _ _ alpha =
     foldl (fn ( (vl,succ) , nb) =>
             case vl of
               SDD.Values v => nb +   (IntInf.fromInt (Values.length v))
