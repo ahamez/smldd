@@ -2,11 +2,13 @@
 signature TOOLS = sig
 
   type SDD
-  val nbPaths       : SDD -> IntInf.int
 
   datatype mode  = Sharing | Hierarchy
 
+  val nbPaths    : SDD -> IntInf.int
+  val nbNodes    : mode -> SDD -> LargeInt.int
   val toDot      : mode -> SDD -> string
+
 end (* signature TOOLS *)
 
 (*--------------------------------------------------------------------------*)
@@ -26,39 +28,63 @@ datatype mode = Sharing | Hierarchy
 (*--------------------------------------------------------------------------*)
 structure HT = HashTable
 
+(*--------------------------------------------------------------------------*)
 (* Count the number of distinct paths in an SDD *)
 fun nbPaths x =
 let
 
-  val visit = SDD.mkVisitor SDD.Cached
-
   fun zero () = IntInf.fromInt 0
   fun one  () = IntInf.fromInt 1
+
+  val visit = SDD.mkVisitor SDD.Cached zero one
 
   fun node _ _ alpha =
     foldl (fn ( (vl,succ) , nb) =>
             case vl of
               SDD.Values v => nb +   (IntInf.fromInt (Values.length v))
-                                   * visit zero one node succ
-            | SDD.Nested n => nb +   visit zero one node n
-                                   * visit zero one node succ
+                                   * visit node succ
+            | SDD.Nested n => nb +   visit node n
+                                   * visit node succ
           )
           (IntInf.fromInt 0)
           alpha
 
 in
-  visit zero one node x
+  visit node x
 end (* fun visitNbPaths *)
 
 (*--------------------------------------------------------------------------*)
-(* Indicate if the dot output emphasizes on hierarchy or sharing *)
-datatype dotMode = ShowSharing | ShowHierarchy
+fun nbNodes mode x =
+let
+
+  fun zero () = LargeInt.fromInt 1
+  fun one  () = LargeInt.fromInt 1
+
+  val visit =
+    case mode of
+      Sharing   => SDD.mkVisitor (SDD.Once (LargeInt.fromInt 0)) zero one
+    | Hierarchy => SDD.mkVisitor SDD.Cached zero one
+
+  fun node _ _ alpha =
+    (LargeInt.fromInt 1)
+  + (foldl (fn ( (vl,succ), sum ) =>
+             sum
+           + (case vl of
+               SDD.Values v => 0
+             | SDD.Nested n => visit node n
+             )
+           + visit node succ
+           )
+          (LargeInt.fromInt 0)
+          alpha
+        )
+in
+  visit node x
+end
 
 (*--------------------------------------------------------------------------*)
 (* Export an SDD to a DOT representation *)
-
-
-fun toDot mode x =
+fun toDotHelper mode x =
 let
 
   val visit = SDD.mkVisitor SDD.NonCached
@@ -225,6 +251,15 @@ let
 in
   String.concat l
 end (* fun toDot *)
+
+(*--------------------------------------------------------------------------*)
+fun toDot mode x =
+  if nbNodes mode x > (LargeInt.fromInt 1000) then
+    "digraph sdd {\n\n node \"42\" "
+  ^ "[shape=rectangle,regular=true,label=\"Too much nodes (>1000)\"];\n"
+  ^ "}\n"
+  else
+    toDotHelper mode x
 
 (*--------------------------------------------------------------------------*)
 end (* fun ToolsFun *)
