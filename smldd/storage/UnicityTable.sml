@@ -127,7 +127,7 @@ functor UnicityTableFunID ( structure Data : DATA )
   (* The type of the unicity table for valuations*)
   val values_table : ( wrdata, wrdata * int ) H.hash_table
     = H.mkTable ( hash, eq )
-                ( 10000, data_not_found )
+                ( 1000000, data_not_found )
 
   val cleanup = ref 1000
 
