@@ -209,7 +209,7 @@ let
           else if x = SDD.zero then
             [terminal 0 0]
           else
-              ["digraph sdd {\n\n"]
+              ["digraph sdd {\n"]
             @ (dotHelper x 0)
             @ (dotArcHelper ())
             @ (if maxShare then
@@ -217,7 +217,7 @@ let
               else
                 List.tabulate ( !maxDepth + 1, terminal 1)
               )
-            @ ["\n}\n"]
+            @ ["\n}"]
 in
   String.concat l
 end (* fun toDot *)
