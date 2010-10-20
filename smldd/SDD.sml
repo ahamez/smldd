@@ -799,7 +799,7 @@ in
             = ref ( HT.mkTable( fn x => hash x , op = )
                               ( 10000, DoNotPanic ) )
 
-        fun visit cache zero one node s =
+        fun visitCache cache zero one node s =
           case HT.find (!cache) s of
             NONE  =>
               let
@@ -812,7 +812,7 @@ in
               end
           | SOME v => v
       in
-        visit cache
+        visitCache cache
       end
 end
 (*--------------------------------------------------------------------------*)
