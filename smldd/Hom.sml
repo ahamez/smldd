@@ -29,8 +29,8 @@ end
 
 (*--------------------------------------------------------------------------*)
 functor HomFun ( structure SDD : SDD
-                 and Variable  : VARIABLE where type t    = SDD.variable
-                 and Values    : VALUES   where type user = SDD.userValues
+                 and Variable  : VARIABLE where type t      = SDD.variable
+                 and Values    : VALUES   where type values = SDD.values
                )
   : Hom
 = struct
@@ -42,7 +42,7 @@ exception FunctionHomOnNested
 (*--------------------------------------------------------------------------*)
 type SDD       = SDD.SDD
 type variable  = Variable.t
-type values    = Values.user
+type values    = Values.values
 type valuation = SDD.valuation
 
 (*--------------------------------------------------------------------------*)

@@ -981,7 +981,7 @@ struct
       fun node _ alpha =
         foldl (fn ( (vl,succ) , nb) =>
                 case vl of
-                  SDD.Values v => nb +   (IntInf.fromInt (DIV.usableLength v))
+                  SDD.Values v => nb +   (IntInf.fromInt (DIV.length v))
                                        * visit zero one node succ
                 | SDD.Nested n => nb +   visit zero one node n
                                        * visit zero one node succ
@@ -1056,7 +1056,7 @@ struct
       fun node _ alpha =
         foldl (fn ( (vl,succ) , nb) =>
                 case vl of
-                  SDD.Values v => nb +   (IntInf.fromInt (DIV.usableLength v))
+                  SDD.Values v => nb +   (IntInf.fromInt (DIV.length v))
                                        * visit zero one node succ
                 | SDD.Nested n => nb +   visit zero one node n
                                        * visit zero one node succ

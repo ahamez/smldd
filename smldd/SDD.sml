@@ -3,10 +3,10 @@ signature SDD = sig
 
   eqtype SDD
   type variable
-  type userValues
+  type values
 
   datatype valuation    = Nested of SDD
-                        | Values of userValues
+                        | Values of values
 
   val zero              : SDD
   val one               : SDD
@@ -22,7 +22,7 @@ signature SDD = sig
 
   val insert            : SDD list -> SDD -> SDD list
 
-  val values            : valuation -> userValues
+  val values            : valuation -> values
   val nested            : valuation -> SDD
   val hashValuation     : valuation -> Hash.t
   val eqValuation       : (valuation * valuation) -> bool
@@ -58,7 +58,7 @@ functor SDDFun ( structure Variable  : VARIABLE
 
 (*--------------------------------------------------------------------------*)
 type variable     = Variable.t
-type userValues   = Values.user
+type values       = Values.values
 type storedValues = Values.stored
 
 (*--------------------------------------------------------------------------*)
@@ -108,7 +108,7 @@ open Definition
 
 (*--------------------------------------------------------------------------*)
 type SDD = Definition.t ref
-datatype valuation = Nested of SDD | Values of userValues
+datatype valuation = Nested of SDD | Values of values
 
 (*--------------------------------------------------------------------------*)
 structure SDDUT = UnicityTableFunID( structure Data = Definition )
@@ -137,8 +137,10 @@ in
   case sdd of
     Zero  => "|0|"
   | One   => "|1|"
-  | Node{ variable=vr, alpha=alpha}  => (nodeHelper Values.toString vr alpha)
-  | HNode{ variable=vr, alpha=alpha} => (nodeHelper toString vr alpha)
+  | Node{ variable=vr, alpha=alpha}  =>
+      (nodeHelper Values.storedToString vr alpha)
+  | HNode{ variable=vr, alpha=alpha} =>
+      (nodeHelper toString vr alpha)
 end
 
 (*--------------------------------------------------------------------------*)
@@ -174,13 +176,13 @@ fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) )
   = case next of
     Zero => zero
   | _    =>
-    if Values.empty values then
+    if Values.storedEmpty values then
       zero
     else
       let
-        val hashValues = Values.hash values
+        val hashValues = Values.storedHash values
         val h = H.hashCombine( Variable.hash var
-                           , H.hashCombine( hashNext, hashValues ))
+                             , H.hashCombine( hashNext, hashValues ))
         val alpha = Vector.fromList [( values, rnext )]
       in
         SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) h )
@@ -194,7 +196,7 @@ fun flatNodeAlpha ( var, alpha ) =
   else
   let
     val hashAlpha = Vector.foldl (fn ((vl,succ),h) =>
-                                    H.hashCombine( Values.hash vl
+                                    H.hashCombine( Values.storedHash vl
                                                , H.hashCombine( hash(!succ),h)
                                                )
                                   )
@@ -380,7 +382,8 @@ in
   | Node{variable=var,...}  =>
     if Values.discrete then
       unionFlatDiscreteSDD flatAlphaNodeToList
-                           Values.toList Values.fromList Values.lt
+                           Values.storedToList Values.storedFromList
+                           Values.storedLt
                            Values.valueLt
                            uid
                            (unionCallback cacheLookup)
@@ -391,12 +394,12 @@ in
                uid
                (squareUnion uid
                             (unionCallback cacheLookup)
-                            Values.union
-                            Values.lt
+                            Values.storedUnion
+                            Values.storedLt
                )
-               Values.intersection
-               Values.difference
-               Values.empty
+               Values.storedIntersection
+               Values.storedDifference
+               Values.storedEmpty
                flatNodeAlpha
                xs var
 
@@ -456,15 +459,15 @@ in
                                   []       => raise DoNotPanic
                                 | (y::ys)  => (y,ys)
 
-    val commonApply' = commonApply Values.intersection
-                                   Values.empty
+    val commonApply' = commonApply Values.storedIntersection
+                                   Values.storedEmpty
                                    (intersectionCallback cacheLookup)
                                    zero
 
     val squareUnion' = squareUnion uid
                                    (unionCallback cacheLookup)
-                                   Values.union
-                                   Values.lt
+                                   Values.storedUnion
+                                   Values.storedLt
   in
     flatNodeAlpha( var
                  , squareUnion'( foldl commonApply' initial operands ) )
@@ -531,8 +534,8 @@ fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
             (x::y::[]) => differenceCallback cacheLookup (x, y)
           | _          => raise DoNotPanic
 
-        val commonApply' = commonApply Values.intersection
-                                       Values.empty
+        val commonApply' = commonApply Values.storedIntersection
+                                       Values.storedEmpty
                                        callback
                                        zero
       in
@@ -541,13 +544,13 @@ fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
 
       val diffPart =
       let
-        val bUnion = Values.union( map (fn (x,_)=>x) ralpha )
+        val bUnion = Values.storedUnion( map (fn (x,_)=>x) ralpha )
       in
         foldl (fn ((aVal,aSuccs),acc) =>
                 let
-                  val diff = Values.difference(aVal,bUnion)
+                  val diff = Values.storedDifference(aVal,bUnion)
                 in
-                  if Values.empty diff then
+                  if Values.storedEmpty diff then
                     acc
                   else
                     ( diff, aSuccs)::acc
@@ -559,8 +562,8 @@ fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
 
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
-                                     Values.union
-                                     Values.lt
+                                     Values.storedUnion
+                                     Values.storedLt
 
       val alpha = squareUnion' ( diffPart @ commonPart )
     in
@@ -746,20 +749,20 @@ fun hash x = Definition.hash (!x)
 (* Return the hash value of a valuation. Needed by HomFun *)
 fun hashValuation x =
   case x of Nested(nested) => Definition.hash (!nested)
-          | Values(values) => Values.hashUsable values
+          | Values(values) => Values.hash values
 
 (*--------------------------------------------------------------------------*)
 (* Compare two valuations. Needed by HomFun *)
 fun eqValuation (x,y) =
   case (x,y) of ( Nested(nx), Nested(ny) ) => nx = ny
-              | ( Values(vx), Values(vy) ) => Values.eqUsable( vx, vy )
+              | ( Values(vx), Values(vy) ) => Values.eq( vx, vy )
               | ( _ , _ )                  => false
 
 (*--------------------------------------------------------------------------*)
 (* Export a valuation to a string. Needed by HomFun *)
 fun valuationToString x =
  case x of Nested(nested) => toString nested
-         | Values(values) => Values.toString (Values.mkStorable values)
+         | Values(values) => Values.toString values
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor       =    (unit -> 'a)
@@ -918,7 +921,7 @@ let
               ^ " [label=\""
               ^ (case values of
                   Nested _ => raise DoNotPanic
-                | Values v => Values.toString (Values.mkStorable v)
+                | Values v => Values.toString v
                 )
               ^ "\"];\n"
               ]

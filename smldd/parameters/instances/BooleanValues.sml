@@ -21,7 +21,7 @@ val discrete = true
 type value  = int
 
 (*--------------------------------------------------------------------------*)
-fun toList v   = case v of
+fun storedToList v   = case v of
                    0 => []
                  | 1 => [0]
                  | 2 => [1]
@@ -29,7 +29,7 @@ fun toList v   = case v of
                  | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
-fun fromList xs =
+fun storedFromList xs =
   case ( List.exists (fn x => x = 0) xs, List.exists (fn x => x = 1) xs ) of
     ( false, false ) => 0
   | ( true , false ) => 1
@@ -41,7 +41,7 @@ val valueLt = op <
 
 (*--------------------------------------------------------------------------*)
 type stored = int
-type user   = int
+type values = int
 
 (*--------------------------------------------------------------------------*)
 val mkStorable = Util.id
@@ -50,7 +50,7 @@ val mkStorable = Util.id
 val mkUsable   = Util.id
 
 (*--------------------------------------------------------------------------*)
-val lt =  op <
+val storedLt =  op <
 
 (*--------------------------------------------------------------------------*)
 val hash = H.const
@@ -64,7 +64,7 @@ fun length x = case x of
                | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
-fun empty x = x = 0
+fun storedEmpty x = x = 0
 
 (*--------------------------------------------------------------------------*)
 fun toString x = case x of
@@ -75,21 +75,21 @@ fun toString x = case x of
                  | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
-fun mkEmpty () = 0
+val storedToString = toString
 
 (*--------------------------------------------------------------------------*)
-val hashUsable = H.const
+fun storedMkEmpty () = 0
 
 (*--------------------------------------------------------------------------*)
-val eqUsable   = (op =)
+val storedHash = H.const
 
 (*--------------------------------------------------------------------------*)
-val usableLength = length
+val eq         = (op =)
 
 (*--------------------------------------------------------------------------*)
-fun union []      = 0
-|   union (x::[]) = x
-|   union (x::xs) =
+fun storedUnion []      = 0
+|   storedUnion (x::[]) = x
+|   storedUnion (x::xs) =
 let
   fun unionHelper (x,y) =
     case (x,y) of
@@ -105,9 +105,9 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun intersection []      = 0
-|   intersection (x::[]) = x
-|   intersection (x::xs) =
+fun storedIntersection []      = 0
+|   storedIntersection (x::[]) = x
+|   storedIntersection (x::xs) =
 let
   fun interHelper (x,y) =
     case (x,y) of
@@ -123,7 +123,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun difference(x,y) =
+fun storedDifference(x,y) =
   case (x,y) of
 
     (0,_) => 0

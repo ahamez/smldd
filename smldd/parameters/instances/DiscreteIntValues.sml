@@ -21,7 +21,7 @@ val discrete = true
 
 (*--------------------------------------------------------------------------*)
 type stored = Definition.t ref
-type user   = SV.t
+type values = SV.t
 type value  = int
 
 (*--------------------------------------------------------------------------*)
@@ -41,10 +41,10 @@ fun mkStorable v        = UT.unify (mkValues v (SV.hash v))
 fun mkUsable (ref(v,_,_)) = v
 
 (*--------------------------------------------------------------------------*)
-fun toList (ref(v,_,_)) = Util.IntVectorToList v
+fun storedToList (ref(v,_,_)) = Util.IntVectorToList v
 
 (*--------------------------------------------------------------------------*)
-fun fromList xs =
+fun storedFromList xs =
 let
   val v = (SV.fromList xs)
 in
@@ -55,32 +55,35 @@ end
 val valueLt  = (op <)
 
 (*--------------------------------------------------------------------------*)
-fun lt (x,y)               = uid x < uid y
+fun storedLt (x,y)               = uid x < uid y
 
 (*--------------------------------------------------------------------------*)
-fun hash (ref(x,_,_))      = SV.hash x
+fun storedHash (ref(x,_,_))      = SV.hash x
 
 (*--------------------------------------------------------------------------*)
-fun length (ref(x,_,_))    = SV.length x
+(*fun storedLength (ref(x,_,_))    = SV.length x*)
 
 (*--------------------------------------------------------------------------*)
-fun empty (ref(x,_,_))     = SV.empty x
+fun storedEmpty (ref(x,_,_))     = SV.empty x
 
 (*--------------------------------------------------------------------------*)
-fun toString (ref(x,_,_))  = SV.toString x
+fun storedToString (ref(x,_,_))  = SV.toString x
 
 (*--------------------------------------------------------------------------*)
-val hashUsable = SV.hash
+val toString = SV.toString
 
 (*--------------------------------------------------------------------------*)
-val eqUsable   = SV.eq
+val hash = SV.hash
 
 (*--------------------------------------------------------------------------*)
-val usableLength   = SV.length
+val eq   = SV.eq
+
+(*--------------------------------------------------------------------------*)
+val length   = SV.length
 
 (*--------------------------------------------------------------------------*)
 val e = mkStorable( SV.mkEmpty() )
-fun mkEmpty() = e
+fun storedMkEmpty() = e
 
 (*--------------------------------------------------------------------------*)
 (* Operations to manipulate values. Used by the cache. *)
@@ -159,7 +162,7 @@ structure cache = CacheFun(structure Operation = Operations )
 
 (*--------------------------------------------------------------------------*)
 (* Operands should be sorted by caller *)
-fun union xs =
+fun storedUnion xs =
   case xs of
     []      => raise DoNotPanic
   | (x::[]) => x (* No need to cache *)
@@ -167,16 +170,16 @@ fun union xs =
 
 (*--------------------------------------------------------------------------*)
 (* Operands should be sorted by caller *)
-fun intersection xs =
+fun storedIntersection xs =
   case xs of
     []      => raise DoNotPanic
   | (x::[]) => x (* No need to cache *)
   | _       => cache.lookup( Operations.Inter xs )
 
 (*--------------------------------------------------------------------------*)
-fun difference(x,y) =
+fun storedDifference(x,y) =
   if x = y then
-    mkEmpty()
+    storedMkEmpty()
   else
     cache.lookup( Operations.Diff(x,y) )
 

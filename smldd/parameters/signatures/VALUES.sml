@@ -1,34 +1,38 @@
 signature VALUES =
 sig
 
+  (* values view *)
+  type values
+
+  val hash            : values -> Hash.t
+  val eq              : values * values -> bool
+  val length          : values -> int
+  val toString        : values -> string
+
+  (* Library view *)
   eqtype stored
-  type user
   eqtype value
 
-  val discrete      : bool
-  val toList        : stored -> value list
-  val fromList      : value list -> stored
+  val discrete              : bool
 
-  val mkStorable    : user -> stored
-  val mkUsable      : stored -> user
+  val storedToList          : stored -> value list
+  val storedFromList        : value list -> stored
 
-  val lt            : stored * stored -> bool
-  val valueLt       : value * value -> bool
+  val mkStorable            : values -> stored
+  val mkUsable              : stored -> values
 
-  val hash          : stored -> Hash.t
+  val storedLt              : stored * stored -> bool
+  val valueLt               : value * value -> bool
 
-  val length        : stored -> int
-  val empty         : stored -> bool
-  val mkEmpty       : unit -> stored
+  val storedHash            : stored -> Hash.t
 
-  val union         : stored list -> stored
-  val intersection  : stored list -> stored
-  val difference    : stored * stored -> stored
+  val storedEmpty           : stored -> bool
+  val storedMkEmpty         : unit -> stored
 
-  val toString      : stored -> string
+  val storedUnion           : stored list -> stored
+  val storedIntersection    : stored list -> stored
+  val storedDifference      : stored * stored -> stored
 
-  val hashUsable    : user -> Hash.t
-  val eqUsable      : user * user -> bool
-  val usableLength  : user -> int
+  val storedToString        : stored -> string
 
 end
