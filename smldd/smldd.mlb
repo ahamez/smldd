@@ -11,9 +11,9 @@ in
   structure Hom
   structure Tools
 
-  (*structure BooleanValues
+  structure BooleanValues
   structure BoolSDD
   structure BoolHom
-  structure BoolTools*)
+  structure BoolTools
 
 end
