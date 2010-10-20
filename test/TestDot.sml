@@ -5,8 +5,8 @@ open SDD
 
 val values = Values o IntVector.fromList
 
-val toDot      = SDD.toDot ShowHierarchy
-val toDotShare = SDD.toDot ShowSharing
+val toDot      = Tools.toDot Tools.ShowHierarchy
+val toDotShare = Tools.toDot Tools.ShowSharing
 
 fun test00 () =
 let
