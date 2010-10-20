@@ -27,7 +27,6 @@ signature SDD = sig
   val hashValuation     : valuation -> Hash.t
   val eqValuation       : (valuation * valuation) -> bool
   val valuationToString : valuation -> string
-  val valuesLength      : userValues -> int
 
   val toString          : SDD -> string
 
@@ -761,9 +760,6 @@ fun eqValuation (x,y) =
 fun valuationToString x =
  case x of Nested(nested) => toString nested
          | Values(values) => Values.toString (Values.mkStorable values)
-
-(*--------------------------------------------------------------------------*)
-val valuesLength = Values.length o Values.mkStorable
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor       =    (unit -> 'a)
