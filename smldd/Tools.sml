@@ -21,6 +21,9 @@ functor ToolsFun ( structure SDD : SDD
 type SDD = SDD.SDD
 
 (*--------------------------------------------------------------------------*)
+(*--------------------------------------------------------------------------*)
+structure HT = HashTable
+
 (* Count the number of distinct paths in an SDD *)
 fun nbPaths x =
 let
@@ -52,7 +55,6 @@ datatype dotMode = ShowSharing | ShowHierarchy
 (*--------------------------------------------------------------------------*)
 (* Export an SDD to a DOT representation *)
 
-structure HT = HashTable
 
 fun toDot mode x =
 let
