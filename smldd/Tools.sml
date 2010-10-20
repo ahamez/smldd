@@ -141,11 +141,19 @@ let
   in
     foldl ( fn ( (vl,succ), str ) =>
           let
-            fun foo x _ _ = nodeStr x depth
-            val next = visitString (fn () => raise DoNotPanic)
-                                   (fn () => "terminal1" ^ (depthStr depth))
-                                   foo
-                                   succ
+
+            fun helper depth sdd =
+            let
+              fun workaround x _ _ = nodeStr x depth
+            in
+              visitString (fn () => raise DoNotPanic)
+                          (fn () => "terminal1" ^ (depthStr depth))
+                          workaround
+                          sdd
+            end
+
+            val next = helper depth succ
+
           in
               str
             @ [ curr
@@ -165,10 +173,7 @@ let
                                ^ (Int.toString(SDD.uid succ))
                                ^ (depthStr depth)
                                ^ "\""
-                    val nested = "\"node"
-                               ^ (Int.toString(SDD.uid n))
-                               ^ (depthStr (depth + 1))
-                               ^ "\""
+                    val nested = helper (depth +1) n
                   in
                     ghost ^ " [arrowhead=none];\n"
                   ^ ghost ^ " -> " ^ next   ^ ";\n"
