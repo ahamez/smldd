@@ -275,33 +275,21 @@ fun check []     = raise DoNotPanic
 |   check(x::xs) =
 
   foldl (fn (x as (ref (iSDD(sx,_,_))),y as (ref (iSDD(sy,_,_)))) =>
-        case sx of
-          (* Zero should have been filtered out *)
-            Zero => raise DoNotPanic
-          | One  => (case sy of
-                      One => y
-                    | _ => raise IncompatibleSDD
-                    )
-
-          | Node{variable=var1,...} =>
-              (case sy of
-                Node{variable=var2,...} =>
-                  if not( Variable.eq( var1, var2 ) ) then
-                    raise IncompatibleSDD
-                  else
-                    y
-              | _ => raise IncompatibleSDD
-              )
-
-          | HNode{variable=var1,...} =>
-              (case sy of
-                HNode{variable=var2,...} =>
-                  if not( Variable.eq( var1, var2 ) ) then
-                    raise IncompatibleSDD
-                  else
-                    y
-              | _ => raise IncompatibleSDD
-              )
+        case (sx,sy) of
+            (Zero,_)  => raise DoNotPanic
+          | (_,Zero)  => raise DoNotPanic
+          | (One,One) => y
+          | (Node{variable=var1,...},Node{variable=var2,...}) =>
+              if not( Variable.eq( var1, var2 ) ) then
+                raise IncompatibleSDD
+              else
+                 y
+          | (HNode{variable=var1,...},HNode{variable=var2,...}) =>
+              if not( Variable.eq( var1, var2 ) ) then
+                raise IncompatibleSDD
+              else
+                y
+          | (_,_) => raise IncompatibleSDD
         )
         x
         xs
