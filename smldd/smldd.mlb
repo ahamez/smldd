@@ -19,4 +19,9 @@ in
   structure BoolHom
   structure BoolTools
 
+  structure BitWord
+  structure BWSDD
+  structure BWHom
+  structure BWTools
+
 end

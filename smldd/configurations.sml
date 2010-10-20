@@ -29,3 +29,18 @@ structure BoolTools = ToolsFun( structure SDD      = BoolSDD
                               )
 
 (* ------------------------------------------------------------------------ *)
+
+structure BWSDD = SDDFun( structure Variable  = IntVariable
+                        ; structure Values    = BitWordValues )
+
+structure BWHom = HomFun( structure SDD      = BWSDD
+                        ; structure Variable = IntVariable
+                        ; structure Values   = BitWordValues
+                        )
+
+structure BWTools = ToolsFun( structure SDD      = BWSDD
+                            ; structure Variable = IntVariable
+                            ; structure Values   = BitWordValues
+                            )
+
+(* ------------------------------------------------------------------------ *)
