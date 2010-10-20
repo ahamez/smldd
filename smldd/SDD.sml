@@ -425,69 +425,49 @@ in
   (* There shouldn't be any |0| *)
   | Zero       => raise DoNotPanic
 
-  (* Flat node case *)
   | Node{variable=var,...}  =>
-  let
-    (* Check operands compatibility *)
-    val _ = check xs
+    let
+      val _ = check xs
 
-    (* Transform the alpha of each node into :
-       (storedValues,SDD list) list.
-       This type is also used as the accumulator for the foldl
-       on the list of operands, as it will be given to the
-       square union operation.
+      val ( initial, operands ) = case map flatAlphaNodeToList xs of
+                                    []       => raise DoNotPanic
+                                  | (y::ys)  => (y,ys)
 
-       initial  : (storedValues * SDD list) list
-       operands : (storedValues * SDD list) list list *)
-    val ( initial, operands ) = case map flatAlphaNodeToList xs of
-                                  []       => raise DoNotPanic
-                                | (y::ys)  => (y,ys)
+      val commonApply' = commonApply Values.storedIntersection
+                                     Values.storedEmpty
+                                     (intersectionCallback cacheLookup)
+                                     zero
 
-    val commonApply' = commonApply Values.storedIntersection
-                                   Values.storedEmpty
-                                   (intersectionCallback cacheLookup)
-                                   zero
+      val squareUnion' = squareUnion uid
+                                     (unionCallback cacheLookup)
+                                     Values.storedUnion
+                                     Values.storedLt
+    in
+      flatNodeAlpha( var
+                   , squareUnion'( foldl commonApply' initial operands ) )
+    end (* Flat node case *)
 
-    val squareUnion' = squareUnion uid
-                                   (unionCallback cacheLookup)
-                                   Values.storedUnion
-                                   Values.storedLt
-  in
-    flatNodeAlpha( var
-                 , squareUnion'( foldl commonApply' initial operands ) )
-  end (* Flat node case *)
-
-  (* Hierachical node case *)
   | HNode{variable=var,...}  =>
-  let
-    (* Check operands compatibility *)
-    val _ = check xs
+    let
+      val _ = check xs
 
-    (* Transform the alpha of each node into :
-       (SDD,SDD list) list.
-       This type is also used as the accumulator for the foldl
-       on the list of operands, as it will be given to the
-       square union operation.
+      val ( initial, operands ) = case map alphaNodeToList xs of
+                                    []       => raise DoNotPanic
+                                  | (y::ys)  => (y,ys)
 
-       initial  : (SDD * SDD list) list
-       operands : (SDD * SDD list) list list *)
-    val ( initial, operands ) = case map alphaNodeToList xs of
-                                  []       => raise DoNotPanic
-                                | (y::ys)  => (y,ys)
+      val commonApply' = commonApply (intersectionCallback cacheLookup)
+                                     (fn x => x = zero )
+                                     (intersectionCallback cacheLookup)
+                                     zero
 
-    val commonApply' = commonApply (intersectionCallback cacheLookup)
-                                   (fn x => x = zero )
-                                   (intersectionCallback cacheLookup)
-                                   zero
-
-    val squareUnion' = squareUnion uid
-                                   (unionCallback cacheLookup)
-                                   (unionCallback cacheLookup)
-                                   (fn (x,y) => uid x < uid y)
-  in
-    nodeAlpha( var
-             , squareUnion' ( foldl commonApply' initial operands ) )
-  end (* Hierachical node case *)
+      val squareUnion' = squareUnion uid
+                                     (unionCallback cacheLookup)
+                                     (unionCallback cacheLookup)
+                                     (fn (x,y) => uid x < uid y)
+    in
+      nodeAlpha( var
+               , squareUnion' ( foldl commonApply' initial operands ) )
+    end (* Hierachical node case *)
 end (* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
