@@ -55,6 +55,27 @@ in
   TextIO.outputSubstr ( dotFile, Substring.extract(dot,0, NONE) )
 end
 
+fun test04 () =
+let
+  val x0 = node (11, Nested one, one )
+
+  val dot = toDot x0
+  val dotFile = TextIO.openOut "testDot04.dot"
+in
+  TextIO.outputSubstr ( dotFile, Substring.extract(dot,0, NONE) )
+end
+
+fun test05 () =
+let
+  val x0 = node (11, Nested one, one )
+
+  val dot = toDotShare x0
+  val dotFile = TextIO.openOut "testDot05.dot"
+in
+  TextIO.outputSubstr ( dotFile, Substring.extract(dot,0, NONE) )
+end
+
+
 end (* structure TestDot *)
 
 fun testDot () =
@@ -63,5 +84,7 @@ fun testDot () =
   TestDot.test01 ();
   TestDot.test02 ();
   TestDot.test03 ();
+  TestDot.test04 ();
+  TestDot.test05 ();
   ()
 )
