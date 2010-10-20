@@ -507,6 +507,64 @@ end (* end fun intersection *)
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
 fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
+let
+  fun nodeDifference lvr rvr la ra
+                     vlUnion vlInter vlDiff vlEmpty vlLt nodeAlpha
+  =
+    if not( Variable.eq(lvr,rvr) ) then
+      raise IncompatibleSDD
+    else
+    let
+
+      val lalpha = alphaToList la
+      val ralpha = alphaToList ra
+
+      val commonPart =
+      let
+        (* Difference is a binary operation, while commonApply
+           expects an n-ary operation *)
+        fun callback xs =
+          case xs of
+            (x::y::[]) => differenceCallback cacheLookup (x, y)
+          | _          => raise DoNotPanic
+
+        val commonApply' = commonApply vlInter
+                                       vlEmpty
+                                       callback
+                                       zero
+      in
+        commonApply' ( lalpha, ralpha )
+      end
+
+      val diffPart =
+      let
+        val bUnion = vlUnion( map (fn (x,_)=>x) ralpha )
+      in
+        foldl (fn ((aVal,aSuccs),acc) =>
+                let
+                  val diff = vlDiff(aVal,bUnion)
+                in
+                  if vlEmpty diff then
+                    acc
+                  else
+                    ( diff, aSuccs)::acc
+                end
+              )
+              []
+              lalpha
+      end
+
+      val squareUnion' = squareUnion uid
+                                     (unionCallback cacheLookup)
+                                     vlUnion
+                                     vlLt
+
+      val alpha = squareUnion' ( diffPart @ commonPart )
+    in
+      nodeAlpha( lvr, alpha )
+    end
+
+in
   case (l,r) of
 
     (Zero,_)  => raise DoNotPanic
@@ -515,118 +573,24 @@ fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
   | (One,_  ) => raise IncompatibleSDD
 
   | ( Node{variable=lvr,alpha=la}, Node{variable=rvr,alpha=ra} ) =>
-    if not( Variable.eq(lvr,rvr) ) then
-      raise IncompatibleSDD
-    else
-    let
+    nodeDifference lvr rvr la ra
+                   Values.storedUnion Values.storedIntersection
+                   Values.storedDifference Values.storedEmpty Values.storedLt
+                   flatNodeAlpha
 
-      val lalpha = alphaToList la
-      val ralpha = alphaToList ra
-
-      val commonPart =
-      let
-        (* Difference is a binary operation, while commonApply
-           expects an n-ary operation *)
-        fun callback xs =
-          case xs of
-            (x::y::[]) => differenceCallback cacheLookup (x, y)
-          | _          => raise DoNotPanic
-
-        val commonApply' = commonApply Values.storedIntersection
-                                       Values.storedEmpty
-                                       callback
-                                       zero
-      in
-        commonApply' ( lalpha, ralpha )
-      end
-
-      val diffPart =
-      let
-        val bUnion = Values.storedUnion( map (fn (x,_)=>x) ralpha )
-      in
-        foldl (fn ((aVal,aSuccs),acc) =>
-                let
-                  val diff = Values.storedDifference(aVal,bUnion)
-                in
-                  if Values.storedEmpty diff then
-                    acc
-                  else
-                    ( diff, aSuccs)::acc
-                end
-              )
-              []
-              lalpha
-      end
-
-      val squareUnion' = squareUnion uid
-                                     (unionCallback cacheLookup)
-                                     Values.storedUnion
-                                     Values.storedLt
-
-      val alpha = squareUnion' ( diffPart @ commonPart )
-    in
-      flatNodeAlpha( lvr, alpha )
-    end
+  | ( HNode{variable=lvr,alpha=la}, HNode{variable=rvr,alpha=ra} ) =>
+    nodeDifference lvr rvr la ra
+                   (unionCallback cacheLookup)
+                   (intersectionCallback cacheLookup)
+                   (differenceCallback cacheLookup)
+                   (fn x => x = zero) (fn (x,y) => uid x < uid y)
+                   nodeAlpha
 
   | ( Node{...}, _ ) => raise IncompatibleSDD
-
-  (* Difference of two hierarchical nodes *)
-  | ( HNode{variable=lvr,alpha=la}, HNode{variable=rvr,alpha=ra} ) =>
-    if not( Variable.eq(lvr,rvr) ) then
-      raise IncompatibleSDD
-    else
-    let
-
-      val lalpha = alphaToList la
-      val ralpha = alphaToList ra
-
-      val commonPart =
-      let
-        (* Difference is a binary operation, while commonApply
-           expects an n-ary operation *)
-        fun callback xs =
-          case xs of
-            (x::y::[]) => differenceCallback cacheLookup (x, y)
-          | _          => raise DoNotPanic
-
-        val commonApply' = commonApply (intersectionCallback cacheLookup)
-                                       (fn x => x = zero )
-                                       callback
-                                       zero
-      in
-        commonApply' ( lalpha, ralpha )
-      end
-
-      val diffPart =
-      let
-        val bUnion = unionCallback cacheLookup (map (fn (x,_)=>x) ralpha)
-      in
-        foldl (fn ((aVal,aSuccs),acc) =>
-                let
-                  val diff = differenceCallback cacheLookup (aVal,bUnion)
-                in
-                  if diff = zero then
-                    acc
-                  else
-                    ( diff, aSuccs)::acc
-                end
-              )
-              []
-              lalpha
-      end
-
-      val squareUnion' = squareUnion uid
-                                     (unionCallback cacheLookup)
-                                     (unionCallback cacheLookup)
-                                     (fn (x,y) => uid x < uid y)
-      val alpha = squareUnion' ( diffPart @ commonPart )
-    in
-      nodeAlpha( lvr, alpha )
-    end
-
   | ( HNode{...}, _ ) => raise IncompatibleSDD
 
-  (* end fun difference *)
+
+end (* end fun difference *)
 
 (*--------------------------------------------------------------------------*)
 (* Apply an SDD operation. Called by CacheFun. *)
