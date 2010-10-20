@@ -1116,6 +1116,59 @@ struct
     assertTrue( nb = 8 )
   end
 
+  fun testNbNodes00 () =
+    assertTrue ( Tools.nbNodes Tools.Sharing one = 1)
+
+  fun testNbNodes01 () =
+  let
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+  in
+    assertTrue ( Tools.nbNodes Tools.Sharing s0 = 6 )
+  end
+
+  fun testNbNodes02 () =
+  let
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val x0 = node ( 0, Nested s0, one )
+  in
+    assertTrue ( Tools.nbNodes Tools.Sharing x0 = 7 )
+  end
+
+  fun testNbNodes03 () =
+  let
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val x0 = node ( 0, Nested s0, one )
+    val x1 = node ( 0, Nested s0, x0  )
+  in
+    assertTrue ( Tools.nbNodes Tools.Sharing x1 = 8 )
+  end
+
+  fun testNbNodes04 () =
+  let
+    val s0 = node( 0, values [1],
+              node( 1, values [2],
+               node( 2, values [0],
+                node( 3, values [0],
+                 node( 4, values [0], one)))))
+    val x0 = node ( 0, Nested s0, one )
+    val x1 = node ( 0, Nested s0, x0  )
+  in
+    assertTrue ( Tools.nbNodes Tools.Hierarchy x1 = 15 )
+  end
+
+
   (* ---------------------------------------------------------------- *)
 
   fun suite () =
@@ -1197,6 +1250,11 @@ struct
       , ("testPaths00"           , testPaths00         )
       , ("testVisitor00"         , testVisitor00       )
       , ("testCachedVisitor00"   , testCachedVisitor00 )
+      , ("testNbNodes00"         , testNbNodes00       )
+      , ("testNbNodes01"         , testNbNodes01       )
+      , ("testNbNodes02"         , testNbNodes02       )
+      , ("testNbNodes03"         , testNbNodes03       )
+      , ("testNbNodes04"         , testNbNodes04       )
       ]
 
   (* ---------------------------------------------------------------- *)
