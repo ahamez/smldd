@@ -4,9 +4,9 @@ signature TOOLS = sig
   type SDD
   val nbPaths       : SDD -> IntInf.int
 
-  datatype dotMode  = ShowSharing | ShowHierarchy
-  val toDot         : dotMode -> SDD -> string
+  datatype mode  = Sharing | Hierarchy
 
+  val toDot      : mode -> SDD -> string
 end (* signature TOOLS *)
 
 (*--------------------------------------------------------------------------*)
@@ -21,6 +21,8 @@ functor ToolsFun ( structure SDD : SDD
 type SDD = SDD.SDD
 
 (*--------------------------------------------------------------------------*)
+datatype mode = Sharing | Hierarchy
+
 (*--------------------------------------------------------------------------*)
 structure HT = HashTable
 
@@ -61,8 +63,8 @@ let
 
   val visit = SDD.mkVisitor SDD.NonCached
 
-  val maxShare = case mode of ShowHierarchy => false
-                            | ShowSharing   => true
+  val maxShare = case mode of Hierarchy => false
+                            | Sharing   => true
 
   fun depthStr depth = if maxShare then
                          ""
