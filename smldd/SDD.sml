@@ -170,8 +170,8 @@ val one = SDDUT.unify (mkNode One (H.const 1))
 
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
-fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) )
-  = case ( Values.storedEmpty values , next ) of
+fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) ) =
+  case ( Values.storedEmpty values , next ) of
     (_,Zero) => zero
   | (true,_) => zero
   | _        =>
