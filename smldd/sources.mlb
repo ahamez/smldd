@@ -5,7 +5,7 @@ $(MLTON_ROOT)/basis/mlton.mlb
 $(SML_LIB)/smlnj-lib/smlnj-lib.mlb
 $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
-./util.sml
+./Util.sml
 ./exceptions.sml
 ./Hash.sml
 
