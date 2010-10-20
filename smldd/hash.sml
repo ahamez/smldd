@@ -6,6 +6,7 @@ struct
   val const       = MLton.hash
 
   val hashInt     = MLton.hash
+  val hashWord    = MLton.hash
 
   fun hashCombine ( seed , v ) =
   let
