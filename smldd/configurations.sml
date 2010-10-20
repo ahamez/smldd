@@ -8,7 +8,10 @@ structure Hom = HomFun( structure SDD      = SDD
                       ; structure Values   = DiscreteIntValues
                       )
 
-structure Tools = ToolsFun( structure SDD = SDD )
+structure Tools = ToolsFun( structure SDD      = SDD
+                          ; structure Variable = IntVariable
+                          ; structure Values   = DiscreteIntValues
+                          )
 
 (* ------------------------------------------------------------------------ *)
 
@@ -20,6 +23,9 @@ structure BoolHom = HomFun( structure SDD      = BoolSDD
                           ; structure Values   = BooleanValues
                           )
 
-structure BoolTools = ToolsFun( structure SDD = BoolSDD )*)
+structure BoolTools = ToolsFun( structure SDD      = SDD
+                              ; structure Variable = IntVariable
+                              ; structure Values   = DiscreteIntValues
+                              )*)
 
 (* ------------------------------------------------------------------------ *)
