@@ -5,41 +5,41 @@ signature SDD = sig
   type variable
   type values
 
-  datatype valuation    = Nested of SDD
-                        | Values of values
+  datatype valuation      = Nested of SDD
+                          | Values of values
 
-  val zero              : SDD
-  val one               : SDD
-  val node              : variable * valuation * SDD -> SDD
+  val zero                : SDD
+  val one                 : SDD
+  val node                : variable * valuation * SDD -> SDD
 
-  val union             : SDD list -> SDD
-  val intersection      : SDD list -> SDD
-  val difference        : SDD * SDD -> SDD
+  val union               : SDD list -> SDD
+  val intersection        : SDD list -> SDD
+  val difference          : SDD * SDD -> SDD
 
-  val uid               : SDD -> int
-  val variable          : SDD -> variable
-  val alpha             : SDD -> (valuation * SDD) list
-  val hash              : SDD -> Hash.t
+  val uid                 : SDD -> int
+  val variable            : SDD -> variable
+  val alpha               : SDD -> (valuation * SDD) list
+  val hash                : SDD -> Hash.t
 
-  val insert            : SDD list -> SDD -> SDD list
+  val insert              : SDD list -> SDD -> SDD list
 
-  val values            : valuation -> values
-  val nested            : valuation -> SDD
-  val hashValuation     : valuation -> Hash.t
-  val eqValuation       : (valuation * valuation) -> bool
-  val valuationToString : valuation -> string
+  val values              : valuation -> values
+  val nested              : valuation -> SDD
+  val hashValuation       : valuation -> Hash.t
+  val eqValuation         : (valuation * valuation) -> bool
+  val valuationToString   : valuation -> string
 
-  val toString          : SDD -> string
+  val toString            : SDD -> string
 
-  datatype visitorMode  = Cached | NonCached
-  type 'a visitor       =    (unit -> 'a)
+  datatype 'a visitorMode = Cached | NonCached | Once of 'a
+  type 'a visitor         =  (unit -> 'a)
                           -> (unit -> 'a)
                           -> (int -> variable -> (valuation * SDD) list -> 'a)
                           -> SDD
                           -> 'a
-  val mkVisitor         : visitorMode -> 'a visitor
+  val mkVisitor           : 'a visitorMode -> 'a visitor
 
-  val stats             : unit -> string
+  val stats               : unit -> string
 
   exception IncompatibleSDD
   exception IsNotANode
@@ -770,13 +770,13 @@ type 'a visitor       =    (unit -> 'a)
                         -> 'a
 
 (*--------------------------------------------------------------------------*)
-datatype visitorMode  = Cached | NonCached
+datatype 'a visitorMode  = Cached | NonCached | Once of 'a
 
 (*--------------------------------------------------------------------------*)
-fun mkVisitor mode : 'a visitor =
+fun mkVisitor (mode:'a visitorMode) : 'a visitor =
 let
 
-  fun visitBase zero one node s =
+  fun visitorBase zero one node s =
   let
     val ref(iSDD(x,_,uid)) = s
   in
@@ -789,27 +789,47 @@ let
 
 in
     case mode of
-      NonCached => visitBase
+
+      NonCached => visitorBase
+
     | Cached =>
       let
-        val cache : (( SDD, 'a ) HT.hash_table) ref
-            = ref ( HT.mkTable( fn x => hash x , op = )
-                              ( 10000, DoNotPanic ) )
+        val cache : (( SDD, 'a ) HT.hash_table)
+            = ( HT.mkTable( fn x => hash x , op = )
+                          ( 10000, DoNotPanic ) )
 
-        fun visitCache cache zero one node s =
-          case HT.find (!cache) s of
+        fun visitorCache cache zero one node s =
+          case HT.find cache s of
             NONE  =>
               let
-                val res = visitBase zero one node s
+                val res = visitorBase zero one node s
               in
               (
-                HT.insert (!cache) ( s, res );
+                HT.insert cache ( s, res );
                 res
               )
               end
           | SOME v => v
       in
-        visitCache cache
+        visitorCache cache
+      end
+
+    | Once (neutral:'a) =>
+      let
+        val cache : (( SDD, bool ) HT.hash_table)
+            = ( HT.mkTable( fn x => hash x , op = )
+                          ( 10000, DoNotPanic ) )
+
+        fun visitorOnce cache zero one node s =
+          case HT.find cache s of
+            NONE  =>
+              (
+                HT.insert cache ( s, true );
+                visitorBase zero one node s
+              )
+          | SOME _ => neutral
+      in
+        visitorOnce cache
       end
 end
 
