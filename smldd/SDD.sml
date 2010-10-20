@@ -171,20 +171,18 @@ val one = SDDUT.unify (mkNode One (H.const 1))
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
 fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) )
-  = case next of
-    Zero => zero
-  | _    =>
-    if Values.storedEmpty values then
-      zero
-    else
-      let
-        val hashValues = Values.storedHash values
-        val h = H.hashCombine( Variable.hash var
-                             , H.hashCombine( hashNext, hashValues ))
-        val alpha = Vector.fromList [( values, rnext )]
-      in
-        SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) h )
-      end
+  = case ( Values.storedEmpty values , next ) of
+    (_,Zero) => zero
+  | (true,_) => zero
+  | _        =>
+    let
+      val hashValues = Values.storedHash values
+      val h = H.hashCombine( Variable.hash var
+                           , H.hashCombine( hashNext, hashValues ))
+      val alpha = Vector.fromList [( values, rnext )]
+    in
+      SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) h )
+    end
 
 (*--------------------------------------------------------------------------*)
 (* Construct a flat node with an pre-computed alpha. Internal use only! *)
