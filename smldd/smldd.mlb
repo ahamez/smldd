@@ -2,6 +2,9 @@ local
   ./sources.mlb
 in
 
+  signature VARIABLE
+  signature VALUES
+
   functor SDDFun
   functor HomFun
   functor ToolsFun
