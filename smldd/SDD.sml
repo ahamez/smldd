@@ -776,7 +776,7 @@ type 'a visitor       =    (unit -> 'a)
 datatype visitorMode  = Cached | NonCached
 
 (*--------------------------------------------------------------------------*)
-fun mkVisitor (mode:visitorMode) : 'a visitor =
+fun mkVisitor mode : 'a visitor =
 let
 
   fun visitBase zero one node s =
