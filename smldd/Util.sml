@@ -38,24 +38,21 @@ let
              NONE  => MLton.Random.srand (Word.fromInt 42)
           | SOME v => MLton.Random.srand v
 
-  fun helper [] = []
-  |   helper (x::[]) = [x]
-  |   helper (x1::x2::xs) =
+  val a = Array.fromList xs
+
+  fun loop 0 = a
+  |   loop i =
   let
-    val m = Word.mod ((MLton.Random.rand()) , (Word.fromInt 2))
-    val r = if  m = Word.fromInt 0 then
-              true
-            else
-              false
+    val j   = Word.toInt( Word.mod( MLton.Random.rand(), Word.fromInt i ) )
+    val tmp = Array.sub( a, j )
+    val _   = Array.update( a, j, Array.sub( a, i ) )
+    val _   = Array.update( a, i, tmp )
   in
-    if r then
-      x1::x2::(helper xs)
-    else
-      x2::x1::(helper xs)
+    loop (i-1)
   end
 
 in
-  helper xs
+  Array.foldr (fn (x,acc) => x::acc) [] (loop ((Array.length a) -1))
 end
 
 (*--------------------------------------------------------------------------*)
