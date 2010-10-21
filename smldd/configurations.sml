@@ -15,21 +15,6 @@ structure Tools = ToolsFun( structure SDD      = SDD
 
 (* ------------------------------------------------------------------------ *)
 
-structure BoolSDD = SDDFun( structure Variable  = IntVariable
-                          ; structure Values    = BooleanValues )
-
-structure BoolHom = HomFun( structure SDD      = BoolSDD
-                          ; structure Variable = IntVariable
-                          ; structure Values   = BooleanValues
-                          )
-
-structure BoolTools = ToolsFun( structure SDD      = BoolSDD
-                              ; structure Variable = IntVariable
-                              ; structure Values   = BooleanValues
-                              )
-
-(* ------------------------------------------------------------------------ *)
-
 structure BWSDD = SDDFun( structure Variable  = IntVariable
                         ; structure Values    = BitWordValues )
 

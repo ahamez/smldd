@@ -14,11 +14,6 @@ in
   structure Hom
   structure Tools
 
-  structure BooleanValues
-  structure BoolSDD
-  structure BoolHom
-  structure BoolTools
-
   structure BitWord
   structure BWSDD
   structure BWHom
