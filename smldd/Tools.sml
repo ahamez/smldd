@@ -173,14 +173,10 @@ let
           let
 
             fun helper depth sdd =
-            let
-              fun workaround x _ _ = nodeStr x depth
-            in
               visitString (fn () => raise DoNotPanic)
                           (fn () => "terminal1" ^ (depthStr depth))
-                          workaround
+                          (fn x => fn _ => fn _ => nodeStr x depth)
                           sdd
-            end
 
             val next = helper depth succ
 
