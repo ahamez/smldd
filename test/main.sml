@@ -3,4 +3,8 @@ SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
 
 SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
                                  ( TestHom.suite() );
+
+SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
+                                 ( TestUtil.suite() );
+
 testDot();

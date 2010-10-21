@@ -32,6 +32,7 @@ TESTSOURCES=./test/main.mlb     \
             ./test/TestDot.sml  \
             ./test/TestHom.sml  \
             ./test/TestSDD.sml  \
+            ./test/TestUtil.sml \
             ./test/main.sml
 
 

@@ -9,6 +9,7 @@ in
     ./TestSDD.sml
     ./TestHom.sml
     ./TestDot.sml
+    ./TestUtil.sml
     ./main.sml
   end
 end
