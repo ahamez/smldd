@@ -9,7 +9,6 @@ struct
   let
     val l = List.tabulate (100, Util.id)
     val r = shuffle l
-    val _ = print ("[" ^ (String.concatWith "," (map Int.toString r)) ^ "]")
   in
     assertTrue( l <> r )
   end
