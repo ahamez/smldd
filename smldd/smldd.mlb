@@ -9,6 +9,8 @@ in
   functor HomFun
   functor ToolsFun
 
+  structure Util
+
   structure IntSortedVector
   structure SDD
   structure Hom
