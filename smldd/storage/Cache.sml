@@ -66,24 +66,15 @@ functor CacheFun ( structure Operation : OPERATION )
 
     fun cleanup () =
     let
-      val _ = print ("\nCLEANUP " ^ name ^ "| before: ")
-      val _ = print (Int.toString(H.numItems cache))
       val mean = Int.quot( (H.fold (fn ((_,hits),acc) => !hits + acc) 0 cache)
                          , (H.numItems cache)
                          )
       fun keep (v,hits) = case W.get v of
                             NONE    => false
                           | SOME _  => !hits > mean
-
-      fun after () = (print (Int.toString(H.numItems cache)); print "\n")
-
-      val _ = print "\n"
-      val _ = print (stats())
-      val _ = print " \n after: "
     in
-(      H.filter keep cache;
-      after()
-)    end
+      H.filter keep cache
+    end
 
     (* Cleanup cache if necessary *)
     val _ = if ( H.numItems cache ) > 1000000 then
