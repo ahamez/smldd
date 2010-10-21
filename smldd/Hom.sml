@@ -11,6 +11,7 @@ signature Hom = sig
   val mkCons          : variable -> valuation -> hom -> hom
   val mkConst         : SDD -> hom
   val mkUnion         : hom list -> hom
+  val mkIntersection  : hom list -> hom
   val mkComposition   : hom -> hom -> hom
   val mkFixpoint      : hom -> hom
   val mkNested        : hom -> variable -> hom
@@ -54,6 +55,7 @@ struct
              | Cons        of ( variable * valuation * t ref )
              | Const       of SDD
              | Union       of t ref list
+             | Inter       of t ref list
              | Compo       of ( t ref * t ref )
              | Fixpoint    of ( t ref )
              | Nested      of ( t ref * variable )
@@ -69,6 +71,7 @@ struct
                                       andalso SDD.eqValuation(s,t)
     | ( Const(s), Const(t) )       => s = t
     | ( Union(xs), Union(ys) )     => xs = ys
+    | ( Inter(xs), Inter(ys) )     => xs = ys
     | ( Compo(a,b), Compo(c,d) )   => a = c andalso b = d
     | ( Fixpoint(h), Fixpoint(i) ) => h = i
     | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
@@ -94,6 +97,8 @@ struct
                              ^ ")"
     | Const(s)    => "Const(" ^ (SDD.toString s) ^ ")"
     | Union(hs)   => String.concatWith " + "
+                                       (map (fn h => toString (!h)) hs)
+    | Inter(hs)   => String.concatWith " ^ "
                                        (map (fn h => toString (!h)) hs)
     | Compo(a,b)  => (toString (!a)) ^ " o " ^ (toString (!b))
     | Fixpoint(h) => "(" ^ (toString (!h)) ^ ")*"
@@ -187,6 +192,18 @@ fun mkUnion' xs =
 val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
 (*--------------------------------------------------------------------------*)
+fun mkIntersection [] = id
+|   mkIntersection (x::[]) = x
+|   mkIntersection xs =
+let
+  val hsh = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                  (H.const 129292632)
+                  xs
+in
+  UT.unify( mkHom (Inter(xs)) hsh )
+end
+
+(*--------------------------------------------------------------------------*)
 fun mkComposition x y =
   if x = id then
     y
@@ -270,6 +287,7 @@ fun skipVariable var (ref (Hom(h,_,_))) =
   | Cons(_,_,_)          => false
   | Nested(_,v)          => not (Variable.eq (var,v))
   | Union(xs)            => List.all (fn x => skipVariable var x) xs
+  | Inter(xs)            => List.all (fn x => skipVariable var x) xs
   | Compo(a,b)           => skipVariable var a andalso skipVariable var b
   | Fixpoint(f)          => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
@@ -396,6 +414,15 @@ fun union lookup xs sdd =
                    []
                    xs
             )
+
+(*--------------------------------------------------------------------------*)
+fun intersection lookup xs sdd =
+  SDD.intersection (foldl (fn (x,acc) =>
+                          SDD.insert acc (evalCallback lookup x sdd)
+                          )
+                          []
+                          xs
+                   )
 
 (*--------------------------------------------------------------------------*)
 fun satUnion lookup F G L sdd =
@@ -534,6 +561,7 @@ in
     | Const(_)              => raise DoNotPanic
     | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
     | Union(xs)             => union lookup xs sdd
+    | Inter(xs)             => intersection lookup xs sdd
     | Compo( a, b )         => composition lookup a b sdd
     | Fixpoint(g)           => fixpoint lookup g sdd
     | Nested( g, var )      => nested lookup g var sdd
