@@ -230,20 +230,23 @@ let
              []
              nodes
 
-  val l = if x = SDD.one then
+  val l = ["digraph sdd {\n"]
+          @
+          (
+          if x = SDD.one then
             [terminal 1 0]
           else if x = SDD.zero then
             [terminal 0 0]
           else
-              ["digraph sdd {\n"]
-            @ (dotHelper x 0)
+              (dotHelper x 0)
             @ (dotArcHelper ())
             @ (if maxShare then
                 [terminal 1 0]
               else
                 List.tabulate ( !maxDepth + 1, terminal 1)
               )
-            @ ["\n}"]
+          )
+          @ ["\n}"]
 in
   String.concat l
 end (* fun toDot *)
