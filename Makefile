@@ -1,4 +1,5 @@
 ML=mlton
+
 TESTFLAGS= -const 'MLton.detectOverflow true'\
            -const 'Exn.keepHistory true'\
            -const 'MLton.safe true'
