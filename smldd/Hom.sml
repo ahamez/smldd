@@ -95,6 +95,10 @@ struct
   fun hash (Hom(_,h,_)) = h
 
   fun toString (Hom(h,hsh,_)) =
+  let
+    fun optPartToString NONE      = ""
+    |   optPartToString (SOME x) = toString (!x)
+  in
   case h of
       Id          => "Id"
     | Cons(v,s,h) => "Cons(" ^ (Variable.toString v)
@@ -113,19 +117,20 @@ struct
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
     | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
-    | SatUnion(_, F, G, L) =>    "F(" (*^ (toString (!F))*) ^ ") + "
+    | SatUnion(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
-                                ^	"L(" (*^ (toString (!L))*) ^ ")"
+                                ^	"L(" ^ (optPartToString L) ^ ")"
     | SatFixpoint(_, F, G, L) =>  "("
-                                ^ "F(" (*^ (toString (!F))*) ^ ") + "
+                                ^ "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
-                                ^	"L(" (*^ (toString (!L))*) ^ ") )*"
+                                ^	"L(" ^ (optPartToString L) ^ ") )*"
+  end
 
 end (* structure Definition *)
 open Definition
