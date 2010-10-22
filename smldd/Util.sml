@@ -56,4 +56,11 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun IntInfToHumanString x =
+  if x < 1000000 then
+    IntInf.toString x
+  else
+    Real.fmt (StringCvt.SCI (SOME 2)) (Real.fromLargeInt x)
+
+(*--------------------------------------------------------------------------*)
 end (* structure Util *)
