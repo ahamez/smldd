@@ -326,11 +326,9 @@ fun unionCallback lookup xs =
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection!
    Operands should be sorted by caller. *)
-fun intersectionCallback lookup xs =
-  case xs of
-    []      => zero (* No need to cache *)
-  | (x::[]) => x    (* No need to cache *)
-  | _       => lookup(Inter( xs, lookup))
+fun intersectionCallback _      [] = zero
+|   intersectionCallback _ (x::[]) = x
+|   intersectionCallback lookup xs = lookup(Inter( xs, lookup))
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection! *)
@@ -554,11 +552,9 @@ end (* end fun difference *)
 
 (*--------------------------------------------------------------------------*)
 (* Apply an SDD operation. Called by CacheFun. *)
-fun apply x =
-  case x of
-    Union( xs, cacheLookup)  => union        cacheLookup xs
-  | Inter( xs, cacheLookup)  => intersection cacheLookup xs
-  | Diff( x,y, cacheLookup)  => difference   cacheLookup (x,y)
+fun apply (Union( xs, cacheLookup))  = union        cacheLookup xs
+|   apply (Inter( xs, cacheLookup))  = intersection cacheLookup xs
+|   apply (Diff( x,y, cacheLookup))  = difference   cacheLookup (x,y)
 
 (*--------------------------------------------------------------------------*)
 (* Hash an SDD operation *)
@@ -571,9 +567,8 @@ in
     Union(xs,_)  => hashOperands( H.const 15411567, xs)
   | Inter(xs,_ ) => hashOperands( H.const 78995947, xs)
   | Diff(l,r,_)  => H.hashCombine( H.const 94169137
-                               , H.hashCombine( Definition.hash(!l)
-                                            , Definition.hash(!r) )
-                               )
+                                 , H.hashCombine( Definition.hash(!l)
+                                                , Definition.hash(!r) ) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -611,11 +606,9 @@ fun union xs =
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.intersectionCallback!
    Operands should be sorted by caller. *)
-fun intersection xs =
- case xs of
-   []      => zero (* No need to cache *)
- | (x::[]) => x    (* No need to cache *)
- | _       => SDDOpCache.lookup(SDDOperations.Inter( xs, cacheLookup ))
+fun intersection []      = zero
+|   intersection (x::[]) = x
+|   intersection xs = SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
@@ -669,9 +662,8 @@ fun hash x = Definition.hash (!x)
 
 (*--------------------------------------------------------------------------*)
 (* Return the hash value of a valuation. Needed by HomFun *)
-fun hashValuation x =
-  case x of Nested(nested) => Definition.hash (!nested)
-          | Values(values) => Values.hash values
+fun hashValuation (Nested(ref n)) = Definition.hash n
+|   hashValuation (Values(v))     = Values.hash v
 
 (*--------------------------------------------------------------------------*)
 (* Compare two valuations. Needed by HomFun *)
@@ -682,9 +674,8 @@ fun eqValuation (x,y) =
 
 (*--------------------------------------------------------------------------*)
 (* Export a valuation to a string. Needed by HomFun *)
-fun valuationToString x =
- case x of Nested(nested) => toString nested
-         | Values(values) => Values.toString values
+fun valuationToString (Nested(n)) = toString n
+|   valuationToString (Values(v)) = Values.toString v
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor       =    (unit -> 'a)
