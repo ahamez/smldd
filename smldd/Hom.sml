@@ -25,6 +25,7 @@ signature Hom = sig
 
   exception NestedHomOnValues
   exception FunctionHomOnNested
+  exception EmptyOperands
 
 end
 
@@ -39,6 +40,7 @@ functor HomFun ( structure SDD : SDD
 (*--------------------------------------------------------------------------*)
 exception NestedHomOnValues
 exception FunctionHomOnNested
+exception EmptyOperands
 
 (*--------------------------------------------------------------------------*)
 type SDD       = SDD.SDD
@@ -60,8 +62,14 @@ struct
              | Fixpoint    of ( t ref )
              | Nested      of ( t ref * variable )
              | Func        of ( (values -> values) ref * variable )
-             | SatUnion    of ( variable * t ref * t ref list * t ref )
-             | SatFixpoint of ( variable * t ref * t ref list * t ref )
+             | SatUnion    of ( variable
+                              * (t ref) option
+                              * t ref list
+                              * (t ref) option )
+             | SatFixpoint of ( variable
+                              * (t ref) option
+                              * t ref list
+                              * (t ref) option )
 
   fun eq (Hom(x,_,_),Hom(y,_,_)) =
     case (x,y) of
@@ -105,19 +113,19 @@ struct
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
     | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
-    | SatUnion(_, F, G, L) =>    "F(" ^ (toString (!F)) ^ ") + "
+    | SatUnion(_, F, G, L) =>    "F(" (*^ (toString (!F))*) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
-                                ^	"L(" ^ (toString (!L)) ^ ")"
+                                ^	"L(" (*^ (toString (!L))*) ^ ")"
     | SatFixpoint(_, F, G, L) =>  "("
-                                ^ "F(" ^ (toString (!F)) ^ ") + "
+                                ^ "F(" (*^ (toString (!F))*) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
-                                ^	"L(" ^ (toString (!L)) ^ ") )*"
+                                ^	"L(" (*^ (toString (!L))*) ^ ") )*"
 
 end (* structure Definition *)
 open Definition
@@ -165,26 +173,24 @@ fun mkNested h vr =
                     (H.hashCombine(hash (!h), Variable.hash vr )) )
 
 (*--------------------------------------------------------------------------*)
-fun mkUnion' xs =
-  case xs of
-    []    => id
-  | x::[] => x
-  | _     =>
-    let
+fun mkUnion' []      = raise EmptyOperands
+|   mkUnion' (x::[]) = x
+|   mkUnion' xs      =
+let
 
-      fun unionHelper ( h, operands ) =
-      case let val ref(Hom(x,_,_)) = h in x end of
-        Union(ys)     => (foldl unionHelper [] ys) @ operands
-      | _             => h::operands
+  fun unionHelper ( h, operands ) =
+  case let val ref(Hom(x,_,_)) = h in x end of
+    Union(ys)     => (foldl unionHelper [] ys) @ operands
+  | _             => h::operands
 
-      val operands = foldl unionHelper [] xs
+  val operands = foldl unionHelper [] xs
 
-      val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                            (H.const 16564717)
-                            operands
-    in
-      UT.unify( mkHom (Union(operands)) unionHash )
-    end
+  val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                        (H.const 16564717)
+                        operands
+in
+  UT.unify( mkHom (Union(operands)) unionHash )
+end
 
 (*--------------------------------------------------------------------------*)
 (* A sorting wrapper for mkUnion' which does the real job.
@@ -192,9 +198,9 @@ fun mkUnion' xs =
 val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
 (*--------------------------------------------------------------------------*)
-fun mkIntersection [] = id
+fun mkIntersection []      = raise EmptyOperands
 |   mkIntersection (x::[]) = x
-|   mkIntersection xs =
+|   mkIntersection xs      =
 let
   val hsh = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                   (H.const 129292632)
@@ -234,15 +240,19 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun hashOption NONE           = H.const 183931413
+|   hashOption (SOME (ref x)) = hash x
+
+(*--------------------------------------------------------------------------*)
 fun mkSatUnion var F G L =
 let
   val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                    (H.const 59489417)
                    G
   val hsh = H.hashCombine( H.const 48511341
-              , H.hashCombine( hash(!F)
+              , H.hashCombine( hashOption F
                  , H.hashCombine( hshG,
-                     H.hashCombine(hash(!L), Variable.hash var ))))
+                     H.hashCombine(hashOption L, Variable.hash var ))))
 in
   UT.unify( mkHom (SatUnion(var, F, G, L)) hsh )
 end
@@ -254,9 +264,9 @@ let
                    (H.const 19592927)
                    G
   val hsh = H.hashCombine( H.const 99495913
-              , H.hashCombine( hash(!F)
+              , H.hashCombine( hashOption F
                  , H.hashCombine( hshG,
-                     H.hashCombine(hash(!L), Variable.hash var ))))
+                     H.hashCombine(hashOption L, Variable.hash var ))))
 in
   UT.unify( mkHom (SatFixpoint(var, F, G, L)) hsh )
 end
@@ -331,49 +341,81 @@ fun eq ((hx,vx),(hy,vy)) = hx = hy andalso Variable.eq(vx,vy)
 fun hash (h,v) = H.hashCombine( Definition.hash(!h), Variable.hash v )
 
 (*--------------------------------------------------------------------------*)
-fun partition v ( h, (F,G,L) ) =
-  if skipVariable v h then
-    ( h::F, G, L )
-  else
-    case let val ref(Hom(x,_,_)) = h in x end of
-      Nested(n,_) => ( F, G, n::L )
-    | _           => ( F, h::G, L )
+fun partition v hs =
+let
+
+  fun helper ( h, (F,G,L) ) =
+    if skipVariable v h then
+      ( h::F, G, L )
+    else
+      case let val ref(Hom(x,_,_)) = h in x end of
+        Nested(n,_) => ( F, G, n::L )
+      | _           => ( F, h::G, L )
+
+  val (F,G,L) = foldr helper ([],[],[]) hs
+  val F' = if length F = 0 then NONE else SOME F
+  val L' = if length L = 0 then NONE else SOME L
+
+in
+  ( F', G, L' )
+end
 
 (*--------------------------------------------------------------------------*)
 fun rewriteUnion orig v xs =
 let
-  val (F,G,L) = foldr (partition v) ([],[],[]) xs
+  val (F,G,L) = partition v xs
 in
-  if length F = 0 andalso length L = 0 then
+
+  if not (Option.isSome F) andalso not (Option.isSome L) then
     orig
+
   else
-    (
-    rewritten := !rewritten + 1;
-    mkSatUnion v (mkUnion' F) G (mkNested (mkUnion' L) v)
-    )
+  let
+    val F' = case F of
+               NONE   => NONE
+             | SOME f => SOME (mkUnion' f)
+    val L' = case L of
+               NONE   => NONE
+             | SOME l => SOME (mkNested (mkUnion' l) v)
+    val _ = rewritten := !rewritten + 1
+  in
+    mkSatUnion v F' G L'
+  end
+
 end
 
 (*--------------------------------------------------------------------------*)
 fun rewriteFixpoint orig v f =
+
   case let val ref(Hom(h,_,_)) = f in h end of
+
     Union(xs) =>
       if List.exists (fn x => x = id) xs then
+      let
+        val (F,G,L) = partition v xs
+      in
+        if not (Option.isSome F) andalso not (Option.isSome L) then
+          orig
+
+        else
         let
-          val (F,G,L) = foldr (partition v) ([],[],[]) xs
+          val F' =
+            case F of
+              NONE   => NONE
+            | SOME f => SOME (mkFixpoint(mkUnion' f)) (* id is contained *)
+          val L' =
+            case L of
+              NONE   => NONE
+            | SOME l => SOME (mkNested (mkFixpoint (mkUnion' (id::l))) v)
+          val _ = rewritten := !rewritten + 1;
         in
-          if length F = 0 andalso length L = 0 then
-            orig
-          else
-            (
-            rewritten := !rewritten + 1;
-            mkSatFixpoint v
-                          (mkFixpoint(mkUnion' F))
-                          G
-                          (mkNested (mkFixpoint (mkUnion' (id::L))) v)
-            )
+          mkSatFixpoint v F' G L'
         end
-      else
+      end
+
+      else (* No id in operands*)
         orig
+
   | _ => orig
 
 (* ------------------------------------------------ *)
@@ -422,7 +464,14 @@ fun satUnion lookup F G L sdd =
   if sdd = SDD.one then
     raise DoNotPanic
   else
-    SDD.union ( evalInsert lookup (F::L::G) [] sdd )
+  let
+    val fRes = case F of NONE => [] | SOME f => [evalCallback lookup f sdd]
+    val gRes = evalInsert lookup G fRes sdd
+    val lRes = case L of NONE   => gRes
+                       | SOME l => evalInsert lookup [l] gRes sdd
+  in
+    SDD.union lRes
+  end
 
 (*--------------------------------------------------------------------------*)
 fun composition lookup a b sdd =
@@ -448,8 +497,8 @@ fun satFixpoint lookup F G L sdd =
 let
   fun loop sdd =
   let
-    val r  = evalCallback lookup F sdd
-    val r' = evalCallback lookup L r
+    val r  = case F of NONE => sdd | SOME f => evalCallback lookup f sdd
+    val r' = case L of NONE => r   | SOME l => evalCallback lookup l r
   in
     foldl (fn (g,sdd) => SDD.union[ sdd, evalCallback lookup g sdd ]) r' G
   end
