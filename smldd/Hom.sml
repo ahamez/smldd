@@ -331,16 +331,13 @@ fun eq ((hx,vx),(hy,vy)) = hx = hy andalso Variable.eq(vx,vy)
 fun hash (h,v) = H.hashCombine( Definition.hash(!h), Variable.hash v )
 
 (*--------------------------------------------------------------------------*)
-fun partition v ( x, (F,G,L) ) =
-  case let val ref(Hom(h,_,_)) = x in h end of
-    Nested(y,_) => if skipVariable v x then
-                     ( x::F, G, L )
-                   else
-                     ( F, G, y::L )
-  | _           => if skipVariable v x then
-                     ( x::F, G, L )
-                   else
-                     ( F, x::G, L )
+fun partition v ( h, (F,G,L) ) =
+  if skipVariable v h then
+    ( h::F, G, L )
+  else
+    case let val ref(Hom(x,_,_)) = h in x end of
+      Nested(n,_) => ( F, G, n::L )
+    | _           => ( F, h::G, L )
 
 (*--------------------------------------------------------------------------*)
 fun rewriteUnion orig v xs =
