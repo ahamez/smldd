@@ -310,9 +310,9 @@ fun flatAlphaNodeToList n =
 (* Apply alphaToList to a node: SDD -> ( SDD * SDD list ) list
    Warning! Duplicate logic with flatAlphaNodeToList! *)
 fun alphaNodeToList n =
-case !n of
-  iSDD(HNode{alpha=alpha,...},_,_) => alphaToList alpha
-| _ => raise DoNotPanic
+  case !n of
+    iSDD(HNode{alpha=alpha,...},_,_) => alphaToList alpha
+  | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.union!
