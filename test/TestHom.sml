@@ -644,46 +644,118 @@ struct
     assertTrue (o8 = s)
   end
 
-  (* ---------------------------------------------------------------- *)
+(*--------------------------------------------------------------------------*)
+(* Get dead states of philosophers *)
+fun testIntersection00 () =
+let
+
+  fun SDDFromList xs =
+  let
+    fun loop _ []      = one
+    |   loop i (x::xs) =
+      node( i, values [x], loop (i+1) xs )
+  in
+    loop 0 xs
+  end
+
+                      (*0 1 2 3 4 5 6 7 8 9*)
+  val p1 = SDDFromList [1,0,0,0,0,0,0,0,0,1]
+  val p2 = SDDFromList [0,1,0,1,0,0,0,0,0,1]
+  val p3 = SDDFromList [0,1,0,0,1,0,1,0,0,1]
+  val p4 = SDDFromList [0,1,0,0,1,0,0,1,0,0]
+  val p5 = SDDFromList [0,0,1,0,0,0,1,0,0,1]
+  val p6 = SDDFromList [0,0,1,0,0,0,0,1,0,0]
+  val p7 = SDDFromList [0,0,0,0,1,1,0,0,0,0]
+  val p8 = SDDFromList [0,0,0,0,1,0,1,0,1,0]
+  val p9 = SDDFromList [0,0,0,1,0,0,0,0,1,0]
+  val s0 = union [p1,p2,p3,p4,p5,p6,p7,p8,p9]
+
+  fun preTest c values =
+    SV.mapPartial (fn x => if x < c then SOME x else NONE) values
+
+  val P0TakeLeft1 = mkUnion [ mkFunction (ref (preTest 1)) 4
+                            , mkFunction (ref (preTest 1)) 1
+                            ]
+  val P0TakeRight1 = mkUnion [ mkFunction (ref (preTest 1)) 4
+                             , mkFunction (ref (preTest 1)) 6
+                             ]
+  val P0TakeRight2 = mkUnion [ mkFunction (ref (preTest 1)) 2
+                             , mkFunction (ref (preTest 1)) 6
+                             ]
+  val P0TakeLeft2 = mkUnion [ mkFunction (ref (preTest 1)) 3
+                            , mkFunction (ref (preTest 1)) 1
+                            ]
+  val P0GoThink = mkFunction (ref (preTest 1)) 0
+  val P1TakeLeft1 = mkUnion [ mkFunction (ref (preTest 1)) 9
+                            , mkFunction (ref (preTest 1)) 6
+                            ]
+  val P1TakeRight1 = mkUnion [ mkFunction (ref (preTest 1)) 9
+                             , mkFunction (ref (preTest 1)) 1
+                             ]
+  val P1TakeRight2 = mkUnion [ mkFunction (ref (preTest 1)) 7
+                             , mkFunction (ref (preTest 1)) 1
+                             ]
+  val P1TakeLeft2 = mkUnion [ mkFunction (ref (preTest 1)) 8
+                            , mkFunction (ref (preTest 1)) 6
+                            ]
+  val P1GoThink = mkFunction (ref (preTest 1)) 5
+
+  val hDead = mkIntersection [ P0TakeLeft1, P0TakeRight1, P0TakeRight2
+                             , P0TakeLeft2, P0GoThink
+                             , P1TakeLeft1, P1TakeRight1, P1TakeRight2
+                             , P1TakeLeft2, P1GoThink
+                             ]
+  val dead = eval hDead s0
+
+  val o1 = SDDFromList [0,0,1,0,0,0,0,1,0,0]
+  val o2 = SDDFromList [0,0,0,1,0,0,0,0,1,0]
+  val odead = union [o1,o2]
+
+in
+  assertTrue( dead = odead )
+end
+
+(*--------------------------------------------------------------------------*)
 
   fun suite () =
       Test.labelTests
-      [ ("testId00"          , testId00        )
-      , ("testId01"          , testId01        )
-      , ("testCons00"        , testCons00      )
-      , ("testCons01"        , testCons01      )
-      , ("testCons02"        , testCons02      )
-      , ("testFunction00"    , testFunction00  )
-      , ("testFunction01"    , testFunction01  )
-      , ("testFunction02"    , testFunction02  )
-      , ("testFunction03"    , testFunction03  )
-      , ("testFunction04"    , testFunction04  )
-      , ("testFunction05"    , testFunction05  )
-      , ("testFunction06"    , testFunction06  )
-      , ("testFunction07"    , testFunction07  )
-      , ("testFunction08"    , testFunction08  )
-      , ("testFunction09"    , testFunction09  )
-      , ("testFunction10"    , testFunction10  )
-      , ("testNested00"      , testNested00    )
-      , ("testNested01"      , testNested01    )
-      , ("testNested02"      , testNested02    )
-      , ("testNested03"      , testNested03    )
-      , ("testNested04"      , testNested04    )
-      , ("testNested05"      , testNested05    )
-      , ("testNested06"      , testNested06    )
-      , ("testUnion00"       , testUnion00     )
-      , ("testUnion01"       , testUnion01     )
-      , ("testUnion02"       , testUnion02     )
-      , ("testUnion03"       , testUnion03     )
-      , ("testUnion04"       , testUnion04     )
-      , ("testUnion05"       , testUnion05     )
-      , ("testUnion06"       , testUnion06     )
-      , ("testFixpoint00"    , testFixpoint00  )
-      , ("testFixpoint01"    , testFixpoint01  )
-      , ("testFixpoint02"    , testFixpoint02  )
-      , ("testFixpoint03"    , testFixpoint03  )
-      , ("testFixpoint04"    , testFixpoint04  )
-      , ("testFixpoint05"    , testFixpoint05  )
+      [ ("testId00"            , testId00            )
+      , ("testId01"            , testId01            )
+      , ("testCons00"          , testCons00          )
+      , ("testCons01"          , testCons01          )
+      , ("testCons02"          , testCons02          )
+      , ("testFunction00"      , testFunction00      )
+      , ("testFunction01"      , testFunction01      )
+      , ("testFunction02"      , testFunction02      )
+      , ("testFunction03"      , testFunction03      )
+      , ("testFunction04"      , testFunction04      )
+      , ("testFunction05"      , testFunction05      )
+      , ("testFunction06"      , testFunction06      )
+      , ("testFunction07"      , testFunction07      )
+      , ("testFunction08"      , testFunction08      )
+      , ("testFunction09"      , testFunction09      )
+      , ("testFunction10"      , testFunction10      )
+      , ("testNested00"        , testNested00        )
+      , ("testNested01"        , testNested01        )
+      , ("testNested02"        , testNested02        )
+      , ("testNested03"        , testNested03        )
+      , ("testNested04"        , testNested04        )
+      , ("testNested05"        , testNested05        )
+      , ("testNested06"        , testNested06        )
+      , ("testUnion00"         , testUnion00         )
+      , ("testUnion01"         , testUnion01         )
+      , ("testUnion02"         , testUnion02         )
+      , ("testUnion03"         , testUnion03         )
+      , ("testUnion04"         , testUnion04         )
+      , ("testUnion05"         , testUnion05         )
+      , ("testUnion06"         , testUnion06         )
+      , ("testFixpoint00"      , testFixpoint00      )
+      , ("testFixpoint01"      , testFixpoint01      )
+      , ("testFixpoint02"      , testFixpoint02      )
+      , ("testFixpoint03"      , testFixpoint03      )
+      , ("testFixpoint04"      , testFixpoint04      )
+      , ("testFixpoint05"      , testFixpoint05      )
+      , ("testIntersection00"  , testIntersection00  )
       ]
 
   (* ---------------------------------------------------------------- *)
