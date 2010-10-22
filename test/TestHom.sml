@@ -595,7 +595,6 @@ struct
 
 
     val h = mkFixpoint (mkUnion [t3,t2,t1,t4,t5,id])
-    (*val h = mkFixpoint (mkUnion [t1,t2,t3,t4,t5,id])*)
     val s = eval h s0
 
     val o0 = node( 0, values [1],
@@ -643,6 +642,100 @@ struct
   in
     assertTrue (o8 = s)
   end
+
+(*--------------------------------------------------------------------------*)
+(* Get philosophers' state space *)
+fun testFixpoint06 () =
+let
+
+  fun SDDFromList xs =
+  let
+    fun loop _ []      = one
+    |   loop i (x::xs) =
+      node( i, values [x], loop (i+1) xs )
+  in
+    loop 0 xs
+  end
+
+  exception WTF
+  fun mkComp []      = raise WTF
+  |   mkComp (x::[]) = x
+  |   mkComp (x::xs) = mkComposition x (mkComp xs)
+
+                      (*0 1 2 3 4 5 6 7 8 9*)
+  val s0 = SDDFromList [0,1,0,0,1,0,1,0,0,1]
+
+  fun pre c values =
+    SV.mapPartial (fn x => if x < c then NONE else SOME (x-c)) values
+
+  fun post c values =
+    SV.map (fn x => x + c) values
+
+  val P0TakeLeft1 = mkComp [ mkFunction (ref (post 1)) 2
+                           , mkFunction (ref (pre 1)) 4
+                           , mkFunction (ref (pre 1)) 1
+                           ]
+  val P0TakeRight1 = mkComp [ mkFunction (ref (post 1)) 3
+                            , mkFunction (ref (pre 1)) 4
+                            , mkFunction (ref (pre 1)) 6
+                            ]
+  val P0TakeRight2 = mkComp [ mkFunction (ref (post 1)) 0
+                            , mkFunction (ref (pre 1)) 2
+                            , mkFunction (ref (pre 1)) 6
+                            ]
+  val P0TakeLeft2 = mkComp [ mkFunction (ref (post 1)) 0
+                           , mkFunction (ref (pre 1)) 3
+                           , mkFunction (ref (pre 1)) 1
+                           ]
+  val P0GoThink = mkComp [ mkFunction (ref (post 1)) 4
+                         , mkFunction (ref (post 1)) 1
+                         , mkFunction (ref (post 1)) 6
+                         , mkFunction (ref (pre 1)) 0
+                         ]
+  val P1TakeLeft1 = mkComp [ mkFunction (ref (post 1)) 7
+                           , mkFunction (ref (pre 1)) 9
+                           , mkFunction (ref (pre 1)) 6
+                           ]
+  val P1TakeRight1 = mkComp [ mkFunction (ref (post 1)) 8
+                            , mkFunction (ref (pre 1)) 9
+                            , mkFunction (ref (pre 1)) 1
+                            ]
+  val P1TakeRight2 = mkComp [ mkFunction (ref (post 1)) 5
+                            , mkFunction (ref (pre 1)) 7
+                            , mkFunction (ref (pre 1)) 1
+                            ]
+  val P1TakeLeft2 = mkComp [ mkFunction (ref (post 1)) 5
+                           , mkFunction (ref (pre 1)) 8
+                           , mkFunction (ref (pre 1)) 6
+                           ]
+  val P1GoThink = mkComp [ mkFunction (ref (post 1)) 9
+                         , mkFunction (ref (post 1)) 6
+                         , mkFunction (ref (post 1)) 1
+                         , mkFunction (ref (pre 1)) 5
+                         ]
+
+  val h = mkUnion [ P0TakeLeft1, P0TakeRight1, P0TakeRight2
+                  , P0TakeLeft2, P0GoThink
+                  , P1TakeLeft1, P1TakeRight1, P1TakeRight2
+                  , P1TakeLeft2, P1GoThink
+                  , id
+                  ]
+  val s = eval (mkFixpoint h) s0
+
+  val p1 = SDDFromList [1,0,0,0,0,0,0,0,0,1]
+  val p2 = SDDFromList [0,1,0,1,0,0,0,0,0,1]
+  val p3 = SDDFromList [0,1,0,0,1,0,1,0,0,1]
+  val p4 = SDDFromList [0,1,0,0,1,0,0,1,0,0]
+  val p5 = SDDFromList [0,0,1,0,0,0,1,0,0,1]
+  val p6 = SDDFromList [0,0,1,0,0,0,0,1,0,0]
+  val p7 = SDDFromList [0,0,0,0,1,1,0,0,0,0]
+  val p8 = SDDFromList [0,0,0,0,1,0,1,0,1,0]
+  val p9 = SDDFromList [0,0,0,1,0,0,0,0,1,0]
+  val o0 = union [p1,p2,p3,p4,p5,p6,p7,p8,p9]
+
+in
+  assertTrue( s = o0 )
+end
 
 (*--------------------------------------------------------------------------*)
 (* Get dead states of philosophers *)
@@ -755,6 +848,7 @@ end
       , ("testFixpoint03"      , testFixpoint03      )
       , ("testFixpoint04"      , testFixpoint04      )
       , ("testFixpoint05"      , testFixpoint05      )
+      , ("testFixpoint06"      , testFixpoint06      )
       , ("testIntersection00"  , testIntersection00  )
       ]
 
