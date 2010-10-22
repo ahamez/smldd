@@ -657,8 +657,7 @@ let
     loop 0 xs
   end
 
-  exception WTF
-  fun mkComp []      = raise WTF
+  fun mkComp []      = raise Empty
   |   mkComp (x::[]) = x
   |   mkComp (x::xs) = mkComposition x (mkComp xs)
 
