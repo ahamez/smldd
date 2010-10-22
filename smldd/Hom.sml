@@ -400,43 +400,29 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+(* Evaluate a list of homomorphisms and insert the result sorted into a list
+   of results*)
+fun evalInsert lookup hs xs sdd =
+  foldl (fn (h,acc) => SDD.insert acc (evalCallback lookup h sdd) ) xs hs
+
+(*--------------------------------------------------------------------------*)
 fun cons lookup (var, vl, next) sdd =
   SDD.node( var, vl, evalCallback lookup next sdd )
 
 (*--------------------------------------------------------------------------*)
-fun union lookup xs sdd =
-  SDD.union (foldl (fn (x,acc) =>
-                     SDD.insert acc (evalCallback lookup x sdd)
-                   )
-                   []
-                   xs
-            )
+fun union lookup hs sdd =
+  SDD.union( evalInsert lookup hs [] sdd )
 
 (*--------------------------------------------------------------------------*)
-fun intersection lookup xs sdd =
-  SDD.intersection (foldl (fn (x,acc) =>
-                          SDD.insert acc (evalCallback lookup x sdd)
-                          )
-                          []
-                          xs
-                   )
+fun intersection lookup hs sdd =
+  SDD.intersection ( evalInsert lookup hs [] sdd )
 
 (*--------------------------------------------------------------------------*)
 fun satUnion lookup F G L sdd =
   if sdd = SDD.one then
     raise DoNotPanic
   else
-  let
-    val FRes = evalCallback lookup F sdd
-    val GRes = foldl (fn (g,acc) =>
-                       SDD.insert acc (evalCallback lookup g sdd)
-                     )
-                     [FRes]
-                     G
-    val LRes = SDD.insert GRes (evalCallback lookup L sdd)
-  in
-    SDD.union (LRes)
-  end
+    SDD.union ( evalInsert lookup (F::L::G) [] sdd )
 
 (*--------------------------------------------------------------------------*)
 fun composition lookup a b sdd =
