@@ -394,7 +394,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun rewriteUnion orig v xs =
+fun rewriteUI operation mk orig v xs =
 let
   val (F,G,L) = partition v xs
 in
@@ -406,41 +406,16 @@ in
   let
     val F' = case F of
                NONE   => NONE
-             | SOME f => SOME (mkUnion' f)
+             | SOME f => SOME (operation f)
     val L' = case L of
                NONE   => NONE
-             | SOME l => SOME (mkNested (mkUnion' l) v)
+             | SOME l => SOME (mkNested (operation l) v)
     val _ = rewritten := !rewritten + 1
   in
-    mkSatUnion v F' G L'
+    mk v F' G L'
   end
 
 end
-
-(*--------------------------------------------------------------------------*)
-fun rewriteIntersection orig v xs =
-let
-  val (F,G,L) = partition v xs
-in
-
-  if not (Option.isSome F) andalso not (Option.isSome L) then
-    orig
-
-  else
-  let
-    val F' = case F of
-               NONE   => NONE
-             | SOME f => SOME (mkIntersection f)
-    val L' = case L of
-               NONE   => NONE
-             | SOME l => SOME (mkNested (mkIntersection l) v)
-    val _ = rewritten := !rewritten + 1
-  in
-    mkSatIntersection v F' G L'
-  end
-
-end
-
 
 (*--------------------------------------------------------------------------*)
 fun rewriteFixpoint orig v f =
@@ -479,8 +454,8 @@ fun rewriteFixpoint orig v f =
 (* ------------------------------------------------ *)
 fun apply ( h, v ) =
   case let val ref(Hom(x,_,_)) = h in x end of
-    Union(xs)   => rewriteUnion h v xs
-  | Inter(xs)   => rewriteIntersection h v xs
+    Union(xs)   => rewriteUI mkUnion' mkSatUnion h v xs
+  | Inter(xs)   => rewriteUI mkIntersection mkSatIntersection h v xs
   | Fixpoint(f) => rewriteFixpoint h v f
   | _           => raise DoNotPanic
 
