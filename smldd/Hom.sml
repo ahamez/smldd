@@ -66,6 +66,10 @@ struct
                               * (t ref) option
                               * t ref list
                               * (t ref) option )
+             | SatInter    of ( variable
+                              * (t ref) option
+                              * t ref list
+                              * (t ref) option )
              | SatFixpoint of ( variable
                               * (t ref) option
                               * t ref list
@@ -86,6 +90,9 @@ struct
     | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
     | ( SatUnion(v, F, G, L)
       , SatUnion(v',F',G',L'))     => F = F' andalso G = G' andalso L = L'
+                                      andalso Variable.eq(v,v')
+    | ( SatInter(v, F, G, L)
+      , SatInter(v',F',G',L'))     => F = F' andalso G = G' andalso L = L'
                                       andalso Variable.eq(v,v')
     | ( SatFixpoint(v, F, G, L)
       , SatFixpoint(v',F',G',L'))  => F = F' andalso G = G' andalso L = L'
@@ -122,6 +129,12 @@ struct
                                 ^ (String.concatWith " + "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
+                                ^	"L(" ^ (optPartToString L) ^ ")"
+    | SatInter(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") ^ "
+                                ^ "G("
+                                ^ (String.concatWith " ^ "
+                                        (map (fn h => toString (!h)) G))
+                                ^ ") ^ "
                                 ^	"L(" ^ (optPartToString L) ^ ")"
     | SatFixpoint(_, F, G, L) =>  "("
                                 ^ "F(" ^ (optPartToString F) ^ ") + "
@@ -263,6 +276,20 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun mkSatIntersection var F G L =
+let
+  val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                   (H.const 565165613)
+                   G
+  val hsh = H.hashCombine( H.const 51454531
+              , H.hashCombine( hashOption F
+                 , H.hashCombine( hshG,
+                     H.hashCombine(hashOption L, Variable.hash var ))))
+in
+  UT.unify( mkHom (SatInter(var, F, G, L)) hsh )
+end
+
+(*--------------------------------------------------------------------------*)
 fun mkSatFixpoint var F G L =
 let
   val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
@@ -307,6 +334,7 @@ fun skipVariable var (ref (Hom(h,_,_))) =
   | Fixpoint(f)          => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
+  | SatInter(v,_,_,_)    => not (Variable.eq (var,v))
   | SatFixpoint(v,_,_,_) => not (Variable.eq (var,v))
 
 (*--------------------------------------------------------------------------*)
@@ -390,6 +418,31 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun rewriteIntersection orig v xs =
+let
+  val (F,G,L) = partition v xs
+in
+
+  if not (Option.isSome F) andalso not (Option.isSome L) then
+    orig
+
+  else
+  let
+    val F' = case F of
+               NONE   => NONE
+             | SOME f => SOME (mkIntersection f)
+    val L' = case L of
+               NONE   => NONE
+             | SOME l => SOME (mkNested (mkIntersection l) v)
+    val _ = rewritten := !rewritten + 1
+  in
+    mkSatIntersection v F' G L'
+  end
+
+end
+
+
+(*--------------------------------------------------------------------------*)
 fun rewriteFixpoint orig v f =
 
   case let val ref(Hom(h,_,_)) = f in h end of
@@ -427,6 +480,7 @@ fun rewriteFixpoint orig v f =
 fun apply ( h, v ) =
   case let val ref(Hom(x,_,_)) = h in x end of
     Union(xs)   => rewriteUnion h v xs
+  | Inter(xs)   => rewriteIntersection h v xs
   | Fixpoint(f) => rewriteFixpoint h v f
   | _           => raise DoNotPanic
 
@@ -442,6 +496,7 @@ let
 in
   case let val ref(Hom(x,_,_)) = h in x end of
     Union(xs)   => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | Inter(xs)   => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Fixpoint(f) => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | _           => h
 end
@@ -476,6 +531,20 @@ fun satUnion lookup F G L sdd =
                        | SOME l => evalInsert lookup [l] gRes sdd
   in
     SDD.union lRes
+  end
+
+(*--------------------------------------------------------------------------*)
+fun satIntersection lookup F G L sdd =
+  if sdd = SDD.one then
+    raise DoNotPanic
+  else
+  let
+    val fRes = case F of NONE => [] | SOME f => [evalCallback lookup f sdd]
+    val gRes = evalInsert lookup G fRes sdd
+    val lRes = case L of NONE   => gRes
+                       | SOME l => evalInsert lookup [l] gRes sdd
+  in
+    SDD.intersection lRes
   end
 
 (*--------------------------------------------------------------------------*)
@@ -604,6 +673,7 @@ in
     | Nested( g, var )      => nested lookup g var sdd
     | Func( f, var )        => function lookup f var sdd
     | SatUnion( _, F, G, L) => satUnion lookup F G L sdd
+    | SatInter( _, F, G, L) => satIntersection lookup F G L sdd
     | SatFixpoint(_,F,G,L)  => satFixpoint lookup F G L sdd
   end
 
