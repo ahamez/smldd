@@ -11,6 +11,7 @@ signature SDD = sig
   val zero                : SDD
   val one                 : SDD
   val node                : variable * valuation * SDD -> SDD
+  val fromList            : (variable * valuation ) list -> SDD
 
   val union               : SDD list -> SDD
   val intersection        : SDD list -> SDD
@@ -242,6 +243,10 @@ fun node ( vr , vl , next ) =
   case vl of
     Values(values) => flatNode( vr, Values.mkStorable values, next )
   | Nested(nested) => hierNode( vr, nested, next )
+
+(*--------------------------------------------------------------------------*)
+fun fromList []             = one
+|   fromList ((var,vl)::xs) = node( var, vl, fromList xs )
 
 (*--------------------------------------------------------------------------*)
 local (* SDD manipulation *)
