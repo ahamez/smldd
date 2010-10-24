@@ -1,5 +1,5 @@
 (*--------------------------------------------------------------------------*)
-signature Hom = sig
+signature HOM = sig
 
   eqtype hom
   type SDD
@@ -34,7 +34,7 @@ functor HomFun ( structure SDD : SDD
                  and Variable  : VARIABLE where type t      = SDD.variable
                  and Values    : VALUES   where type values = SDD.values
                )
-  : Hom
+  : HOM
 = struct
 
 (*--------------------------------------------------------------------------*)
