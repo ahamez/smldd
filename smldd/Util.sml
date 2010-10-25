@@ -76,7 +76,7 @@ let
   end
 
 in
-  if i < 0 then
+  if i < 0 orelse i > length xs then
     raise Subscript
   else
     helper xs i
