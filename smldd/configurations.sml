@@ -1,5 +1,4 @@
 (* ------------------------------------------------------------------------ *)
-
 structure SDD = SDDFun( structure Variable  = IntVariable
                       ; structure Values    = DiscreteIntValues )
 
@@ -14,7 +13,6 @@ structure Tools = ToolsFun( structure SDD      = SDD
                           )
 
 (* ------------------------------------------------------------------------ *)
-
 structure BWSDD = SDDFun( structure Variable  = IntVariable
                         ; structure Values    = BitWordValues )
 
