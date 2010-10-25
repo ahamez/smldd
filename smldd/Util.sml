@@ -83,4 +83,26 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun explodeRightBy xs i =
+let
+
+  fun helper ( x, [] ) = [[x]]
+  |   helper ( x, Y as (y::ys) ) =
+    if length y = i then
+      [x] :: Y
+    else
+      (x::y)::ys
+
+in
+
+  if i < 0 then
+    raise Domain
+  else if i > length xs then
+    raise Subscript
+  else
+    foldr helper [] xs
+
+end
+
+(*--------------------------------------------------------------------------*)
 end (* structure Util *)
