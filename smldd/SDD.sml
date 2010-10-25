@@ -320,8 +320,7 @@ fun alphaNodeToList n =
   | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
-(* Warning: duplicate with SDD.union!
-   Operands should be sorted by caller. *)
+(* Warning: duplicate with SDD.union! Operands should be sorted by caller. *)
 fun unionCallback lookup xs =
   case List.filter (fn x => x <> zero ) xs of
     []      => zero   (* No need to cache *)
