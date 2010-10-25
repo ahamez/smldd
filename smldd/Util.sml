@@ -63,4 +63,24 @@ fun IntInfToHumanString x =
     Real.fmt (StringCvt.SCI (SOME 2)) (Real.fromLargeInt x)
 
 (*--------------------------------------------------------------------------*)
+fun splitAt xs i =
+let
+
+  fun helper [] _      = ( [], [])
+  |   helper xs 0      = ( [], xs )
+  |   helper (x::xs) i =
+  let
+    val ( a, b ) = helper xs (i - 1)
+  in
+    ( x::a, b )
+  end
+
+in
+  if i < 0 then
+    raise Subscript
+  else
+    helper xs i
+end
+
+(*--------------------------------------------------------------------------*)
 end (* structure Util *)
