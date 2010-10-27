@@ -7,4 +7,7 @@ sig
   val hash      : t -> Hash.t
   val toString  : t -> string
 
+  val first     : t
+  val next      : t -> t
+
 end
