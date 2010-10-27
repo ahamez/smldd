@@ -4,6 +4,7 @@ in
 
   signature VARIABLE
   signature VALUES
+  signature IDENTIFIER
 
   functor SDDFun
   functor HomFun
@@ -14,6 +15,7 @@ in
   structure IntSortedVector
   structure SDD
   structure Hom
+  structure Order
   structure Tools
 
   structure BitWord
