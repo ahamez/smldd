@@ -7,7 +7,7 @@ structure Hom = HomFun( structure SDD      = SDD
                       ; structure Values   = DiscreteIntValues
                       )
 
-structure Order = OrderFun( structure Identifier = StringIdentifier
+structure Order = OrderFun( structure Identifier = IntIdentifier
                           ; structure SDD        = SDD
                           ; structure Variable   = IntVariable
                           ; structure Values     = DiscreteIntValues
