@@ -3,26 +3,26 @@ struct
 
   open SMLUnit.Assert
   structure Test = SMLUnit.Test
-  open Order
+  open StringOrder
 
   fun testFlatOrder00 () =
   let
     val vars = ["a","b","c","d"]
-    val ord  = Order.flatOrder vars
+    val ord  = flatOrder vars
     (*val _ = print "\n"
-    val _ = print (Order.toString ord)*)
+    val _ = print (toString ord)*)
   in
     assertTrue( true )
   end
 
   fun testHierOrder00 () =
   let
-    val ord0  = Order.flatOrder ["a","b","c","d"]
-    val ord1  = Order.flatOrder ["d","e","f","g"]
+    val ord0  = flatOrder ["a","b","c","d"]
+    val ord1  = flatOrder ["d","e","f","g"]
     val ord2  = addHierarchicalNode (mkOrder()) "x" ord0
     val ord3  = addHierarchicalNode ord2 "y" ord1
     (*val _ = print "\n"
-    val _ = print (Order.toString ord3)*)
+    val _ = print (toString ord3)*)
   in
     assertTrue( true )
   end
@@ -33,7 +33,7 @@ struct
     val ord  = flatOrder vars
     val ord' = transform (MaxLeaves 5) ord
     (*val _ = print "\n"
-    val _ = print (Order.toString ord')*)
+    val _ = print (toString ord')*)
   in
     assertTrue( true )
   end
@@ -44,7 +44,7 @@ struct
     val ord  = flatOrder vars
     val ord' = transform (MaxLeaves 3) ord
     (*val _ = print "\n"
-    val _ = print (Order.toString ord')*)
+    val _ = print (toString ord')*)
   in
     assertTrue( true )
   end
