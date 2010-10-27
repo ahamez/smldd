@@ -14,17 +14,20 @@ SOURCES=./smldd/sources.mlb                                  \
         ./smldd/storage/UnicityTable.sml                     \
         ./smldd/BitWord.sml                                  \
         ./smldd/IntSortedVector.sml                          \
+        ./smldd/parameters/signatures/IDENTIFIER.sml         \
         ./smldd/parameters/signatures/VALUES.sml             \
         ./smldd/parameters/signatures/VARIABLE.sml           \
         ./smldd/parameters/instances/BitWordValues.sml       \
         ./smldd/parameters/instances/DiscreteIntValues.sml   \
         ./smldd/parameters/instances/IntVariable.sml         \
+        ./smldd/parameters/instances/StringIdentifier.sml    \
         ./smldd/squareUnion.sml                              \
         ./smldd/commonApply.sml                              \
         ./smldd/unionSDD.sml                                 \
         ./smldd/unionFlatDiscreteSDD.sml                     \
         ./smldd/SDD.sml                                      \
         ./smldd/Hom.sml                                      \
+        ./smldd/Order.sml                                    \
         ./smldd/Tools.sml                                    \
         ./smldd/configurations.sml
 
