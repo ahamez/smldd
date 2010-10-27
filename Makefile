@@ -31,11 +31,12 @@ SOURCES=./smldd/sources.mlb                                  \
         ./smldd/Tools.sml                                    \
         ./smldd/configurations.sml
 
-TESTSOURCES=./test/main.mlb     \
-            ./test/TestDot.sml  \
-            ./test/TestHom.sml  \
-            ./test/TestSDD.sml  \
-            ./test/TestUtil.sml \
+TESTSOURCES=./test/main.mlb      \
+            ./test/TestDot.sml   \
+            ./test/TestHom.sml   \
+            ./test/TestOrder.sml \
+            ./test/TestSDD.sml   \
+            ./test/TestUtil.sml  \
             ./test/main.sml
 
 

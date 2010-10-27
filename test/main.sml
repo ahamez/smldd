@@ -7,4 +7,7 @@ SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
 SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
                                  ( TestUtil.suite() );
 
+SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
+                                 ( TestOrder.suite() );
+
 testDot();

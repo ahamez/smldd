@@ -10,6 +10,7 @@ in
     ./TestHom.sml
     ./TestDot.sml
     ./TestUtil.sml
+    ./TestOrder.sml
     ./main.sml
   end
 end
