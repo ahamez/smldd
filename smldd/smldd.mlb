@@ -15,7 +15,8 @@ in
   structure IntSortedVector
   structure SDD
   structure Hom
-  structure Order
+  structure IntOrder
+  structure StringOrder
   structure Tools
 
   structure BitWord
