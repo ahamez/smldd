@@ -126,6 +126,17 @@ let
               alpha
        )
 
+  fun walkOnly depth dotHelper uid var alpha =
+    foldl (fn ((vl,succ),str) =>
+              case vl of
+                SDD.Values v => dotHelper succ depth
+              | SDD.Nested n => str
+                                @ (dotHelper n    (depth + 1) )
+                                @ (dotHelper succ depth       )
+          )
+          []
+          alpha
+
   (* Associate an SDD to a list of all hierarchies it belongs to *)
   val nodes : ( ( SDD , int list ref ) HT.hash_table )
         = (HT.mkTable( SDD.hash , op = ) ( 10000, DoNotPanic ))
@@ -134,27 +145,42 @@ let
 
   fun dotHelper sdd depth =
   let
-    val _ = case HT.find nodes sdd of
-              NONE        => HT.insert nodes ( sdd, ref [depth] )
-            | SOME depths =>
-              let
-                fun insertSorted x [] = []
-                |   insertSorted x (Y as (y::ys)) =
-                  if x = y then
-                    Y
-                  else if x < y then
-                    x::Y
-                  else
-                    y::(insertSorted x ys)
-              in
-                depths := insertSorted depth (!depths)
-              end
+    val ( found, newDepth ) =
+                case HT.find nodes sdd of
+                  NONE        => ( HT.insert nodes ( sdd, ref [depth] );
+                                   ( false, false )
+                                 )
+                | SOME depths =>
+                  let
+                    fun insertSorted x [] = ([x] , true)
+                    |   insertSorted x (Y as (y::ys)) =
+                      if x = y then
+                        ( Y, false )
+                      else if x < y then
+                        ( x::Y, true )
+                      else
+                      let
+                        val (ys',newDepth) = insertSorted x ys
+                      in
+                        ( y::ys', newDepth )
+                      end
+
+                    val ( depths', newDepth ) = insertSorted depth (!depths)
+                    val _ = depths := depths'
+                  in
+                    ( true, newDepth )
+                  end
     val _ = if depth > !maxDepth then
               maxDepth := depth
             else
               ()
   in
-    visit (fn () => []) (fn () => []) (node depth dotHelper) sdd
+    if not found then
+      visit (fn () => []) (fn () => []) (node depth dotHelper) sdd
+    else if newDepth then
+      visit (fn () => []) (fn () => []) (walkOnly depth dotHelper) sdd
+    else
+      []
   end
 
   fun nodeArc depth uid _ alpha =
