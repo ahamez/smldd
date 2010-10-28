@@ -87,7 +87,10 @@ end
 fun toDotHelper mode x =
 let
 
-  val visit = SDD.mkVisitor SDD.NonCached
+  val visit = case mode of Hierarchy => SDD.mkVisitor SDD.NonCached
+                         | Sharing   => SDD.mkVisitor (SDD.Once [])
+
+  val visitArc = SDD.mkVisitor SDD.NonCached
 
   val maxShare = case mode of Hierarchy => false
                             | Sharing   => true
@@ -134,11 +137,6 @@ let
     val _ = case HT.find nodes sdd of
               NONE        => HT.insert nodes ( sdd, ref [depth] )
             | SOME depths =>
-              if maxShare then
-                (* Insert only for the first time, as in real sharing mode,
-                   we don't care about depth *)
-                ()
-              else
               let
                 fun insertSorted x [] = []
                 |   insertSorted x (Y as (y::ys)) =
@@ -217,10 +215,10 @@ let
   fun dotArcHelper () =
     HT.foldi (fn (sdd, ref depths, str) =>
                str @ (foldl (fn (d,str) =>
-                              str @ (visit (fn () => [])
-                                           (fn () => [])
-                                           (nodeArc d)
-                                           sdd
+                              str @ (visitArc (fn () => [])
+                                              (fn () => [])
+                                              (nodeArc d)
+                                              sdd
                                     )
                              )
                              []
