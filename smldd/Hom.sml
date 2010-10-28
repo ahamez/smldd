@@ -15,7 +15,16 @@ signature HOM = sig
   val mkComposition   : hom -> hom -> hom
   val mkFixpoint      : hom -> hom
   val mkNested        : hom -> variable -> hom
-  val mkFunction      : (values -> values) ref -> variable -> hom
+
+  datatype UserIn     = Eval of values
+                      | Hash
+                      | Print
+
+  datatype UserOut    = EvalRes  of values
+                      | HashRes  of Hash.t
+                      | PrintRes of string
+
+  val mkFunction      : (UserIn -> UserOut) ref -> variable -> hom
 
   val eval            : hom -> SDD -> SDD
 
@@ -26,6 +35,9 @@ signature HOM = sig
   exception NestedHomOnValues
   exception FunctionHomOnNested
   exception EmptyOperands
+  exception NotUserValues
+  exception NotUserString
+  exception NotUserHash
 
 end
 
@@ -41,12 +53,43 @@ functor HomFun ( structure SDD : SDD
 exception NestedHomOnValues
 exception FunctionHomOnNested
 exception EmptyOperands
+exception NotUserValues
+exception NotUserString
+exception NotUserHash
 
 (*--------------------------------------------------------------------------*)
 type SDD       = SDD.SDD
 type variable  = Variable.t
 type values    = Values.values
 type valuation = SDD.valuation
+
+(*--------------------------------------------------------------------------*)
+datatype UserIn     = Eval of values
+                    | Hash
+                    | Print
+
+(*--------------------------------------------------------------------------*)
+datatype UserOut    = EvalRes  of values
+                    | HashRes  of Hash.t
+                    | PrintRes of string
+
+(*--------------------------------------------------------------------------*)
+fun funcValues (ref f) v =
+  case f (Eval v ) of
+    EvalRes v => v
+  | _         => raise NotUserValues
+
+(*--------------------------------------------------------------------------*)
+fun funcString (ref f) =
+  case f Print of
+    PrintRes s => s
+  | _          => raise NotUserString
+
+(*--------------------------------------------------------------------------*)
+fun funcHash (ref f) =
+  case f Hash of
+    HashRes h => h
+  | _         => raise NotUserHash
 
 (*--------------------------------------------------------------------------*)
 structure Definition =
@@ -61,7 +104,7 @@ struct
              | Compo       of ( t ref * t ref )
              | Fixpoint    of ( t ref )
              | Nested      of ( t ref * variable )
-             | Func        of ( (values -> values) ref * variable )
+             | Func        of ( (UserIn -> UserOut) ref * variable )
              | SatUnion    of ( variable
                               * (t ref) option
                               * t ref list
@@ -123,7 +166,8 @@ struct
     | Fixpoint(h) => "(" ^ (toString (!h)) ^ ")*"
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
-    | Func(_,v)   => "Func(" ^ (Variable.toString v) ^ ")"
+    | Func(_,v)   => "Func("  ^ ","
+                      ^ (Variable.toString v) ^ ")"
     | SatUnion(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
@@ -252,7 +296,8 @@ fun mkFixpoint (rh as (ref (Hom(h,hsh,_)))) =
 (*--------------------------------------------------------------------------*)
 fun mkFunction f var =
 let
-  val hsh = H.hashCombine( H.const 7837892, Variable.hash var )
+  val hsh = H.hashCombine( H.const 7837892,
+              H.hashCombine( Variable.hash var, funcHash f ) )
 in
   UT.unify( mkHom (Func(f,var)) hsh )
 end
@@ -590,7 +635,7 @@ fun function lookup f var sdd =
                 SDD.Nested(_)      => raise FunctionHomOnNested
               | SDD.Values(values) =>
               let
-                val values' = !f values
+                val values' = funcValues f values
               in
                 SDD.insert acc (SDD.node( var, SDD.Values values', succ))
               end

@@ -3,7 +3,16 @@ struct
 
   open SMLUnit.Assert
   structure Test = SMLUnit.Test
+  structure SV = IntSortedVector
   open StringOrder
+
+  (* ---------------------------------------------------------------- *)
+  fun f3 (Hom.Eval _) =
+    Hom.EvalRes (SV.fromList [1,2,3])
+  |   f3 Hom.Print =
+    Hom.PrintRes "f3"
+  |   f3 Hom.Hash =
+    Hom.HashRes (Hash.const 987)
 
   fun testFlatOrder00 () =
   let
@@ -107,8 +116,7 @@ struct
 
   fun testHom00 () =
   let
-    fun f0 _ = IntSortedVector.fromList [1,2,3]
-    val rf0  = ref f0
+    val rf0  = ref f3
     val vars  = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
     val ord   = flatOrder vars
     val h0    = hom ord "i" (fn v => Hom.mkFunction rf0 v)
@@ -119,8 +127,7 @@ struct
 
   fun testHom01 () =
   let
-    fun f0 _ = IntSortedVector.fromList [1,2,3]
-    val rf0  = ref f0
+    val rf0  = ref f3
     val vars  = ["a","b","c","d"]
     val ord  = transform (MaxLeaves 3) (flatOrder vars)
     val h0    = hom ord "c" (fn v => Hom.mkFunction rf0 v)
