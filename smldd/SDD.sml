@@ -735,7 +735,7 @@ in
 
     | Once (neutral:'a) =>
       let
-        val cache : (( SDD, bool ) HT.hash_table)
+        val cache : (( SDD, unit ) HT.hash_table)
             = ( HT.mkTable( fn x => hash x , op = )
                           ( 10000, DoNotPanic ) )
 
@@ -743,7 +743,7 @@ in
           case HT.find cache s of
             NONE  =>
               (
-                HT.insert cache ( s, true );
+                HT.insert cache ( s, () );
                 visitorBase zero one node s
               )
           | SOME _ => neutral
