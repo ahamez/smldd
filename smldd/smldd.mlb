@@ -10,6 +10,7 @@ in
   functor HomFun
   functor ToolsFun
 
+  structure Hash
   structure Util
 
   structure IntSortedVector
