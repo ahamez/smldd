@@ -4,6 +4,7 @@ struct
   type t          = Int32.int
 
   val eq          = op =
+  val lt          = Int32.<
   fun hash x      = Hash.hashCombine( Hash.hashInt x, Hash.const 666 )
   val toString    = Int32.toString
 
