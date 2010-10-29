@@ -269,7 +269,7 @@ let
                   (H.const 129292632)
                   xs
 in
-  UT.unify( mkHom (Inter(xs)) hsh )
+  UT.unify( mkHom (Inter xs) hsh )
 end
 
 (*--------------------------------------------------------------------------*)
