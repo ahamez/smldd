@@ -241,32 +241,29 @@ fun domainEq (x , y ) =
   | ( Empty, Empty) => true
   | ( _ , _ )       => false
 
+
 (*--------------------------------------------------------------------------*)
-fun domainIntersection x y =
+fun emptyDomainIntersection x y =
   case ( x, y ) of
-    ( All, _ )   => y
-  | ( _, All )   => x
-  | ( Empty, _ ) => Empty
-  | ( _, Empty ) => Empty
+    ( All, _ )   => false
+  | ( _, All )   => false
+  | ( Empty, _ ) => true
+  | ( _, Empty ) => true
   | ( Variables ls, Variables rs ) =>
     let
 
       fun helper ls rs =
         case ( ls, rs ) of
-          ( _, [] ) => []
-        | ( [], _ ) => []
+          ( _, [] ) => true
+        | ( [], _ ) => true
         | ( l::ls, r::rs ) =>
           if Variable.eq( l, r ) then
-            l::(helper ls rs)
+            false
           else
             helper ls rs
 
-      val inter = helper ls rs
-
     in
-      case inter of
-        [] => Empty
-      | _  => Variables inter
+      helper ls rs
     end
 
 (*--------------------------------------------------------------------------*)
@@ -323,9 +320,9 @@ fun isSelector (ref(Hom((h,_,_)))) =
 
 (*--------------------------------------------------------------------------*)
 fun commutatives x y =
-  if domainEq( (domainIntersection (domain x) (domain y)), Empty ) then
+  if isSelector(x) andalso isSelector(y) then
     true
-  else if isSelector(x) andalso isSelector(y) then
+  else if emptyDomainIntersection (domain x) (domain y) then
     true
   else
   let
