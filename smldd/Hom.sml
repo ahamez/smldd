@@ -124,11 +124,12 @@ struct
     | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
                                       andalso h=i
                                       andalso SDD.eqValuation(s,t)
-    | ( Const(s), Const(t) )       => s = t
-    | ( Union(xs), Union(ys) )     => xs = ys
-    | ( Inter(xs), Inter(ys) )     => xs = ys
+    | ( Const s, Const t )         => s = t
+    | ( Union xs, Union ys )       => xs = ys
+    | ( Inter xs, Inter ys )       => xs = ys
     | ( Comp(a,b), Comp(c,d) )     => a = c andalso b = d
-    | ( Fixpoint(h), Fixpoint(i) ) => h = i
+    (*| ( ComComp xs, ComComp ys )   => xs = ys*)
+    | ( Fixpoint h, Fixpoint i )   => h = i
     | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
     | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
     | ( SatUnion(v, F, G, L)
@@ -157,13 +158,13 @@ struct
                              ^ ", "
                              ^ (toString (!h))
                              ^ ")"
-    | Const(s)    => "Const(" ^ (SDD.toString s) ^ ")"
-    | Union(hs)   => String.concatWith " + "
+    | Const s     => "Const(" ^ (SDD.toString s) ^ ")"
+    | Union hs    => String.concatWith " + "
                                        (map (fn h => toString (!h)) hs)
-    | Inter(hs)   => String.concatWith " ^ "
+    | Inter hs    => String.concatWith " ^ "
                                        (map (fn h => toString (!h)) hs)
     | Comp(a,b)   => (toString (!a)) ^ " o " ^ (toString (!b))
-    | Fixpoint(h) => "(" ^ (toString (!h)) ^ ")*"
+    | Fixpoint h  => "(" ^ (toString (!h)) ^ ")*"
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
     | Func(_,v)   => "Func("  ^ ","
@@ -289,7 +290,7 @@ fun mkComposition x y =
 fun mkFixpoint (rh as (ref (Hom(h,hsh,_)))) =
   case h of
     Id          => rh
-  | Fixpoint(_) => rh
+  | Fixpoint _  => rh
   | _           => UT.unify( mkHom (Fixpoint(rh))
                                    (H.hashCombine( hsh, H.const 5959527)) )
 
@@ -370,13 +371,13 @@ fun hash (Op(h,s,_)) =
 fun skipVariable var (ref (Hom(h,_,_))) =
   case h of
     Id                   => true
-  | Const(_)             => false
+  | Const _              => false
   | Cons(_,_,_)          => false
   | Nested(_,v)          => not (Variable.eq (var,v))
-  | Union(xs)            => List.all (fn x => skipVariable var x) xs
-  | Inter(xs)            => List.all (fn x => skipVariable var x) xs
+  | Union xs             => List.all (fn x => skipVariable var x) xs
+  | Inter xs             => List.all (fn x => skipVariable var x) xs
   | Comp(a,b)            => skipVariable var a andalso skipVariable var b
-  | Fixpoint(f)          => skipVariable var f
+  | Fixpoint f           => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
   | SatInter(v,_,_,_)    => not (Variable.eq (var,v))
@@ -390,7 +391,7 @@ fun evalCallback lookup h sdd =
   else
     case let val ref(Hom(x,_,_)) = h in x end of
       Id                => sdd
-    | Const(c)          => c
+    | Const c           => c
     | Cons(var,vl,next) => if next = id then
                                       SDD.node( var, vl, sdd )
                                     else
@@ -467,7 +468,7 @@ fun rewriteFixpoint orig v f =
 
   case let val ref(Hom(h,_,_)) = f in h end of
 
-    Union(xs) =>
+    Union xs =>
       if List.exists (fn x => x = id) xs then
       let
         val (F,G,L) = partition v xs
@@ -499,9 +500,9 @@ fun rewriteFixpoint orig v f =
 (* ------------------------------------------------ *)
 fun apply ( h, v ) =
   case let val ref(Hom(x,_,_)) = h in x end of
-    Union(xs)   => rewriteUI mkUnion' mkSatUnion h v xs
-  | Inter(xs)   => rewriteUI mkIntersection mkSatIntersection h v xs
-  | Fixpoint(f) => rewriteFixpoint h v f
+    Union xs    => rewriteUI mkUnion' mkSatUnion h v xs
+  | Inter xs    => rewriteUI mkIntersection mkSatIntersection h v xs
+  | Fixpoint f  => rewriteFixpoint h v f
   | _           => raise DoNotPanic
 
 end (* structure Rewrite *)
@@ -515,9 +516,9 @@ let
   val _ = processed := !processed + 1
 in
   case let val ref(Hom(x,_,_)) = h in x end of
-    Union(xs)   => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
-  | Inter(xs)   => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
-  | Fixpoint(f) => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+    Union xs    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | Inter xs    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | Fixpoint f  => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | _           => h
 end
 
@@ -684,12 +685,12 @@ in
   in
     case let val ref(Hom(x,_,_)) = h' in x end of
       Id                    => raise DoNotPanic
-    | Const(_)              => raise DoNotPanic
+    | Const _               => raise DoNotPanic
     | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
-    | Union(xs)             => union lookup xs sdd
-    | Inter(xs)             => intersection lookup xs sdd
+    | Union xs              => union lookup xs sdd
+    | Inter xs              => intersection lookup xs sdd
     | Comp( a, b )          => composition lookup a b sdd
-    | Fixpoint(g)           => fixpoint lookup g sdd
+    | Fixpoint g            => fixpoint lookup g sdd
     | Nested( g, var )      => nested lookup g var sdd
     | Func( f, var )        => function lookup f var sdd
     | SatUnion( _, F, G, L) => satUnion lookup F G L sdd
@@ -715,7 +716,7 @@ fun eval h sdd =
   else
     case let val ref(Hom(x,_,_)) = h in x end of
       Id                => sdd
-    | Const(c)          => c
+    | Const c           => c
     | Cons(var,vl,next) =>
       if next = id then
         SDD.node( var, vl, sdd )
