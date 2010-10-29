@@ -111,13 +111,13 @@ struct
                               * t ref list
                               * (t ref) option )
              | SatInter    of ( variable
-                              * (t ref) option
-                              * t ref list
-                              * (t ref) option )
+                              * (t ref) option    (* F *)
+                              * t ref list        (* G *)
+                              * (t ref) option )  (* L *)
              | SatFixpoint of ( variable
-                              * (t ref) option
-                              * t ref list
-                              * (t ref) option )
+                              * (t ref) option    (* F *)
+                              * t ref list        (* G *)
+                              * (t ref) option )  (* L *)
 
   fun eq (Hom(x,_,_),Hom(y,_,_)) =
     case (x,y) of
