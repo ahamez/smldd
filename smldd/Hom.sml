@@ -241,7 +241,6 @@ fun domainEq (x , y ) =
   | ( Empty, Empty) => true
   | ( _ , _ )       => false
 
-
 (*--------------------------------------------------------------------------*)
 fun emptyDomainIntersection x y =
   case ( x, y ) of
