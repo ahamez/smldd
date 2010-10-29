@@ -348,15 +348,30 @@ fun domain (ref(Hom((h,_,_)))) =
 
 (*--------------------------------------------------------------------------*)
 fun isSelector (ref(Hom((h,_,_)))) =
+let
+  fun selectorOption NONE     = true
+  |   selectorOption (SOME h) = isSelector h
+in
   case h of
-    Func(_,_)   => true
-  | Nested(g,_) => isSelector g
-  | Union hs    => List.all isSelector hs
-  | Inter hs    => List.all isSelector hs
-  | Comp(f,g)   => isSelector f andalso isSelector g
-  | ComComp hs  => List.all isSelector hs
-  | Fixpoint g  => isSelector g
-  | _           => false
+    Func(_,_)            => true
+  | Nested(g,_)          => isSelector g
+  | Union hs             => List.all isSelector hs
+  | Inter hs             => List.all isSelector hs
+  | Comp(f,g)            => isSelector f andalso isSelector g
+  | ComComp hs           => List.all isSelector hs
+  | Fixpoint g           => isSelector g
+  | SatUnion(_,F,G,L)    => selectorOption F
+                            andalso List.all isSelector G
+                            andalso selectorOption L
+  | SatInter(_,F,G,L)    => selectorOption F
+                            andalso List.all isSelector G
+                            andalso selectorOption L
+  | SatFixpoint(_,F,G,L) => selectorOption F
+                            andalso List.all isSelector G
+                            andalso selectorOption L
+  | SatComComp(_,F,G)    => isSelector F andalso List.all isSelector G
+  | _                    => false
+end
 
 (*--------------------------------------------------------------------------*)
 fun commutatives x y =
