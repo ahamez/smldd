@@ -101,7 +101,7 @@ struct
              | Const       of SDD
              | Union       of t ref list
              | Inter       of t ref list
-             | Compo       of ( t ref * t ref )
+             | Comp        of ( t ref * t ref )
              | Fixpoint    of ( t ref )
              | Nested      of ( t ref * variable )
              | Func        of ( (UserIn -> UserOut) ref * variable )
@@ -127,7 +127,7 @@ struct
     | ( Const(s), Const(t) )       => s = t
     | ( Union(xs), Union(ys) )     => xs = ys
     | ( Inter(xs), Inter(ys) )     => xs = ys
-    | ( Compo(a,b), Compo(c,d) )   => a = c andalso b = d
+    | ( Comp(a,b), Comp(c,d) )     => a = c andalso b = d
     | ( Fixpoint(h), Fixpoint(i) ) => h = i
     | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
     | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
@@ -162,7 +162,7 @@ struct
                                        (map (fn h => toString (!h)) hs)
     | Inter(hs)   => String.concatWith " ^ "
                                        (map (fn h => toString (!h)) hs)
-    | Compo(a,b)  => (toString (!a)) ^ " o " ^ (toString (!b))
+    | Comp(a,b)   => (toString (!a)) ^ " o " ^ (toString (!b))
     | Fixpoint(h) => "(" ^ (toString (!h)) ^ ")*"
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
@@ -282,7 +282,7 @@ fun mkComposition x y =
     val hsh = H.hashCombine( H.const 539351353
                            , H.hashCombine( hash (!x), hash(!y) ) )
   in
-    UT.unify( mkHom (Compo( x, y )) hsh  )
+    UT.unify( mkHom (Comp( x, y )) hsh  )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -375,7 +375,7 @@ fun skipVariable var (ref (Hom(h,_,_))) =
   | Nested(_,v)          => not (Variable.eq (var,v))
   | Union(xs)            => List.all (fn x => skipVariable var x) xs
   | Inter(xs)            => List.all (fn x => skipVariable var x) xs
-  | Compo(a,b)           => skipVariable var a andalso skipVariable var b
+  | Comp(a,b)            => skipVariable var a andalso skipVariable var b
   | Fixpoint(f)          => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
@@ -688,7 +688,7 @@ in
     | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
     | Union(xs)             => union lookup xs sdd
     | Inter(xs)             => intersection lookup xs sdd
-    | Compo( a, b )         => composition lookup a b sdd
+    | Comp( a, b )          => composition lookup a b sdd
     | Fixpoint(g)           => fixpoint lookup g sdd
     | Nested( g, var )      => nested lookup g var sdd
     | Func( f, var )        => function lookup f var sdd
