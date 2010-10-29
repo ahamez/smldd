@@ -102,6 +102,7 @@ struct
              | Union       of t ref list
              | Inter       of t ref list
              | Comp        of ( t ref * t ref )
+             | ComComp     of t ref list
              | Fixpoint    of ( t ref )
              | Nested      of ( t ref * variable )
              | Func        of ( (UserIn -> UserOut) ref * variable )
@@ -128,7 +129,7 @@ struct
     | ( Union xs, Union ys )       => xs = ys
     | ( Inter xs, Inter ys )       => xs = ys
     | ( Comp(a,b), Comp(c,d) )     => a = c andalso b = d
-    (*| ( ComComp xs, ComComp ys )   => xs = ys*)
+    | ( ComComp xs, ComComp ys )   => xs = ys
     | ( Fixpoint h, Fixpoint i )   => h = i
     | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
     | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
@@ -164,6 +165,8 @@ struct
     | Inter hs    => String.concatWith " ^ "
                                        (map (fn h => toString (!h)) hs)
     | Comp(a,b)   => (toString (!a)) ^ " o " ^ (toString (!b))
+    | ComComp hs  => String.concatWith " @ "
+                                       (map (fn h => toString (!h)) hs)
     | Fixpoint h  => "(" ^ (toString (!h)) ^ ")*"
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
@@ -211,6 +214,131 @@ fun uid (ref(Hom(_,_,x))) = x
 val id = UT.unify( mkHom Id (H.const 1) )
 
 (*--------------------------------------------------------------------------*)
+datatype domain = All
+                | Empty
+                | Variables of (variable list)
+
+(*--------------------------------------------------------------------------*)
+fun domainEq (x , y ) =
+  case ( x, y ) of
+    ( Variables xs, Variables ys ) =>
+    if length xs <> length ys then
+      false
+    else
+      let
+        fun loop [] [] = true
+        |   loop [] _  = raise DoNotPanic
+        |   loop _  [] = raise DoNotPanic
+        |   loop (x::xs) (y::ys) =
+        if Variable.eq( x, y ) then
+          loop xs ys
+        else
+          false
+      in
+        loop xs ys
+      end
+  | ( All, All )    => true
+  | ( Empty, Empty) => true
+  | ( _ , _ )       => false
+
+(*--------------------------------------------------------------------------*)
+fun domainIntersection x y =
+  case ( x, y ) of
+    ( All, _ )   => y
+  | ( _, All )   => x
+  | ( Empty, _ ) => Empty
+  | ( _, Empty ) => Empty
+  | ( Variables ls, Variables rs ) =>
+    let
+
+      fun helper ls rs =
+        case ( ls, rs ) of
+          ( _, [] ) => []
+        | ( [], _ ) => []
+        | ( l::ls, r::rs ) =>
+          if Variable.eq( l, r ) then
+            l::(helper ls rs)
+          else
+            helper ls rs
+
+      val inter = helper ls rs
+
+    in
+      case inter of
+        [] => Empty
+      | _  => Variables inter
+    end
+
+(*--------------------------------------------------------------------------*)
+fun domainUnion []         = Empty
+|   domainUnion (x::[])    = x
+|   domainUnion (x::y::xs) =
+  case ( x, y ) of
+    ( All, _ )   => All
+  | ( _, All )   => All
+  | ( Empty, _ ) => y
+  | ( _, Empty ) => x
+  | ( Variables ls, Variables rs ) =>
+  let
+
+    fun insert [] x = [x]
+    |   insert (L as (l::ls)) x =
+      if Variable.eq( x, l ) then
+        L
+      else if Variable.lt( x, l ) then
+        x::L
+      else
+        l::(insert ls x)
+
+    fun merge xs [] = xs
+    |   merge xs (y::ys) =
+      merge (insert xs y) ys
+
+  in
+    domainUnion ((Variables (merge ls rs))::xs)
+  end
+
+(*--------------------------------------------------------------------------*)
+fun domain (ref(Hom((h,_,_)))) =
+  case h of
+    Nested( _, v ) => Variables [v]
+  | Func( _, v )   => Variables [v]
+  | Comp( a, b )   => domainUnion ( [ domain a, domain b ])
+  | ComComp xs     => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
+  | Union xs       => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
+  | Inter xs       => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
+  | _              => All
+
+(*--------------------------------------------------------------------------*)
+fun isSelector (ref(Hom((h,_,_)))) =
+  case h of
+    Func(_,_)   => true
+  | Nested(g,_) => isSelector g
+  | Union hs    => List.all isSelector hs
+  | Inter hs    => List.all isSelector hs
+  | Comp(f,g)   => isSelector f andalso isSelector g
+  | ComComp hs  => List.all isSelector hs
+  | Fixpoint g  => isSelector g
+  | _           => false
+
+(*--------------------------------------------------------------------------*)
+fun commutatives x y =
+  if domainEq( (domainIntersection (domain x) (domain y)), Empty ) then
+    true
+  else if isSelector(x) andalso isSelector(y) then
+    true
+  else
+  let
+    val ref(Hom(h1,_,_)) = x
+    val ref(Hom(h2,_,_)) = y
+  in
+    case ( h1, h2 ) of
+      ( Nested( g1, v1 ), Nested( g2, v2) ) =>
+        Variable.eq(v1,v2) andalso commutatives g1 g2
+    | ( _, _ ) => false
+  end
+
+(*--------------------------------------------------------------------------*)
 fun mkCons var vl next =
 let
   val hsh = H.hashCombine( Variable.hash var
@@ -236,23 +364,43 @@ fun mkNested h vr =
                     (H.hashCombine(hash (!h), Variable.hash vr )) )
 
 (*--------------------------------------------------------------------------*)
+structure HT = HashTable
+
 fun mkUnion' []      = raise EmptyOperands
 |   mkUnion' (x::[]) = x
 |   mkUnion' xs      =
 let
 
+  (*val nesteds : ( ( variable , hom list ref ) HT.hash_table )
+      = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))*)
+
   fun unionHelper ( h, operands ) =
   case let val ref(Hom(x,_,_)) = h in x end of
+
     Union(ys)     => (foldl unionHelper [] ys) @ operands
+
+  (*| Nested(g,v)   => (case HT.find nesteds v of
+                       NONE    => HT.insert nesteds ( v, ref [g] )
+                     | SOME hs => hs := !hs @ [g];
+                     operands
+                     )*)
+
   | _             => h::operands
 
   val operands = foldl unionHelper [] xs
 
+  (*val nesteds' = HT.foldi (fn ( v, ref hs, acc) =>
+                            (mkNested (mkUnion' hs) v) :: acc
+                          )
+                          []
+                          nesteds*)
+  val operands' = (*nesteds' @*) operands
+
   val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                         (H.const 16564717)
-                        operands
+                        operands'
 in
-  UT.unify( mkHom (Union(operands)) unionHash )
+  UT.unify( mkHom (Union operands') unionHash )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -273,17 +421,63 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun mkCommutativeComposition [] = raise EmptyOperands
+|   mkCommutativeComposition hs =
+let
+  val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
+                  (H.const 795921317)
+                  hs
+in
+  UT.unify( mkHom (ComComp hs) hsh )
+end
+
+(*--------------------------------------------------------------------------*)
 fun mkComposition x y =
-  if x = id then
-    y
-  else if y = id then
+  if y = id then
     x
+  else if x = id then
+    y
   else
   let
-    val hsh = H.hashCombine( H.const 539351353
-                           , H.hashCombine( hash (!x), hash(!y) ) )
+
+    fun addParameter [] y = [y]
+    |   addParameter xs (ry as (ref (Hom(y,_,_)))) =
+    case y of
+
+      ComComp ys  => foldl (fn (x,acc) => addParameter acc x) xs ys
+
+    | Nested(f,v) =>
+    let
+      fun loop [] = [ry]
+      |   loop ((rx as (ref(Hom(x,_,_))))::xs) =
+       case x of
+         Nested(g,w) => if Variable.eq( v, w ) then
+                          (mkNested (mkComposition g f) v)::xs
+                        else
+                          rx::(loop xs)
+       | _ => rx::(loop xs)
+    in
+      loop xs
+    end
+
+    | _ =>
+    let
+      val (c,notC) = List.partition (fn x => commutatives x ry) xs
+      fun hsh x y = H.hashCombine( H.const 539351353
+                                 , H.hashCombine( hash (!x), hash(!y) ) )
+      fun mk x y = UT.unify( mkHom (Comp( x, y )) (hsh x y) )
+    in
+      case notC of
+        []    => ry::c
+      | x::[] => (mk x ry)::c
+      | xs    => (mk (mkCommutativeComposition notC) ry)::c
+    end
+
+    val operands = addParameter (addParameter [] x) y
   in
-    UT.unify( mkHom (Comp( x, y )) hsh  )
+    case operands of
+      x::[] => x
+    | xs    => mkCommutativeComposition xs
   end
 
 (*--------------------------------------------------------------------------*)
@@ -374,9 +568,10 @@ fun skipVariable var (ref (Hom(h,_,_))) =
   | Const _              => false
   | Cons(_,_,_)          => false
   | Nested(_,v)          => not (Variable.eq (var,v))
-  | Union xs             => List.all (fn x => skipVariable var x) xs
-  | Inter xs             => List.all (fn x => skipVariable var x) xs
+  | Union hs             => List.all (fn x => skipVariable var x) hs
+  | Inter hs             => List.all (fn x => skipVariable var x) hs
   | Comp(a,b)            => skipVariable var a andalso skipVariable var b
+  | ComComp hs           => List.all (fn x => skipVariable var x) hs
   | Fixpoint f           => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
@@ -573,6 +768,22 @@ fun composition lookup a b sdd =
   evalCallback lookup a (evalCallback lookup b sdd)
 
 (*--------------------------------------------------------------------------*)
+fun commutativeComposition lookup hs sdd =
+  if sdd = SDD.one then
+    (* Standard composition *)
+    foldr (fn (h,acc) => evalCallback lookup h acc) SDD.one hs
+  else
+  let
+    val var = SDD.variable sdd
+    val (F,G) = List.partition (fn h => skipVariable var h ) hs
+    val gRes = foldr (fn (g,acc) => evalCallback lookup g acc) sdd G
+  in
+    case F of
+      [] => gRes
+    | _  => evalCallback lookup (mkCommutativeComposition F) gRes
+  end
+
+(*--------------------------------------------------------------------------*)
 fun fixpointHelper f sdd =
 let
   val res = f sdd
@@ -687,9 +898,10 @@ in
       Id                    => raise DoNotPanic
     | Const _               => raise DoNotPanic
     | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
-    | Union xs              => union lookup xs sdd
-    | Inter xs              => intersection lookup xs sdd
+    | Union hs              => union lookup hs sdd
+    | Inter hs              => intersection lookup hs sdd
     | Comp( a, b )          => composition lookup a b sdd
+    | ComComp hs            => commutativeComposition lookup hs sdd
     | Fixpoint g            => fixpoint lookup g sdd
     | Nested( g, var )      => nested lookup g var sdd
     | Func( f, var )        => function lookup f var sdd
