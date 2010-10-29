@@ -118,6 +118,10 @@ struct
                               * (t ref) option    (* F *)
                               * t ref list        (* G *)
                               * (t ref) option )  (* L *)
+             | SatComComp  of ( variable
+                              * t ref             (* F *)
+                              * t ref list        (* G *)
+                              )
 
   fun eq (Hom(x,_,_),Hom(y,_,_)) =
     case (x,y) of
@@ -142,6 +146,9 @@ struct
     | ( SatFixpoint(v, F, G, L)
       , SatFixpoint(v',F',G',L'))  => F = F' andalso G = G' andalso L = L'
                                       andalso Variable.eq(v,v')
+    | ( SatComComp(v, F, G)
+      , SatComComp(v',F',G'))      => Variable.eq(v,v') andalso F = F'
+                                      andalso G = G'
     | ( _ , _ )                    => false
 
   fun hash (Hom(_,h,_)) = h
@@ -172,18 +179,21 @@ struct
                                ^ (Variable.toString v) ^ ")"
     | Func(_,v)   => "Func("  ^ ","
                       ^ (Variable.toString v) ^ ")"
+
     | SatUnion(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
                                 ^	"L(" ^ (optPartToString L) ^ ")"
+
     | SatInter(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") ^ "
                                 ^ "G("
                                 ^ (String.concatWith " ^ "
                                         (map (fn h => toString (!h)) G))
                                 ^ ") ^ "
                                 ^	"L(" ^ (optPartToString L) ^ ")"
+
     | SatFixpoint(_, F, G, L) =>  "("
                                 ^ "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
@@ -191,6 +201,12 @@ struct
                                         (map (fn h => toString (!h)) G))
                                 ^ ") + "
                                 ^	"L(" ^ (optPartToString L) ^ ") )*"
+
+    | SatComComp(_, F, G) =>      "F(" ^ (toString (!F)) ^ ") @ "
+                                ^ "G("
+                                ^ (String.concatWith " @ "
+                                        (map (fn h => toString (!h)) G))
+                                ^ ")"
   end
 
 end (* structure Definition *)
@@ -274,13 +290,61 @@ fun domainUnion []         = Empty
 (*--------------------------------------------------------------------------*)
 fun domain (ref(Hom((h,_,_)))) =
   case h of
-    Nested( _, v ) => Variables [v]
-  | Func( _, v )   => Variables [v]
-  | Comp( a, b )   => domainUnion ( [ domain a, domain b ])
-  | ComComp xs     => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
-  | Union xs       => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
-  | Inter xs       => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
-  | _              => All
+    Nested( _, v )  => Variables [v]
+  | Func( _, v )    => Variables [v]
+  | Comp( a, b )    => domainUnion [ domain a, domain b ]
+  | ComComp xs      => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
+  | Union xs        => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
+  | Inter xs        => domainUnion (foldr (fn (h,l) => (domain h)::l) [] xs)
+
+  | SatUnion(v,F,G,L) =>
+  let
+    val dF = case F of
+               NONE   => Empty
+             | SOME f => domain f
+    val dG = domainUnion (foldr (fn (h,l) => (domain h)::l) [] G)
+    val dL = case L of
+               NONE   => Empty
+             | SOME l => domain l
+  in
+    domainUnion [ Variables [v], dF, dG, dL ]
+  end
+
+  | SatInter(v,F,G,L) =>
+  let
+    val dF = case F of
+               NONE   => Empty
+             | SOME f => domain f
+    val dG = domainUnion (foldr (fn (h,l) => (domain h)::l) [] G)
+    val dL = case L of
+               NONE   => Empty
+             | SOME l => domain l
+  in
+    domainUnion [ Variables [v], dF, dG, dL ]
+  end
+
+  | SatFixpoint(v,F,G,L) =>
+  let
+    val dF = case F of
+               NONE   => Empty
+             | SOME f => domain f
+    val dG = domainUnion (foldr (fn (h,l) => (domain h)::l) [] G)
+    val dL = case L of
+               NONE   => Empty
+             | SOME l => domain l
+  in
+    domainUnion [ Variables [v], dF, dG, dL ]
+  end
+
+  | SatComComp(v,F,G) =>
+  let
+    val dF = domain F
+    val dG = domainUnion (foldr (fn (h,l) => (domain h)::l) [] G)
+  in
+    domainUnion [ Variables [v], dF, dG ]
+  end
+
+  | _               => All
 
 (*--------------------------------------------------------------------------*)
 fun isSelector (ref(Hom((h,_,_)))) =
@@ -517,6 +581,19 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun mkSatComComp var F G =
+let
+  val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                   (H.const 87284791)
+                   G
+  val hsh = H.hashCombine( H.const 30918931
+              , H.hashCombine( hash (!F)
+                 , H.hashCombine( hshG, Variable.hash var )))
+in
+  UT.unify( mkHom (SatComComp(var, F, G )) hsh )
+end
+
+(*--------------------------------------------------------------------------*)
 structure Evaluation (* : OPERATION *) = struct
 
 (*--------------------------------------------------------------------------*)
@@ -550,6 +627,7 @@ fun skipVariable var (ref (Hom(h,_,_))) =
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
   | SatInter(v,_,_,_)    => not (Variable.eq (var,v))
   | SatFixpoint(v,_,_,_) => not (Variable.eq (var,v))
+  | SatComComp(v,_,_)    => not (Variable.eq (var,v))
 
 (*--------------------------------------------------------------------------*)
 (* Evaluate an homomorphism on an SDD. Warning! Duplicate with Hom.eval! *)
@@ -665,12 +743,23 @@ fun rewriteFixpoint orig v f =
 
   | _ => orig
 
-(* ------------------------------------------------ *)
+(*--------------------------------------------------------------------------*)
+fun rewriteComComp orig v hs =
+let
+  val (F,G) = List.partition (fn h => skipVariable v h ) hs
+in
+  case F of
+    [] => orig
+  | fs => mkSatComComp v (mkCommutativeComposition fs) G
+end
+
+(*--------------------------------------------------------------------------*)
 fun apply ( h, v ) =
   case let val ref(Hom(x,_,_)) = h in x end of
-    Union xs    => rewriteUI mkUnion' mkSatUnion h v xs
-  | Inter xs    => rewriteUI mkIntersection mkSatIntersection h v xs
+    Union hs    => rewriteUI mkUnion' mkSatUnion h v hs
+  | Inter hs    => rewriteUI mkIntersection mkSatIntersection h v hs
   | Fixpoint f  => rewriteFixpoint h v f
+  | ComComp hs  => rewriteComComp h v hs
   | _           => raise DoNotPanic
 
 end (* structure Rewrite *)
@@ -684,10 +773,11 @@ let
   val _ = processed := !processed + 1
 in
   case let val ref(Hom(x,_,_)) = h in x end of
-    Union xs    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
-  | Inter xs    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
-  | Fixpoint f  => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
-  | _           => h
+    Union _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | Inter _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | Fixpoint _ => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | ComComp _  => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
+  | _          => h
 end
 
 (*--------------------------------------------------------------------------*)
@@ -742,18 +832,19 @@ fun composition lookup a b sdd =
 
 (*--------------------------------------------------------------------------*)
 fun commutativeComposition lookup hs sdd =
+  foldr (fn (h,acc) => evalCallback lookup h acc) sdd hs
+
+(*--------------------------------------------------------------------------*)
+fun satCommutativeComposition lookup F G sdd =
   if sdd = SDD.one then
     (* Standard composition *)
-    foldr (fn (h,acc) => evalCallback lookup h acc) SDD.one hs
+    foldr (fn (h,acc) => evalCallback lookup h acc) SDD.one (F::G)
   else
   let
-    val var = SDD.variable sdd
-    val (F,G) = List.partition (fn h => skipVariable var h ) hs
-    val gRes = foldr (fn (g,acc) => evalCallback lookup g acc) sdd G
+    val fRes = evalCallback lookup F sdd
+    val gRes = foldr (fn (g,acc) => evalCallback lookup g acc) fRes G
   in
-    case F of
-      [] => gRes
-    | _  => evalCallback lookup (mkCommutativeComposition F) gRes
+    gRes
   end
 
 (*--------------------------------------------------------------------------*)
@@ -881,6 +972,7 @@ in
     | SatUnion( _, F, G, L) => satUnion lookup F G L sdd
     | SatInter( _, F, G, L) => satIntersection lookup F G L sdd
     | SatFixpoint(_,F,G,L)  => satFixpoint lookup F G L sdd
+    | SatComComp(_,F,G)     => satCommutativeComposition lookup F G sdd
   end
 
 end (* fun apply *)
