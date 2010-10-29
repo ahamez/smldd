@@ -219,29 +219,6 @@ datatype domain = All
                 | Variables of (variable list)
 
 (*--------------------------------------------------------------------------*)
-fun domainEq (x , y ) =
-  case ( x, y ) of
-    ( Variables xs, Variables ys ) =>
-    if length xs <> length ys then
-      false
-    else
-      let
-        fun loop [] [] = true
-        |   loop [] _  = raise DoNotPanic
-        |   loop _  [] = raise DoNotPanic
-        |   loop (x::xs) (y::ys) =
-        if Variable.eq( x, y ) then
-          loop xs ys
-        else
-          false
-      in
-        loop xs ys
-      end
-  | ( All, All )    => true
-  | ( Empty, Empty) => true
-  | ( _ , _ )       => false
-
-(*--------------------------------------------------------------------------*)
 fun emptyDomainIntersection x y =
   case ( x, y ) of
     ( All, _ )   => false
