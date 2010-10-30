@@ -451,7 +451,7 @@ let
   fun unionHelper ( h, operands ) =
   case let val ref(Hom(x,_,_)) = h in x end of
 
-    Union(ys)     => (foldl unionHelper [] ys) @ operands
+    Union ys      => (foldl unionHelper [] ys) @ operands
 
   | Nested(g,v)   => (case HT.find nesteds v of
                        NONE    => HT.insert nesteds ( v, ref [g] )
