@@ -539,12 +539,12 @@ fun mkComposition x y =
       val (c,notC) = List.partition (fn x => commutatives x ry) xs
       fun hsh x y = H.hashCombine( H.const 539351353
                                  , H.hashCombine( hash (!x), hash(!y) ) )
-      fun mk x y = UT.unify( mkHom (Comp( x, y )) (hsh x y) )
+      fun mkComp x y = UT.unify( mkHom (Comp( x, y )) (hsh x y) )
     in
       case notC of
         []    => ry::c
-      | x::[] => (mk x ry)::c
-      | xs    => (mk (mkCommutativeComposition notC) ry)::c
+      | x::[] => (mkComp x ry)::c
+      | xs    => (mkComp (mkCommutativeComposition notC) ry)::c
     end
 
   in
