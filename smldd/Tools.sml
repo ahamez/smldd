@@ -273,7 +273,7 @@ let
           @ ["\n}"]
 in
   String.concat l
-end (* fun toDot *)
+end (* fun toDotHelper *)
 
 (*--------------------------------------------------------------------------*)
 fun toDot mode x =
