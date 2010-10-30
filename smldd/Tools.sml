@@ -2,6 +2,7 @@
 signature TOOLS = sig
 
   type SDD
+  type hom
 
   datatype mode  = Sharing | Hierarchy
 
@@ -9,18 +10,24 @@ signature TOOLS = sig
   val nbNodes    : mode -> SDD -> LargeInt.int
   val toDot      : mode -> SDD -> string
 
+  val homToDot   : hom -> string
+
 end (* signature TOOLS *)
 
 (*--------------------------------------------------------------------------*)
 functor ToolsFun ( structure SDD : SDD
                    and Variable  : VARIABLE where type t      = SDD.variable
                    and Values    : VALUES   where type values = SDD.values
+                   and Hom       : HOM      where type SDD = SDD.SDD
+                                            where type variable = SDD.variable
+                                            where type values = SDD.values
                  )
   : TOOLS
 = struct
 
 (*--------------------------------------------------------------------------*)
 type SDD = SDD.SDD
+type hom = Hom.hom
 
 (*--------------------------------------------------------------------------*)
 datatype mode = Sharing | Hierarchy
@@ -283,6 +290,93 @@ fun toDot mode x =
   ^ "}\n"
   else
     toDotHelper mode x
+
+(*--------------------------------------------------------------------------*)
+fun homToDot h =
+let
+
+  fun helper h =
+  let
+
+    val node = "\"" ^ (Int.toString (Hom.uid h)) ^ "\""
+    fun uid g = "\"" ^ (Int.toString (Hom.uid g)) ^ "\""
+
+    fun id _ = node ^ " [label=\"ID\"];\n"
+
+    fun cons vr vl nxt = "\n"
+
+    fun const s = "\n"
+
+    fun union hs =
+      node ^ " [label=\"+\"];\n"
+    ^ (foldl (fn (h,str) =>
+               str ^ node ^ " -> " ^ (uid h) ^ ";\n"
+             )
+             ""
+             hs
+      )
+    ^ (foldl (fn (h,str) => str ^ (helper h)) "" hs)
+
+    fun inter hs =
+      node ^ " [label=\"^\"];\n"
+    ^ (foldl (fn (h,str) =>
+               str ^ node ^ " -> " ^ (uid h) ^ ";\n"
+             )
+             ""
+             hs
+      )
+    ^(foldl (fn (h,str) => str ^ (helper h)) "" hs)
+
+    fun comp f g =
+      node ^ " [label=\"o\"];\n"
+    ^ node ^ " -> " ^ (uid f) ^ " [label=\"left\"];\n"
+    ^ node ^ " -> " ^ (uid g) ^ " [label=\"right\"];\n"
+    ^ (helper f)
+    ^ (helper g)
+
+    fun comcomp hs =
+      node ^ " [label=\"@\"];\n"
+    ^ (foldl (fn (h,str) =>
+               str ^ node ^ " -> " ^ (uid h) ^ ";\n"
+             )
+             ""
+             hs
+      )
+    ^ (foldl (fn (h,str) => str ^ (helper h)) "" hs)
+
+    fun fixpoint h =
+      node ^ " [label=\"*\"];\n"
+    ^ node ^ " -> " ^ (uid h) ^ ";\n"
+    ^ (helper h)
+
+    fun nested h v =
+      node ^ " [label=\"Nested(" ^ (Variable.toString v) ^ ")\"];\n"
+    ^ node ^ " -> " ^ (uid h) ^ ";\n"
+    ^ (helper h)
+
+    fun func f v =
+    let
+      fun funcString (ref f) =
+        case f Hom.Print of
+          Hom.PrintRes s => s
+        | _              => raise Hom.NotUserString
+    in
+      node ^ " [label=\"Func(" ^ (funcString f) ^ ","
+    ^ (Variable.toString v) ^ ")\"];\n"
+    end
+
+    val visitor = Hom.mkVisitor ()
+    val visit = visitor id cons const union inter comp comcomp fixpoint
+                        nested func
+  in
+    visit h
+  end
+
+in
+  "digraph hom {\n\n"
+^ (helper h)
+^ "}\n"
+end
 
 (*--------------------------------------------------------------------------*)
 end (* fun ToolsFun *)

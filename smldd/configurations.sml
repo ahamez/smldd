@@ -22,6 +22,7 @@ structure StringOrder = OrderFun( structure Identifier = StringIdentifier
 structure Tools = ToolsFun( structure SDD      = SDD
                           ; structure Variable = IntVariable
                           ; structure Values   = DiscreteIntValues
+                          ; structure Hom      = Hom
                           )
 
 (* ------------------------------------------------------------------------ *)
@@ -42,6 +43,7 @@ structure BWOrder = OrderFun( structure Identifier = StringIdentifier
 structure BWTools = ToolsFun( structure SDD      = BWSDD
                             ; structure Variable = IntVariable
                             ; structure Values   = BitWordValues
+                            ; structure Hom      = BWHom
                             )
 
 (* ------------------------------------------------------------------------ *)
