@@ -493,8 +493,7 @@ fun mkComposition x y =
   else
   let
 
-    fun addParameter [] y = [y]
-    |   addParameter xs (ry as (ref (Hom(y,_,_)))) =
+    fun addParameter xs (ry as (ref (Hom(y,_,_)))) =
     case y of
 
       ComComp ys  => foldl (fn (x,acc) => addParameter acc x) xs ys
