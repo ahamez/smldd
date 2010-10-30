@@ -78,6 +78,9 @@ datatype UserOut    = EvalRes  of values
                     | PrintRes of string
 
 (*--------------------------------------------------------------------------*)
+type userFunction   = (UserIn -> UserOut) ref
+
+(*--------------------------------------------------------------------------*)
 fun funcValues (ref f) v =
   case f (Eval v ) of
     EvalRes v => v
