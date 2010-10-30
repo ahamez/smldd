@@ -7,6 +7,8 @@ signature HOM = sig
   type values
   type valuation
 
+  val uid             : hom -> int
+
   val id              : hom
   val mkCons          : variable -> valuation -> hom -> hom
   val mkConst         : SDD -> hom
