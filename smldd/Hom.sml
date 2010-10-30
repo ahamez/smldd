@@ -525,9 +525,8 @@ fun mkComposition x y =
       | xs    => (mk (mkCommutativeComposition notC) ry)::c
     end
 
-    val operands = addParameter (addParameter [] x) y
   in
-    case operands of
+    case addParameter (addParameter [] x) y of
       x::[] => x
     | xs    => mkCommutativeComposition xs
   end
