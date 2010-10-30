@@ -430,30 +430,30 @@ fun mkUnion' []      = raise EmptyOperands
 |   mkUnion' xs      =
 let
 
-  (*val nesteds : ( ( variable , hom list ref ) HT.hash_table )
-      = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))*)
+  val nesteds : ( ( variable , hom list ref ) HT.hash_table )
+      = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))
 
   fun unionHelper ( h, operands ) =
   case let val ref(Hom(x,_,_)) = h in x end of
 
     Union(ys)     => (foldl unionHelper [] ys) @ operands
 
-  (*| Nested(g,v)   => (case HT.find nesteds v of
+  | Nested(g,v)   => (case HT.find nesteds v of
                        NONE    => HT.insert nesteds ( v, ref [g] )
                      | SOME hs => hs := !hs @ [g];
                      operands
-                     )*)
+                     )
 
   | _             => h::operands
 
   val operands = foldl unionHelper [] xs
 
-  (*val nesteds' = HT.foldi (fn ( v, ref hs, acc) =>
+  val nesteds' = HT.foldi (fn ( v, ref hs, acc) =>
                             (mkNested (mkUnion' hs) v) :: acc
                           )
                           []
-                          nesteds*)
-  val operands' = (*nesteds' @*) operands
+                          nesteds
+  val operands' = nesteds' @ operands
 
   val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                         (H.const 16564717)
