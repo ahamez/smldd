@@ -24,7 +24,9 @@ signature HOM = sig
                       | HashRes  of Hash.t
                       | PrintRes of string
 
-  val mkFunction      : (UserIn -> UserOut) ref -> variable -> hom
+  type userFunction   = (UserIn -> UserOut) ref
+
+  val mkFunction      : userFunction -> variable -> hom
 
   val eval            : hom -> SDD -> SDD
 
