@@ -36,6 +36,21 @@ signature HOM = sig
 
   val stats           : unit -> string
 
+  type 'a visitor     =
+                     (*Id*)    (unit -> 'a)
+                   (*Cons*) -> (variable -> valuation -> hom -> 'a)
+                  (*Const*) -> (SDD -> 'a)
+                  (*Union*) -> (hom list -> 'a)
+           (*Intersection*) -> (hom list -> 'a)
+            (*Composition*) -> (hom -> hom -> 'a)
+(*Commutative composition*) -> (hom list -> 'a)
+               (*Fixpoint*) -> (hom -> 'a)
+                 (*Nested*) -> (hom -> variable -> 'a)
+               (*Function*) -> (userFunction -> variable -> 'a)
+                            -> hom
+                            -> 'a
+  val mkVisitor       : unit -> 'a visitor
+
   exception NestedHomOnValues
   exception FunctionHomOnNested
   exception EmptyOperands
@@ -1025,6 +1040,47 @@ fun eval h sdd =
 
 (*--------------------------------------------------------------------------*)
 fun toString x = Definition.toString (!x)
+
+(*--------------------------------------------------------------------------*)
+type 'a visitor =
+                     (*Id*)    (unit -> 'a)
+                   (*Cons*) -> (variable -> valuation -> hom -> 'a)
+                  (*Const*) -> (SDD -> 'a)
+                  (*Union*) -> (hom list -> 'a)
+           (*Intersection*) -> (hom list -> 'a)
+            (*Composition*) -> (hom -> hom -> 'a)
+(*Commutative composition*) -> (hom list -> 'a)
+               (*Fixpoint*) -> (hom -> 'a)
+                 (*Nested*) -> (hom -> variable -> 'a)
+               (*Function*) -> (userFunction -> variable -> 'a)
+                            -> hom
+                            -> 'a
+
+(*--------------------------------------------------------------------------*)
+fun mkVisitor (():unit) : 'a visitor =
+let
+
+  fun visitor id cons const union inter comp comcomp fixpoint nested func h =
+  let
+    val ref(Hom(x,_,_)) = h
+  in
+    case x of
+      Id              => id ()
+    | Cons(v,vl,nxt)  => cons v vl nxt
+    | Const s         => const s
+    | Union hs        => union hs
+    | Inter hs        => inter hs
+    | Comp(a,b)       => comp a b
+    | ComComp hs      => comcomp hs
+    | Fixpoint h      => fixpoint h
+    | Nested(h,v)     => nested h v
+    | Func(f,v)       => func f v
+    | _               => raise DoNotPanic
+  end
+
+in
+  visitor
+end
 
 (*--------------------------------------------------------------------------*)
 fun stats () = (cache.stats()) ^ (Evaluation.rewriteCache.stats())
