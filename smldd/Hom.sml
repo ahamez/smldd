@@ -475,7 +475,7 @@ let
   fun unionHelper ( h, operands ) =
   case let val ref(Hom(x,_,_)) = h in x end of
 
-    Union ys      => (foldl unionHelper [] ys) @ operands
+    Union ys      => foldr unionHelper operands ys
 
   | Nested(g,v)   => (case HT.find nesteds v of
                        NONE    => HT.insert nesteds ( v, ref [g] )
@@ -485,7 +485,7 @@ let
 
   | _             => h::operands
 
-  val operands = foldl unionHelper [] xs
+  val operands = foldr unionHelper [] xs
 
   val nesteds' = HT.foldi (fn ( v, ref hs, acc) =>
                             (mkNested (mkUnion' hs) v) :: acc
