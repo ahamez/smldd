@@ -199,7 +199,7 @@ struct
     | Fixpoint h  => "(" ^ (toString (!h)) ^ ")*"
     | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
                                ^ (Variable.toString v) ^ ")"
-    | Func(_,v)   => "Func("  ^ ","
+    | Func(f,v)   => "Func(" ^ (funcString f) ^ ","
                       ^ (Variable.toString v) ^ ")"
 
     | SatUnion(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") + "
