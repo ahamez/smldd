@@ -28,6 +28,23 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun sort extract lt xs =
+let
+
+  fun helper []      = []
+  |   helper (x::xs) =
+    let
+      val x'    = extract x
+      val (left,right)  = List.partition (fn y => lt( extract y , x' ) ) xs
+    in
+      helper left @ [x] @ helper right
+    end
+
+in
+  helper xs
+end
+
+(*--------------------------------------------------------------------------*)
 fun id x = x
 
 (*--------------------------------------------------------------------------*)
