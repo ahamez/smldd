@@ -498,7 +498,7 @@ end
 fun mkCommutativeComposition [] = raise EmptyOperands
 |   mkCommutativeComposition hs =
 let
-  val hs' = Util.sortUnique uid (op<) (op>) hs
+  val hs' = Util.sort uid (op<) hs
   val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
                   (H.const 795921317)
                   hs'
@@ -619,7 +619,7 @@ end
 (*--------------------------------------------------------------------------*)
 fun mkSatComComp var F G =
 let
-  val G' = Util.sortUnique uid (op<) (op>) G
+  val G' = Util.sort uid (op<) G
   val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                    (H.const 87284791)
                    G'
@@ -785,7 +785,7 @@ fun rewriteComComp orig v hs =
 let
   val (F,G) = List.partition (fn h => skipVariable v h ) hs
 in
-  case Util.sortUnique uid (op<) (op>) F of
+  case Util.sort uid (op<) F of
     [] => orig
   | fs => mkSatComComp v (mkCommutativeComposition fs) G
 end
