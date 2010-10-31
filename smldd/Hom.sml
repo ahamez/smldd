@@ -479,8 +479,8 @@ let
 
   | Nested(g,v)   => (case HT.find nesteds v of
                        NONE    => HT.insert nesteds ( v, ref [g] )
-                     | SOME hs => hs := !hs @ [g];
-                     operands
+                     | SOME hs => hs := !hs @ [g]
+                     ; operands
                      )
 
   | _             => h::operands
