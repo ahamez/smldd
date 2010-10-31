@@ -295,11 +295,16 @@ fun toDot mode x =
 fun homToDot h =
 let
 
-  fun helper h =
+  val cpt = ref 0
+
+  fun helper father h =
   let
 
-    val node = "\"" ^ (Int.toString (Hom.uid h)) ^ "\""
-    fun uid g = "\"" ^ (Int.toString (Hom.uid g)) ^ "\""
+    val cval = !cpt
+    val _ = cpt := !cpt + 1
+    val myUid = Hom.uid h
+    val node = "\"" ^ (Int.toString father) ^ (Int.toString myUid) ^ "\""
+    fun uid g = "\"" ^ (Int.toString cval) ^ (Int.toString (Hom.uid g)) ^ "\""
 
     fun id _ = node ^ " [label=\"ID\"];\n"
 
@@ -315,7 +320,7 @@ let
              ""
              hs
       )
-    ^ (foldl (fn (h,str) => str ^ (helper h)) "" hs)
+    ^ (foldl (fn (h,str) => str ^ (helper cval h)) "" hs)
 
     fun inter hs =
       node ^ " [label=\"^\"];\n"
@@ -325,14 +330,14 @@ let
              ""
              hs
       )
-    ^(foldl (fn (h,str) => str ^ (helper h)) "" hs)
+    ^ (foldl (fn (h,str) => str ^ (helper cval h)) "" hs)
 
     fun comp f g =
       node ^ " [label=\"o\"];\n"
     ^ node ^ " -> " ^ (uid f) ^ " [label=\"left\"];\n"
     ^ node ^ " -> " ^ (uid g) ^ " [label=\"right\"];\n"
-    ^ (helper f)
-    ^ (helper g)
+    ^ (helper cval f)
+    ^ (helper cval g)
 
     fun comcomp hs =
       node ^ " [label=\"@\"];\n"
@@ -342,17 +347,17 @@ let
              ""
              hs
       )
-    ^ (foldl (fn (h,str) => str ^ (helper h)) "" hs)
+    ^ (foldl (fn (h,str) => str ^ (helper cval h)) "" hs)
 
     fun fixpoint h =
       node ^ " [label=\"*\"];\n"
     ^ node ^ " -> " ^ (uid h) ^ ";\n"
-    ^ (helper h)
+    ^ (helper cval h)
 
     fun nested h v =
       node ^ " [label=\"Nested(" ^ (Variable.toString v) ^ ")\"];\n"
     ^ node ^ " -> " ^ (uid h) ^ ";\n"
-    ^ (helper h)
+    ^ (helper cval h)
 
     fun func f v =
     let
@@ -374,7 +379,7 @@ let
 
 in
   "digraph hom {\n\n"
-^ (helper h)
+^ (helper (!cpt) h)
 ^ "}\n"
 end
 
