@@ -441,6 +441,27 @@ fun mkNested h vr =
                     (H.hashCombine(hash (!h), Variable.hash vr )) )
 
 (*--------------------------------------------------------------------------*)
+fun mkCommutativeComposition [] = raise EmptyOperands
+|   mkCommutativeComposition hs =
+let
+
+  fun helper ( h, operands ) =
+    case let val ref(Hom(x,_,_)) = h in x end of
+      Id              => operands
+    | ComComp ys      => (foldr helper [] ys) @ operands
+    | _               => h::operands
+
+  val operands = foldr helper [] hs
+
+  val hs' = Util.sort uid (op<) operands
+  val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
+                  (H.const 795921317)
+                  hs'
+in
+  UT.unify( mkHom (ComComp hs') hsh )
+end
+
+(*--------------------------------------------------------------------------*)
 structure HT = HashTable
 
 fun mkUnion' []      = raise EmptyOperands
