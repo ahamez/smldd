@@ -249,6 +249,9 @@ fun mkHom hom hsh uid = Hom( hom, hsh, uid )
 fun uid (ref(Hom(_,_,x))) = x
 
 (*--------------------------------------------------------------------------*)
+fun toString x = Definition.toString (!x)
+
+(*--------------------------------------------------------------------------*)
 val id = UT.unify( mkHom Id (H.const 1) )
 
 (*--------------------------------------------------------------------------*)
@@ -1037,9 +1040,6 @@ fun eval h sdd =
       else
         cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
     | _ => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
-
-(*--------------------------------------------------------------------------*)
-fun toString x = Definition.toString (!x)
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor =
