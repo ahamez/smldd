@@ -844,6 +844,85 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+fun testFactorization00 () =
+let
+  fun f c (Eval values) =
+    EvalRes (SV.map (fn x => x + c) values)
+  |   f c Print =
+    PrintRes ("f" ^ (Int.toString c))
+  |   f c Hash =
+    HashRes (Hash.hashInt c)
+
+  val a = mkFunction (ref (f 0)) 0
+  val b = mkFunction (ref (f 1)) 0
+  val c = mkFunction (ref (f 2)) 0
+  val d = mkFunction (ref (f 3)) 0
+
+  val s0 = SDD.node( 0, SDD.Values (SV.fromList [0]), SDD.one )
+
+  val o0 = SDD.union [ eval a (eval b (eval c (eval d s0)))
+                     , eval a (eval b (eval c s0))
+                     , eval a (eval b s0)
+                     ]
+
+  val habcd = mkComposition a (mkComposition b (mkComposition c d))
+  val habc  = mkComposition a (mkComposition b c)
+  val hab   = mkComposition a b
+
+  val h = mkUnion [ habcd, habc, hab ]
+  val s = eval h s0
+
+  val homDot = Tools.homToDot h
+  val homDotFile = TextIO.openOut "testFactorization00.dot"
+  val _ = TextIO.outputSubstr ( homDotFile
+                              , Substring.extract(homDot,0, NONE))
+
+in
+  assertTrue( s = o0 )
+end
+
+(*--------------------------------------------------------------------------*)
+fun testFactorization01 () =
+let
+  fun f c (Eval values) =
+    EvalRes (SV.map (fn x => x + c) values)
+  |   f c Print =
+    PrintRes ("f" ^ (Int.toString c))
+  |   f c Hash =
+    HashRes (Hash.hashInt c)
+
+  val a = mkFunction (ref (f 0)) 0
+  val b = mkFunction (ref (f 1)) 0
+  val c = mkFunction (ref (f 2)) 0
+  val d = mkFunction (ref (f 3)) 0
+
+  val s0 = SDD.node( 0, SDD.Values (SV.fromList [0]), SDD.one )
+
+  val o0 = SDD.union [ eval a (eval b (eval c (eval d s0)))
+                     , eval a (eval b (eval c s0))
+                     , eval a (eval b s0)
+                     , eval a s0
+                     ]
+
+  val habcd = mkComposition a (mkComposition b (mkComposition c d))
+  val habc  = mkComposition a (mkComposition b c)
+  val hab   = mkComposition a b
+  val ha    = a
+
+  val h = mkUnion [ habcd, habc, hab, a ]
+  val s = eval h s0
+
+  val homDot = Tools.homToDot h
+  val homDotFile = TextIO.openOut "testFactorization01.dot"
+  val _ = TextIO.outputSubstr ( homDotFile
+                              , Substring.extract(homDot,0, NONE))
+
+in
+  assertTrue( s = o0 )
+end
+
+
+(*--------------------------------------------------------------------------*)
 
   fun suite () =
       Test.labelTests
@@ -885,6 +964,8 @@ end
       , ("testFixpoint05"      , testFixpoint05      )
       , ("testFixpoint06"      , testFixpoint06      )
       , ("testIntersection00"  , testIntersection00  )
+      , ("testFactorization00" , testFactorization00 )
+      , ("testFactorization01" , testFactorization01 )
       ]
 
   (* ---------------------------------------------------------------- *)
