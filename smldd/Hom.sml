@@ -478,6 +478,56 @@ let
   val nesteds : ( ( variable , hom list ref ) HT.hash_table )
       = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))
 
+  val coms = ref []
+
+  fun factorize [] = []
+  |   factorize hs =
+  let
+
+    val counts : ( ( hom , int ref ) HT.hash_table )
+        = (HT.mkTable( Definition.hash o ! , op = ) ( 1000, DoNotPanic ))
+
+    val _ = List.app (fn hs =>
+                       List.app (fn h => case HT.find counts h of
+                                         NONE   => HT.insert counts (h, ref 1)
+                                       | SOME c => c := !c + 1
+                                )
+                                hs
+                     )
+                     hs
+
+    val ( factor, _ ) = HT.foldi (fn ( h, ref c, current as (_,max) ) =>
+                                 if c > max then
+                                   ( h, c )
+                                 else
+                                   current
+                                 )
+                                 (id,1)
+                                 counts
+
+    val (common,rem) = List.partition (fn hs =>
+                                        List.exists (fn h => h = factor) hs
+                                      )
+                                      hs
+
+    val common' = foldr (fn (hs,acc) =>
+                        let
+                          val filtered = List.filter (fn h => h <> factor) hs
+                        in
+                          case filtered of
+                            [] => id :: acc
+                          | _  => (mkCommutativeComposition filtered)::acc
+                        end
+                        )
+                        []
+                        common
+  in
+    if factor = id then
+      map (fn hs => mkCommutativeComposition hs) hs
+    else
+      (mkCommutativeComposition [ factor, mkUnion' common'])::(factorize rem)
+  end
+
   fun unionHelper ( h, operands ) =
   case let val ref(Hom(x,_,_)) = h in x end of
 
@@ -486,6 +536,10 @@ let
   | Nested(g,v)   => (case HT.find nesteds v of
                        NONE    => HT.insert nesteds ( v, ref [g] )
                      | SOME hs => hs := !hs @ [g]
+                     ; operands
+                     )
+
+  | ComComp ys    => ( coms := ys::(!coms)
                      ; operands
                      )
 
@@ -498,13 +552,20 @@ let
                           )
                           []
                           nesteds
-  val operands' = nesteds' @ operands
 
-  val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                        (H.const 16564717)
-                        operands'
+  val operands' = (factorize (!coms)) @ nesteds' @ operands
+
 in
-  UT.unify( mkHom (Union operands') unionHash )
+  case operands' of
+    []    => raise EmptyOperands
+  | x::[] => x
+  | _     => let
+               val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+                                     (H.const 16564717)
+                                     operands'
+             in
+               UT.unify( mkHom (Union operands') unionHash )
+             end
 end
 
 (*--------------------------------------------------------------------------*)
@@ -522,18 +583,6 @@ let
                   xs
 in
   UT.unify( mkHom (Inter xs) hsh )
-end
-
-(*--------------------------------------------------------------------------*)
-fun mkCommutativeComposition [] = raise EmptyOperands
-|   mkCommutativeComposition hs =
-let
-  val hs' = Util.sort uid (op<) hs
-  val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
-                  (H.const 795921317)
-                  hs'
-in
-  UT.unify( mkHom (ComComp hs') hsh )
 end
 
 (*--------------------------------------------------------------------------*)
