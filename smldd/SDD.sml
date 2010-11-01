@@ -241,8 +241,8 @@ fun hierNodeAlpha ( var , alpha ) =
 (* Return a node *)
 fun node ( vr , vl , next ) =
   case vl of
-    Values(values) => flatNode( vr, Values.mkStorable values, next )
-  | Nested(nested) => hierNode( vr, nested, next )
+    Values values => flatNode( vr, Values.mkStorable values, next )
+  | Nested nested => hierNode( vr, nested, next )
 
 (*--------------------------------------------------------------------------*)
 fun fromList []             = one
