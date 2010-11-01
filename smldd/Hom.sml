@@ -560,7 +560,9 @@ in
     []    => raise EmptyOperands
   | x::[] => x
   | _     => let
-               val unionHash = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
+               val unionHash = foldl (fn (x,acc) =>
+                                       H.hashCombine(hash (!x), acc)
+                                     )
                                      (H.const 16564717)
                                      operands'
              in
