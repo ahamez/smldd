@@ -453,12 +453,18 @@ let
 
   val operands = foldr helper [] hs
 
-  val hs' = Util.sort uid (op<) operands
-  val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
-                  (H.const 795921317)
-                  hs'
 in
-  UT.unify( mkHom (ComComp hs') hsh )
+  case operands of
+    []    => raise EmptyOperands
+  | x::[] => x
+  | _     => let
+                val operands' = Util.sort uid (op<) operands
+                val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
+                                (H.const 795921317)
+                                operands'
+             in
+               UT.unify( mkHom (ComComp operands') hsh )
+             end
 end
 
 (*--------------------------------------------------------------------------*)
