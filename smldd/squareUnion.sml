@@ -22,7 +22,7 @@ let
       fun insertHelper  [] x = [x]
       |   insertHelper (L as (l::ls)) x =
       if x = l then
-        L
+        raise DoNotPanic
       else if valLt(x,l) then
         x::L
       else
