@@ -92,7 +92,7 @@ let
           let
             val (res,rem) = oneArcOfA (diffab,aSuccs) ((diffba,bSuccs)::bAlpha)
           in
-            ( (inter, mergeSuccs aSuccs bSuccs)::res, (diffba,bSuccs)::rem )
+            ( (inter, mergeSuccs aSuccs bSuccs)::res, rem )
           end
         end
       end
