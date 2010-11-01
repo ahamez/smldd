@@ -66,5 +66,5 @@ let
   val alpha'' = foldl mergeVls   [] alpha'
 
 in
-  Vector.fromList (alpha'')
+  Vector.fromList alpha''
 end
