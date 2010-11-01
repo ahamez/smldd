@@ -227,7 +227,7 @@ fun hierNode ( var, rnested as (ref (iSDD(nested,hashNested,_)))
 
 (*--------------------------------------------------------------------------*)
 (* Construct a node with an pre-computed alpha. Internal use only! *)
-fun nodeAlpha ( var , alpha ) =
+fun hierNodeAlpha ( var , alpha ) =
   if Vector.length alpha = 0 then
     zero
   else
@@ -396,7 +396,7 @@ in
              (intersectionCallback cacheLookup)
              (differenceCallback cacheLookup)
              (fn x => x = zero)
-             nodeAlpha
+             hierNodeAlpha
              xs var
 
 end (* end fun union *)
@@ -461,8 +461,8 @@ in
                                      (unionCallback cacheLookup)
                                      (fn (x,y) => uid x < uid y)
     in
-      nodeAlpha( var
-               , squareUnion' ( foldl commonApply' initial operands ) )
+      hierNodeAlpha( var
+                   , squareUnion' ( foldl commonApply' initial operands ) )
     end (* Hierachical node case *)
 end (* end fun intersection *)
 
@@ -471,7 +471,7 @@ end (* end fun intersection *)
 fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
 let
   fun nodeDifference lvr rvr la ra
-                     vlUnion vlInter vlDiff vlEmpty vlLt nodeAlpha
+                     vlUnion vlInter vlDiff vlEmpty vlLt hierNodeAlpha
   =
     if not( Variable.eq(lvr,rvr) ) then
       raise IncompatibleSDD
@@ -523,7 +523,7 @@ let
 
       val alpha = squareUnion' ( diffPart @ commonPart )
     in
-      nodeAlpha( lvr, alpha )
+      hierNodeAlpha( lvr, alpha )
     end
 
 in
@@ -546,7 +546,7 @@ in
                    (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
                    (fn x => x = zero) (fn (x,y) => uid x < uid y)
-                   nodeAlpha
+                   hierNodeAlpha
 
   | ( Node{...}, _ ) => raise IncompatibleSDD
   | ( HNode{...}, _ ) => raise IncompatibleSDD
