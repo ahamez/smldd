@@ -698,56 +698,67 @@ let
                       (*0 1 2 3 4 5 6 7 8 9*)
   val s0 = SDDFromList [0,1,0,0,1,0,1,0,0,1]
 
-  val P0TakeLeft1 = mkComp [ mkFunction (ref (post 1)) 2
-                           , mkFunction (ref (pre 1)) 4
-                           , mkFunction (ref (pre 1)) 1
+  val post1 = ref (post 1)
+  val pre1  = ref (pre 1)
+
+  val P0TakeLeft1 = mkComp [ mkFunction post1 2
+                           , mkFunction pre1 4
+                           , mkFunction pre1 1
                            ]
-  val P0TakeRight1 = mkComp [ mkFunction (ref (post 1)) 3
-                            , mkFunction (ref (pre 1)) 4
-                            , mkFunction (ref (pre 1)) 6
+  val P0TakeRight1 = mkComp [ mkFunction post1 3
+                            , mkFunction pre1 4
+                            , mkFunction pre1 6
                             ]
-  val P0TakeRight2 = mkComp [ mkFunction (ref (post 1)) 0
-                            , mkFunction (ref (pre 1)) 2
-                            , mkFunction (ref (pre 1)) 6
+  val P0TakeRight2 = mkComp [ mkFunction post1 0
+                            , mkFunction pre1 2
+                            , mkFunction pre1 6
                             ]
-  val P0TakeLeft2 = mkComp [ mkFunction (ref (post 1)) 0
-                           , mkFunction (ref (pre 1)) 3
-                           , mkFunction (ref (pre 1)) 1
+  val P0TakeLeft2 = mkComp [ mkFunction post1 0
+                           , mkFunction pre1 3
+                           , mkFunction pre1 1
                            ]
-  val P0GoThink = mkComp [ mkFunction (ref (post 1)) 4
-                         , mkFunction (ref (post 1)) 1
-                         , mkFunction (ref (post 1)) 6
-                         , mkFunction (ref (pre 1)) 0
+  val P0GoThink = mkComp [ mkFunction post1 4
+                         , mkFunction post1 1
+                         , mkFunction post1 6
+                         , mkFunction pre1 0
                          ]
-  val P1TakeLeft1 = mkComp [ mkFunction (ref (post 1)) 7
-                           , mkFunction (ref (pre 1)) 9
-                           , mkFunction (ref (pre 1)) 6
+  val P1TakeLeft1 = mkComp [ mkFunction post1 7
+                           , mkFunction pre1 9
+                           , mkFunction pre1 6
                            ]
-  val P1TakeRight1 = mkComp [ mkFunction (ref (post 1)) 8
-                            , mkFunction (ref (pre 1)) 9
-                            , mkFunction (ref (pre 1)) 1
+  val P1TakeRight1 = mkComp [ mkFunction post1 8
+                            , mkFunction pre1 9
+                            , mkFunction pre1 1
                             ]
-  val P1TakeRight2 = mkComp [ mkFunction (ref (post 1)) 5
-                            , mkFunction (ref (pre 1)) 7
-                            , mkFunction (ref (pre 1)) 1
+  val P1TakeRight2 = mkComp [ mkFunction post1 5
+                            , mkFunction pre1 7
+                            , mkFunction pre1 1
                             ]
-  val P1TakeLeft2 = mkComp [ mkFunction (ref (post 1)) 5
-                           , mkFunction (ref (pre 1)) 8
-                           , mkFunction (ref (pre 1)) 6
+  val P1TakeLeft2 = mkComp [ mkFunction post1 5
+                           , mkFunction pre1 8
+                           , mkFunction pre1 6
                            ]
-  val P1GoThink = mkComp [ mkFunction (ref (post 1)) 9
-                         , mkFunction (ref (post 1)) 6
-                         , mkFunction (ref (post 1)) 1
-                         , mkFunction (ref (pre 1)) 5
+  val P1GoThink = mkComp [ mkFunction post1 9
+                         , mkFunction post1 6
+                         , mkFunction post1 1
+                         , mkFunction pre1 5
                          ]
 
-  val h = mkUnion [ P0TakeLeft1, P0TakeRight1, P0TakeRight2
-                  , P0TakeLeft2, P0GoThink
-                  , P1TakeLeft1, P1TakeRight1, P1TakeRight2
-                  , P1TakeLeft2, P1GoThink
-                  , id
-                  ]
-  val s = eval (mkFixpoint h) s0
+  val h = mkFixpoint(
+              mkUnion [ P0TakeLeft1, P0TakeRight1, P0TakeRight2
+                      , P0TakeLeft2, P0GoThink
+                      , P1TakeLeft1, P1TakeRight1, P1TakeRight2
+                      , P1TakeLeft2, P1GoThink
+                      , id
+                      ]
+                    )
+
+  (*val homDot = Tools.homToDot h
+  val homDotFile = TextIO.openOut "testFixpoint06.dot"
+  val _ = TextIO.outputSubstr ( homDotFile
+                              , Substring.extract(homDot,0, NONE))*)
+
+  val s = eval h s0
 
   val p1 = SDDFromList [1,0,0,0,0,0,0,0,0,1]
   val p2 = SDDFromList [0,1,0,1,0,0,0,0,0,1]
