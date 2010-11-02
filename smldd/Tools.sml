@@ -364,7 +364,7 @@ let
       fun funcString (ref f) =
         case f Hom.Print of
           Hom.PrintRes s => s
-        | _              => raise Hom.NotUserString
+        | _              => ""
     in
       node ^ " [label=\"Func(" ^ (funcString f) ^ ","
     ^ (Variable.toString v) ^ ")\"];\n"
