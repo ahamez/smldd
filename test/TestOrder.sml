@@ -17,9 +17,7 @@ struct
   fun testFlatOrder00 () =
   let
     val vars = ["a","b","c","d"]
-    val ord  = flatOrder vars
-    (*val _ = print "\n"
-    val _ = print (toString ord)*)
+    val _  = flatOrder vars
   in
     assertTrue( true )
   end
@@ -29,9 +27,7 @@ struct
     val ord0  = flatOrder ["a","b","c","d"]
     val ord1  = flatOrder ["d","e","f","g"]
     val ord2  = addHierarchicalNode (mkOrder()) "x" ord0
-    val ord3  = addHierarchicalNode ord2 "y" ord1
-    (*val _ = print "\n"
-    val _ = print (toString ord3)*)
+    val _  = addHierarchicalNode ord2 "y" ord1
   in
     assertTrue( true )
   end
@@ -40,9 +36,7 @@ struct
   let
     val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o"]
     val ord  = flatOrder vars
-    val ord' = transform (MaxLeaves 5) ord
-    (*val _ = print "\n"
-    val _ = print (toString ord')*)
+    val _ = transform (MaxLeaves 5) ord
   in
     assertTrue( true )
   end
@@ -51,9 +45,7 @@ struct
   let
     val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
     val ord  = flatOrder vars
-    val ord' = transform (MaxLeaves 3) ord
-    (*val _ = print "\n"
-    val _ = print (toString ord')*)
+    val _ = transform (MaxLeaves 3) ord
   in
     assertTrue( true )
   end
