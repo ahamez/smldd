@@ -1,6 +1,8 @@
 ann
-"allowFFI false"
-"redundantMatch error"
+  "allowFFI false"
+  "redundantMatch error"
+  "warnUnused true"
+  "nonexhaustiveMatch ignore"
 in
   local
     ./SMLUnit/SMLUnit.mlb

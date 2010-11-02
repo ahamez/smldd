@@ -1,41 +1,45 @@
-(*--------------------------------------------------------------------------*)
+ann
+  "allowFFI false"
+  "redundantMatch error"
+  "nonexhaustiveMatch error"
+in
 
-$(MLTON_ROOT)/basis/basis.mlb
-$(MLTON_ROOT)/basis/mlton.mlb
-$(SML_LIB)/smlnj-lib/smlnj-lib.mlb
-$(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+  $(MLTON_ROOT)/basis/basis.mlb
+  $(MLTON_ROOT)/basis/mlton.mlb
+  $(SML_LIB)/smlnj-lib/smlnj-lib.mlb
+  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
-./Util.sml
-./exceptions.sml
-./Hash.sml
+  ./Util.sml
+  ./exceptions.sml
+  ./Hash.sml
 
-./storage/signatures/DATA.sml
-./storage/signatures/OPERATION.sml
-./storage/Cache.sml
-./storage/UnicityTable.sml
+  ./storage/signatures/DATA.sml
+  ./storage/signatures/OPERATION.sml
+  ./storage/Cache.sml
+  ./storage/UnicityTable.sml
 
-./BitWord.sml
-./IntSortedVector.sml
+  ./BitWord.sml
+  ./IntSortedVector.sml
 
-./parameters/signatures/VALUES.sml
-./parameters/signatures/VARIABLE.sml
-./parameters/signatures/IDENTIFIER.sml
+  ./parameters/signatures/VALUES.sml
+  ./parameters/signatures/VARIABLE.sml
+  ./parameters/signatures/IDENTIFIER.sml
 
-./parameters/instances/BitWordValues.sml
-./parameters/instances/DiscreteIntValues.sml
-./parameters/instances/IntVariable.sml
-./parameters/instances/IntIdentifier.sml
-./parameters/instances/StringIdentifier.sml
+  ./parameters/instances/BitWordValues.sml
+  ./parameters/instances/DiscreteIntValues.sml
+  ./parameters/instances/IntVariable.sml
+  ./parameters/instances/IntIdentifier.sml
+  ./parameters/instances/StringIdentifier.sml
 
-./squareUnion.sml
-./commonApply.sml
-./unionSDD.sml
-./unionFlatDiscreteSDD.sml
-./SDD.sml
-./Hom.sml
-./Tools.sml
-./Order.sml
+  ./squareUnion.sml
+  ./commonApply.sml
+  ./unionSDD.sml
+  ./unionFlatDiscreteSDD.sml
+  ./SDD.sml
+  ./Hom.sml
+  ./Tools.sml
+  ./Order.sml
 
-./configurations.sml
+  ./configurations.sml
 
-(*--------------------------------------------------------------------------*)
+end
