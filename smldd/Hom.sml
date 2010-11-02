@@ -906,17 +906,17 @@ fun composition lookup a b sdd =
 
 (*--------------------------------------------------------------------------*)
 fun commutativeComposition lookup hs sdd =
-  foldr (fn (h,acc) => evalCallback lookup h acc) sdd hs
+  foldl (fn (h,acc) => evalCallback lookup h acc) sdd hs
 
 (*--------------------------------------------------------------------------*)
 fun satCommutativeComposition lookup F G sdd =
   if sdd = SDD.one then
     (* Standard composition *)
-    foldr (fn (h,acc) => evalCallback lookup h acc) SDD.one (F::G)
+    foldl (fn (h,acc) => evalCallback lookup h acc) SDD.one (F::G)
   else
   let
     val fRes = evalCallback lookup F sdd
-    val gRes = foldr (fn (g,acc) => evalCallback lookup g acc) fRes G
+    val gRes = foldl (fn (g,acc) => evalCallback lookup g acc) fRes G
   in
     gRes
   end
