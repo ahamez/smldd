@@ -20,24 +20,23 @@ struct
     EvalRes (SV.mapPartial (fn x => if x < c then NONE else SOME (x-c))
                            values
             )
-  |   pre c Print =
-    PrintRes ("Pre" ^ (Int.toString c))
+  |   pre _ Selector = SelectorRes true
+  |   pre c Print    = PrintRes ("Pre" ^ (Int.toString c))
   |   pre c Hash =
     HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.const 4956317) )
 
   (* ---------------------------------------------------------------- *)
   fun preTest c (Eval values) =
     EvalRes (SV.mapPartial  (fn x => if x < c then SOME x else NONE) values )
-  |   preTest c Print =
-    PrintRes ("Pre" ^ (Int.toString c))
+  |   preTest c Print = PrintRes ("Pre" ^ (Int.toString c))
+  |   preTest _ Selector = SelectorRes true
   |   preTest c Hash =
     HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.const 4956317) )
 
   (* ---------------------------------------------------------------- *)
   fun post c (Eval values) =
     EvalRes (SV.map (fn x => x + c) values)
-  |   post c Print =
-    PrintRes ("Post" ^ (Int.toString c))
+  |   post c Print = PrintRes ("Post" ^ (Int.toString c))
   |   post c Hash =
     HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.const 1481673) )
 

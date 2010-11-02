@@ -19,10 +19,12 @@ signature HOM = sig
   val mkNested        : hom -> variable -> hom
 
   datatype UserIn     = Eval of values
+                      | Selector
                       | Hash
                       | Print
 
   datatype UserOut    = EvalRes  of values
+                      | SelectorRes of bool
                       | HashRes  of Hash.t
                       | PrintRes of string
 
@@ -73,7 +75,6 @@ exception NestedHomOnValues
 exception FunctionHomOnNested
 exception EmptyOperands
 exception NotUserValues
-exception NotUserString
 exception NotUserHash
 
 (*--------------------------------------------------------------------------*)
@@ -84,13 +85,15 @@ type valuation = SDD.valuation
 
 (*--------------------------------------------------------------------------*)
 datatype UserIn     = Eval of values
+                    | Selector
                     | Hash
                     | Print
 
 (*--------------------------------------------------------------------------*)
-datatype UserOut    = EvalRes  of values
-                    | HashRes  of Hash.t
-                    | PrintRes of string
+datatype UserOut    = EvalRes     of values
+                    | SelectorRes of bool
+                    | HashRes     of Hash.t
+                    | PrintRes    of string
 
 (*--------------------------------------------------------------------------*)
 type userFunction   = (UserIn -> UserOut) ref
@@ -101,11 +104,23 @@ fun funcValues (ref f) v =
     EvalRes v => v
   | _         => raise NotUserValues
 
+val JOIQSJDIS = 0
+
+(*--------------------------------------------------------------------------*)
+fun funcSelector (ref f) =
+  (case f Selector of
+    SelectorRes b => b
+  | _             => false
+  )
+  handle Match => false
+
 (*--------------------------------------------------------------------------*)
 fun funcString (ref f) =
-  case f Print of
+  (case f Print of
     PrintRes s => s
-  | _          => raise NotUserString
+  | _          => "???"
+  )
+  handle Match => "???"
 
 (*--------------------------------------------------------------------------*)
 fun funcHash (ref f) =
@@ -378,7 +393,7 @@ let
   |   selectorOption (SOME h) = isSelector h
 in
   case h of
-    Func(_,_)            => true
+    Func(f,_)            => funcSelector f
   | Nested(g,_)          => isSelector g
   | Union hs             => List.all isSelector hs
   | Inter hs             => List.all isSelector hs
