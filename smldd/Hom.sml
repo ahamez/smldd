@@ -103,8 +103,6 @@ fun funcValues (ref f) v =
     EvalRes v => v
   | _         => raise NotUserValues
 
-val JOIQSJDIS = 0
-
 (*--------------------------------------------------------------------------*)
 fun funcSelector (ref f) =
   (case f Selector of
