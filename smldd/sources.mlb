@@ -1,6 +1,7 @@
 ann
   "allowFFI false"
   "redundantMatch error"
+  "warnUnused true"
   "nonexhaustiveMatch error"
 in
 
