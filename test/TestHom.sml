@@ -906,7 +906,6 @@ let
   val habcd = mkComposition a (mkComposition b (mkComposition c d))
   val habc  = mkComposition a (mkComposition b c)
   val hab   = mkComposition a b
-  val ha    = a
 
   val h = mkUnion [ habcd, habc, hab, a ]
   val s = eval h s0
