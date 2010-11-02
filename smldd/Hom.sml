@@ -57,7 +57,6 @@ signature HOM = sig
   exception FunctionHomOnNested
   exception EmptyOperands
   exception NotUserValues
-  exception NotUserString
   exception NotUserHash
 
 end
