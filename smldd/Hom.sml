@@ -480,7 +480,6 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-
 fun mkUnion' []      = raise EmptyOperands
 |   mkUnion' (x::[]) = x
 |   mkUnion' xs      =
