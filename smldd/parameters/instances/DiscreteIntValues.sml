@@ -4,7 +4,6 @@ structure DiscreteIntValues : VALUES = struct
 (*--------------------------------------------------------------------------*)
 structure SV = IntSortedVector
 structure H  = Hash
-structure HT = HashTable
 
 (*--------------------------------------------------------------------------*)
 (* Used by the unicity table *)
@@ -115,7 +114,7 @@ fun hash x =
     case x of
       Union(xs) => hashOperands( H.const 15411567, xs)
     | Inter(xs) => hashOperands( H.const 78995947, xs)
-    | Diff(ref(l,hl,_),ref(r,hr,_)) =>
+    | Diff(ref(_,hl,_),ref(_,hr,_)) =>
         H.hashCombine( H.const 94165961
                      , H.hashCombine( hl, hr )
                      )
@@ -182,9 +181,6 @@ fun storedDifference(x,y) =
     storedMkEmpty()
   else
     cache.lookup( Operations.Diff(x,y) )
-
-(*--------------------------------------------------------------------------*)
-val stats = cache.stats
 
 (*--------------------------------------------------------------------------*)
 end (* DiscreteIntValues *)

@@ -187,7 +187,7 @@ struct
 
   fun hash (Hom(_,h,_)) = h
 
-  fun toString (Hom(h,hsh,_)) =
+  fun toString (Hom(h,_,_)) =
   let
     fun optPartToString NONE      = ""
     |   optPartToString (SOME x) = toString (!x)
@@ -480,7 +480,6 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-structure HT = HashTable
 
 fun mkUnion' []      = raise EmptyOperands
 |   mkUnion' (x::[]) = x
@@ -583,7 +582,7 @@ fun mkComposition x y =
       case notC of
         []    => ry::c
       | x::[] => (mkComp x ry)::c
-      | xs    => (mkComp (mkCommutativeComposition notC) ry)::c
+      | _     => (mkComp (mkCommutativeComposition notC) ry)::c
     end
 
   in
@@ -976,7 +975,7 @@ fun nested lookup h var sdd =
   end
 
 (*--------------------------------------------------------------------------*)
-fun function lookup f var sdd =
+fun function f var sdd =
   if sdd = SDD.one then
     SDD.one
   else
@@ -1044,7 +1043,7 @@ in
     | ComComp hs            => commutativeComposition lookup hs sdd
     | Fixpoint g            => fixpoint lookup g sdd
     | Nested( g, var )      => nested lookup g var sdd
-    | Func( f, var )        => function lookup f var sdd
+    | Func( f, var )        => function f var sdd
     | SatUnion( _, F, G, L) => satUnion lookup F G L sdd
     | SatInter( _, F, G, L) => satIntersection lookup F G L sdd
     | SatFixpoint(_,F,G,L)  => satFixpoint lookup F G L sdd

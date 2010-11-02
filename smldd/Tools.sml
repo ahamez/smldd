@@ -77,7 +77,7 @@ let
   + (foldl (fn ( (vl,succ), sum ) =>
              sum
            + (case vl of
-               SDD.Values v => 0
+               SDD.Values _ => 0
              | SDD.Nested n => visit node n
              )
            + visit node succ
@@ -124,7 +124,7 @@ let
     ^ "\"];\n"
     :: (foldl (fn ((vl,succ),str) =>
                 case vl of
-                  SDD.Values v => str @ (dotHelper succ depth)
+                  SDD.Values _ => str @ (dotHelper succ depth)
                 | SDD.Nested n => str
                                   @ (dotHelper n    (depth + 1) )
                                   @ (dotHelper succ depth       )
@@ -133,10 +133,10 @@ let
               alpha
        )
 
-  fun walkOnly depth dotHelper uid var alpha =
+  fun walkOnly depth dotHelper _ _ alpha =
     foldl (fn ((vl,succ),str) =>
               case vl of
-                SDD.Values v => dotHelper succ depth
+                SDD.Values _ => dotHelper succ depth
               | SDD.Nested n => str
                                 @ (dotHelper n    (depth + 1) )
                                 @ (dotHelper succ depth       )
@@ -308,9 +308,9 @@ let
 
     fun id _ = node ^ " [label=\"ID\"];\n"
 
-    fun cons vr vl nxt = "\n"
+    fun cons _ _ _ = "\n"
 
-    fun const s = "\n"
+    fun const _ = "\n"
 
     fun union hs =
       node ^ " [label=\"+\"];\n"

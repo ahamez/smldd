@@ -44,7 +44,6 @@ functor OrderFun ( structure Identifier : IDENTIFIER
 
 (*--------------------------------------------------------------------------*)
 exception ArtificialNode
-exception NotYetImplemented
 
 (*--------------------------------------------------------------------------*)
 type identifier = Identifier.t
@@ -80,13 +79,12 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun variable   (Node( v, _ )) = v
-fun identifier (Node( _, i )) = i
 
 fun nodes (Order ns) = ns
 
 (*--------------------------------------------------------------------------*)
-fun nextVar (Order [] )        = Variable.first
-|   nextVar (Order((n,_)::xs)) = Variable.next (variable n)
+fun nextVar (Order [] )       = Variable.first
+|   nextVar (Order((n,_)::_)) = Variable.next (variable n)
 
 (*--------------------------------------------------------------------------*)
 fun mkOrder () = Order []
@@ -144,7 +142,7 @@ end
 (*--------------------------------------------------------------------------*)
 |   transform Flatten (Order ns) =
 let
-  fun helper ( ( Node(v,i), NONE ), acc ) =
+  fun helper ( ( Node(_,i), NONE ), acc ) =
     addFlatNode' acc ( Node( nextVar acc, i ) )
 
   |   helper ( ( _, SOME nested ), acc ) =

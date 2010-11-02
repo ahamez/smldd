@@ -122,7 +122,7 @@ exception IsNotNested
 
 (*--------------------------------------------------------------------------*)
 (* Export an SDD to a string *)
-fun toString (ref (iSDD(sdd,_,h))) =
+fun toString (ref (iSDD(sdd,_,_))) =
 let
   fun nodeHelper vlToString vr alpha =
    "(" ^ (Variable.toString vr) ^ ")" ^ " [ " ^
@@ -186,7 +186,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
-fun flatNode ( var, values, rnext as (ref (iSDD(next,hashNext,_))) ) =
+fun flatNode ( var, values, rnext as (ref (iSDD(next,_,_))) ) =
   case ( Values.storedEmpty values , next ) of
     (_,Zero) => zero
   | (true,_) => zero
@@ -212,8 +212,9 @@ fun flatNodeAlpha ( var, alpha ) =
 
 (*--------------------------------------------------------------------------*)
 (* Return an hierarchical node. Not exported *)
-fun hierNode ( var, rnested as (ref (iSDD(nested,hashNested,_)))
-                  , rnext as (ref (iSDD(next,hashNext,_))) )
+fun hierNode ( var, rnested as (ref (iSDD(nested,_,_)))
+                  , rnext as (ref (iSDD(next,_,_)))
+             )
 = case ( next, nested ) of
     ( Zero , _ ) => zero
   | ( _ , Zero ) => zero
@@ -273,7 +274,7 @@ datatype operation = Union of
 fun checkCompatibilty []     = raise DoNotPanic
 |   checkCompatibilty(x::xs) =
 
-  foldl (fn (x as (ref (iSDD(sx,_,_))),y as (ref (iSDD(sy,_,_)))) =>
+  foldl (fn ( ref (iSDD(sx,_,_)), y as (ref (iSDD(sy,_,_)))) =>
         case (sx,sy) of
             (Zero,_)  => raise DoNotPanic
           | (_,Zero)  => raise DoNotPanic
@@ -642,11 +643,11 @@ fun values x = case x of Nested _ => raise IsNotNested
                        | Values v => v
 
 (*--------------------------------------------------------------------------*)
-fun nested x = case x of Values v => raise IsNotValues
+fun nested x = case x of Values _ => raise IsNotValues
                        | Nested s => s
 
 (*--------------------------------------------------------------------------*)
-fun alpha (x as (ref (iSDD(sdd,_,_)))) =
+fun alpha (ref (iSDD(sdd,_,_))) =
 let
   fun alphaHelper a f =
       Vector.foldr
@@ -702,8 +703,8 @@ let
     case x of
       Zero                        => zero ()
     | One                         => one ()
-    | Node  {variable=v,alpha=a}  => node uid v (alpha s)
-    | HNode {variable=v,alpha=a}  => node uid v (alpha s)
+    | Node  {variable=v,alpha=_}  => node uid v (alpha s)
+    | HNode {variable=v,alpha=_}  => node uid v (alpha s)
   end
 
 in
