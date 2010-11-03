@@ -34,11 +34,17 @@ structure BWHom = HomFun( structure SDD      = BWSDD
                         ; structure Values   = BitWordValues
                         )
 
-structure BWOrder = OrderFun( structure Identifier = StringIdentifier
-                            ; structure SDD        = BWSDD
-                            ; structure Variable   = IntVariable
-                            ; structure Values     = BitWordValues
-                            ; structure Hom        = BWHom)
+structure BWIntOrder = OrderFun( structure Identifier = IntIdentifier
+                               ; structure SDD        = BWSDD
+                               ; structure Variable   = IntVariable
+                               ; structure Values     = BitWordValues
+                               ; structure Hom        = BWHom)
+
+structure BWStringOrder = OrderFun( structure Identifier = StringIdentifier
+                                  ; structure SDD        = BWSDD
+                                  ; structure Variable   = IntVariable
+                                  ; structure Values     = BitWordValues
+                                  ; structure Hom        = BWHom)
 
 structure BWTools = ToolsFun( structure SDD      = BWSDD
                             ; structure Variable = IntVariable
