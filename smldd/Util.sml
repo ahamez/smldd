@@ -76,24 +76,44 @@ end
 fun IntInfToHumanString x =
 let
 
-  fun helper x last count =
+  val threshold = 10000000000
+  val precision = 2
+
+  fun helper mant dotMant exp =
   let
-    val (q,r) = IntInf.quotRem( x, IntInf.fromInt 10 )
+    val (q,r) = IntInf.quotRem( mant, IntInf.fromInt 10 )
   in
     if q = 0 then
-      ( x, last, count )
+    let
+      val ( dotMant', _ ) = foldl (fn ( x, ( acc, pow) ) =>
+                                    ( acc + x * (IntInf.pow( 10, pow ))
+                                    , pow - 1
+                                    )
+                                  )
+                                  ( 0, precision - 1 )
+                                  dotMant
+    in
+      ( mant, dotMant', exp )
+    end
     else
-      helper q r (count + 1)
+    let
+      val dotMant' = if length dotMant >= precision then
+                       r::(List.take( dotMant, precision - 1 ))
+                     else
+                       r::dotMant
+    in
+      helper q dotMant' (exp + 1)
+    end
   end
 
 in
-  if x < 10000000000 then
+  if x < threshold then
     IntInf.toString x
   else
   let
-    val (a,b,c) = helper x 0 0
+    val (a,b,c) = helper x [] 0
   in
-    IntInf.toString a ^ "." ^ (IntInf.toString b) ^ "e" ^ (IntInf.toString c)
+    IntInf.toString a ^ "." ^ (IntInf.toString b) ^ "E" ^ (IntInf.toString c)
   end
 end
 
