@@ -74,10 +74,28 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun IntInfToHumanString x =
-  if x < 1000000 then
+let
+
+  fun helper x last count =
+  let
+    val (q,r) = IntInf.quotRem( x, IntInf.fromInt 10 )
+  in
+    if q = 0 then
+      ( x, last, count )
+    else
+      helper q r (count + 1)
+  end
+
+in
+  if x < 10000000000 then
     IntInf.toString x
   else
-    Real.fmt (StringCvt.SCI (SOME 2)) (Real.fromLargeInt x)
+  let
+    val (a,b,c) = helper x 0 0
+  in
+    IntInf.toString a ^ "." ^ (IntInf.toString b) ^ "e" ^ (IntInf.toString c)
+  end
+end
 
 (*--------------------------------------------------------------------------*)
 fun splitAt xs i =
