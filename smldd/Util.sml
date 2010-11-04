@@ -73,6 +73,24 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+(* Our own take function which does not check bounds *)
+fun take (l, n) =
+let
+   fun loop (l, n, ac) =
+      if n > 0 then
+        case l of
+          [] => rev ac
+        | x :: l => loop (l, n - 1, x::ac)
+      else
+        rev ac
+in
+  if n < 0 then
+    raise Subscript
+  else
+    loop (l, n, [])
+end
+
+(*--------------------------------------------------------------------------*)
 fun IntInfToString x thresh prec =
 let
 
