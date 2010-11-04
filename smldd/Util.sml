@@ -73,11 +73,16 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun IntInfToHumanString x =
+fun IntInfToString x thresh prec =
 let
 
-  val threshold = 10000000000
-  val precision = 2
+  val threshold = case thresh of
+                    NONE   => 10000000000
+                  | SOME t => t
+
+  val precision = case prec of
+                    NONE   => 2
+                  | SOME p => p
 
   fun helper mant dotMant exp =
   let
