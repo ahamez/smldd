@@ -184,6 +184,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+(* Create packets of size i from list xs. Process from the right of the list*)
 fun explodeRightBy xs i =
 let
 
