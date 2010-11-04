@@ -922,6 +922,8 @@ fun satCommutativeComposition lookup F G sdd =
   end
 
 (*--------------------------------------------------------------------------*)
+local (* Fixpoint stuff *)
+
 fun fixpointHelper f sdd =
 let
   val res = f sdd
@@ -932,11 +934,11 @@ in
     fixpointHelper f res
 end
 
-(*--------------------------------------------------------------------------*)
+in (* local fixpoint stuff *)
+
 fun fixpoint lookup h sdd =
   fixpointHelper (evalCallback lookup h) sdd
 
-(*--------------------------------------------------------------------------*)
 fun satFixpoint lookup F G L sdd =
 let
   fun loop sdd =
@@ -949,6 +951,8 @@ let
 in
   fixpointHelper loop sdd
 end
+
+end (* local fixpoint stuff *)
 
 (*--------------------------------------------------------------------------*)
 fun nested lookup h var sdd =
