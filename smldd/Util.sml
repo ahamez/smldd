@@ -196,14 +196,10 @@ let
       (x::y)::ys
 
 in
-
-  if i < 0 then
-    raise Domain
-  else if i > length xs then
+  if i < 0 orelse i > length xs then
     raise Subscript
   else
     foldr helper [] xs
-
 end
 
 (*--------------------------------------------------------------------------*)
