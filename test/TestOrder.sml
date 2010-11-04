@@ -91,17 +91,17 @@ struct
 
   fun testAnonymise00 () =
   let
-    val ord = flatOrder ["a","b","c","d"]
-    val ord'  = transform Anonymise (transform (MaxLeaves 3) ord)
-    val cst = IntSortedVector.fromList [0]
-    val vst = SDD.Values cst
-    fun f _ = cst
-    val s0  = SDD ord' f
-    val o0  = SDD.node( 0
-                      , SDD.Nested (SDD.fromList [(2,vst),(1,vst),(0,vst)])
-                      , SDD.one
-                      )
-    val o1  = SDD.node( 1, SDD.Nested (SDD.node(0,vst,SDD.one)), o0 )
+    val ord  = flatOrder ["a","b","c","d"]
+    val ord' = transform Anonymise (transform (MaxLeaves 3) ord)
+    val cst  = IntSortedVector.fromList [0]
+    val vst  = SDD.Values cst
+    fun f _  = cst
+    val s0   = SDD ord' f
+    val o0   = SDD.node( 0
+                       , SDD.Nested (SDD.fromList [(2,vst),(1,vst),(0,vst)])
+                       , SDD.one
+                       )
+    val o1   = SDD.node( 1, SDD.Nested (SDD.node(0,vst,SDD.one)), o0 )
   in
     assertTrue( o1 = s0 )
   end
@@ -109,10 +109,10 @@ struct
   fun testHom00 () =
   let
     val rf0  = ref f3
-    val vars  = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
-    val ord   = flatOrder vars
-    val h0    = hom ord "i" (fn v => Hom.mkFunction rf0 v)
-    val o0    = Hom.mkFunction rf0 5
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val h0   = hom ord "i" (fn v => Hom.mkFunction rf0 v)
+    val o0   = Hom.mkFunction rf0 5
   in
     assertTrue( h0 = o0 )
   end
@@ -120,12 +120,39 @@ struct
   fun testHom01 () =
   let
     val rf0  = ref f3
-    val vars  = ["a","b","c","d"]
+    val vars = ["a","b","c","d"]
     val ord  = transform (MaxLeaves 3) (flatOrder vars)
-    val h0    = hom ord "c" (fn v => Hom.mkFunction rf0 v)
-    val o0    = Hom.mkNested (Hom.mkFunction rf0 1) 0
+    val h0   = hom ord "c" (fn v => Hom.mkFunction rf0 v)
+    val o0   = Hom.mkNested (Hom.mkFunction rf0 1) 0
   in
     assertTrue( h0 = o0 )
+  end
+
+  fun testId00 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = transform (MaxLeaves 3) (flatOrder vars)
+    val ord' = transform Id ord
+  in
+    assertTrue( StringOrder.eq( ord, ord' ) )
+  end
+
+  fun testShuffle00 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = flatOrder vars
+    val ord' = transform Shuffle ord
+  in
+    assertTrue( not (StringOrder.eq( ord, ord' )) )
+  end
+
+  fun testShuffle01 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = transform (MaxLeaves 3) (flatOrder vars)
+    val ord' = transform Shuffle ord
+  in
+    assertTrue( not (StringOrder.eq( ord, ord' )) )
   end
 
   fun suite () =
@@ -140,6 +167,9 @@ struct
       , ("testAnonymise00"     , testAnonymise00   )
       , ("testHom00"           , testHom00         )
       , ("testHom01"           , testHom01         )
+      , ("testId00"            , testId00          )
+      , ("testShuffle00"       , testShuffle00     )
+      , ("testShuffle01"       , testShuffle01     )
       ]
 
 end
