@@ -161,6 +161,8 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+|   transform (MaxLeaves 0) _ = raise Domain
+|   transform (MaxLeaves 1) _ = raise Domain
 |   transform (MaxLeaves leaves) (Order ns) =
   if length ns < leaves then
     Order ns
