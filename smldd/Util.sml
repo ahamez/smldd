@@ -85,20 +85,45 @@ let
   in
     if q = 0 then
     let
-      val ( dotMant', _ ) = foldl (fn ( x, ( acc, pow) ) =>
-                                    ( acc + x * (IntInf.pow( 10, pow ))
-                                    , pow - 1
+
+      val l = let
+                val len = length dotMant
+              in
+                if len <= precision then
+                  dotMant @ (List.tabulate (precision - len + 1, fn _ => 0))
+                else
+                  dotMant
+              end
+
+      val (l',carry) = if List.last l > 5 then
+                         foldr (fn ( x, ( acc, carry ) ) =>
+                                  if carry then
+                                    if x = 9 then
+                                      ( 0::acc, true )
+                                    else
+                                      ( (x+1)::acc, false )
+                                  else
+                                    ( x::acc, false )
+                                )
+                                ( [], true )
+                                (List.take (l, precision))
+                       else
+                         ( l, false )
+
+      val dotMant' = (String.concat (map (fn x => (IntInf.toString x))
+                                         (List.take ( l', precision ))
                                     )
-                                  )
-                                  ( 0, precision - 1 )
-                                  dotMant
+                     )
+
+      val mant' = if carry then mant + 1 else mant
+
     in
-      ( mant, dotMant', exp )
+      ( IntInf.toString mant', dotMant', Int.toString exp )
     end
     else
     let
-      val dotMant' = if length dotMant >= precision then
-                       r::(List.take( dotMant, precision - 1 ))
+      val dotMant' = if length dotMant > precision then
+                       r::(List.take( dotMant, precision ))
                      else
                        r::dotMant
     in
@@ -113,7 +138,7 @@ in
   let
     val (a,b,c) = helper x [] 0
   in
-    IntInf.toString a ^ "." ^ (IntInf.toString b) ^ "E" ^ (IntInf.toString c)
+    a ^ "." ^ b ^ "E" ^ c
   end
 end
 
