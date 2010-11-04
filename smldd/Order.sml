@@ -20,6 +20,9 @@ signature ORDER = sig
   datatype mode            = Anonymise
                            | Flatten
                            | MaxLeaves of int
+                           | Shuffle
+                           | Id
+
   val transform            : mode -> order -> order
 
   val SDD                  : order -> (identifier -> values) -> SDD
@@ -120,6 +123,8 @@ fun addHierarchicalNode ord i nestedOrd =
 datatype mode = Anonymise
               | Flatten
               | MaxLeaves of int
+              | Shuffle
+              | Id
 
 (*--------------------------------------------------------------------------*)
 fun transform _ (Order []) = Order []
@@ -176,7 +181,25 @@ end
 
   in
     transform (MaxLeaves leaves) (helper ns)
-  end   
+  end
+
+(*--------------------------------------------------------------------------*)
+|   transform Shuffle (Order ns) =
+let
+  fun helper ( (Node(v,i), NONE), acc) =
+    addFlatNode' acc ( Node( v, i ) )
+
+  |   helper ( (Node(v,i), SOME nested), acc) =
+    addHierarchicalNode' acc
+                         ( Node( v, i ) )
+                         (transform Shuffle nested)
+
+in
+  foldr helper (mkOrder ()) (Util.shuffle ns)
+end
+
+(*--------------------------------------------------------------------------*)
+|   transform Id ord = ord
 
 (*--------------------------------------------------------------------------*)
 fun SDD (Order ns) f =
