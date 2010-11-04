@@ -91,6 +91,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+(* Export an IntInf to a string in scientific notation *)
 fun IntInfToString x thresh prec =
 let
 
