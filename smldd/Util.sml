@@ -146,10 +146,11 @@ let
     end
     else
     let
-      val dotMant' = if length dotMant > precision then
-                       r::(List.take( dotMant, precision ))
-                     else
-                       r::dotMant
+      val dotMant' =  r::(take( dotMant, precision ))
+      (*if length dotMant > precision then
+                             r::(List.take( dotMant, precision ))
+                           else
+                             r::dotMant*)
     in
       helper q dotMant' (exp + 1)
     end
