@@ -6,6 +6,7 @@ structure BitWordValues : VALUES = struct
   val hash                = BitWord.hash
   val eq                  = BitWord.eq
   val length              = BitWord.length
+  val empty               = BitWord.empty
   val toString            = BitWord.toString
 
   (* Library view *)

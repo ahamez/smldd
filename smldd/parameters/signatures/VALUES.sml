@@ -7,6 +7,7 @@ sig
   val hash            : values -> Hash.t
   val eq              : values * values -> bool
   val length          : values -> int
+  val empty           : values -> bool
   val toString        : values -> string
 
   (* Library view *)

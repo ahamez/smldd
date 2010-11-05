@@ -12,7 +12,8 @@ signature TOOLS = sig
 
   val nbPaths     : SDD -> IntInf.int
   val paths       : SDD -> (variable * values) list list
-  val orderPaths  : order -> SDD -> (identifier * values) list list
+  val orderPaths  : order -> (values -> values) -> SDD
+                          -> (identifier * values) list list
   val valuesPaths : SDD -> values list list
   val nbNodes     : mode -> SDD -> LargeInt.int
   val toDot       : mode -> SDD -> string
@@ -129,7 +130,7 @@ fun valuesPaths x = pathsBase (fn (_,v) => v ) x
 end (* local paths, valuesPaths *)
 
 (*--------------------------------------------------------------------------*)
-fun orderPaths ord x =
+fun orderPaths ord filter x =
 let
 
   fun zero () = raise Domain
@@ -152,8 +153,12 @@ let
                         val id = case Order.identifier ord (varPath@[var]) of
                                    NONE   => raise Fail "orderPaths no ID 1"
                                  | SOME i => i
+                        val v' = filter v
                       in
-                        [ ( id, v ) ]::paths
+                        if Values.empty v' then
+                          paths
+                        else
+                          [ ( id, v ) ]::paths
                       end
                     | SDD.Nested n =>
                         ( visitCached (node (varPath@[var])) n ) @ paths
@@ -167,8 +172,12 @@ let
                                   case Order.identifier ord (varPath@[var]) of
                                     NONE   => raise Fail "orderPaths no ID 2"
                                   | SOME i => i
+                                val v' = filter v
                               in
-                                ((id,v)::path)::paths
+                                if Values.empty v' then
+                                  path::paths
+                                else
+                                  ((id,v)::path)::paths
                               end
                             | SDD.Nested n =>
                                 foldl (fn ( nestedPath, paths ) =>
