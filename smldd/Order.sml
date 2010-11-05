@@ -25,6 +25,7 @@ signature ORDER = sig
 
   val transform            : mode -> order -> order
 
+  val identifier           : order -> variable list -> identifier option
   val SDD                  : order -> (identifier -> values) -> SDD
   val hom                  : order -> identifier -> (variable -> hom) -> hom
 
@@ -202,6 +203,22 @@ end
 
 (*--------------------------------------------------------------------------*)
 |   transform Id ord = ord
+
+(*--------------------------------------------------------------------------*)
+fun identifier (Order []) _    = NONE
+|   identifier _          []   = NONE
+
+|   identifier (Order ((Node(v,i), NONE)::ns)) (P as (v'::_)) =
+  if Variable.eq( v, v' ) then
+    i
+  else
+    identifier (Order ns) P
+
+|   identifier (Order ((Node(v,_), SOME nested)::ns)) (P as (v'::path)) =
+  if Variable.eq( v, v' ) then
+    identifier nested path
+  else
+    identifier (Order ns) P
 
 (*--------------------------------------------------------------------------*)
 fun SDD (Order ns) f =
