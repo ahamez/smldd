@@ -190,6 +190,50 @@ in
   assertTrue( eqPaths( p0, o0 ) )
 end
 
+fun testOrderPaths00 () =
+let
+  val ord0 = IntOrder.flatOrder [0,1,2,3]
+  val cst  = IntSortedVector.fromList [0]
+  fun f _  = cst
+  val s0   = IntOrder.SDD ord0 f
+  val p0   = orderPaths ord0 s0
+  val o0   = [ [ ( 0, cst ), ( 1, cst ), ( 2, cst ), ( 3, cst ) ] ]
+in
+  assertTrue( eqPaths( p0, o0 ) )
+end
+
+fun testOrderPaths01 () =
+let
+  val vars = [0,1,2,3,4]
+  val ord0 = IntOrder.transform IntOrder.Anonymise
+               (IntOrder.transform (IntOrder.MaxLeaves 3)
+                 (IntOrder.flatOrder vars)
+                )
+  val cst  = IntSortedVector.fromList [0]
+  fun f _  = cst
+  val s0   = IntOrder.SDD ord0 f
+
+  val p0   = orderPaths ord0 s0
+  val o0   = [[ ( 0, cst ), ( 1, cst ), ( 2, cst ), ( 3, cst ), ( 4, cst ) ]]
+in
+  assertTrue( eqPaths( p0, o0 ) )
+end
+
+fun testOrderPaths02 () =
+let
+  val vars = [0,1,2,3]
+  val ord0 = IntOrder.transform IntOrder.Anonymise
+               (IntOrder.transform (IntOrder.MaxLeaves 3)
+                 (IntOrder.flatOrder vars)
+                )
+  fun f x  = IntSortedVector.fromList [x+100]
+  val s0   = IntOrder.SDD ord0 f
+  val p0   = orderPaths ord0 s0
+  val o0   = [ [ ( 0, f 0 ), ( 1, f 1 ), ( 2, f 2 ), ( 3, f 3 ) ] ]
+in
+  assertTrue( eqPaths( p0, o0 ) )
+end
+
 fun suite () =
     Test.labelTests
     [ ("testPaths00"          , testPaths00        )
@@ -201,6 +245,8 @@ fun suite () =
     , ("testPaths06"          , testPaths06        )
     , ("testPaths07"          , testPaths07        )
     , ("testPaths08"          , testPaths08        )
+    , ("testOrderPaths00"     , testOrderPaths00   )
+    , ("testOrderPaths01"     , testOrderPaths01   )
     ]
 
 end
