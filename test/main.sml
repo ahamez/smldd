@@ -10,4 +10,7 @@ SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
 SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
                                  ( TestOrder.suite() );
 
+SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
+                                 ( TestTools.suite() );
+
 testDot();

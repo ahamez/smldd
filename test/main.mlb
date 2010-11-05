@@ -13,6 +13,7 @@ in
     ./TestDot.sml
     ./TestUtil.sml
     ./TestOrder.sml
+    ./TestTools.sml
     ./main.sml
   end
 end
