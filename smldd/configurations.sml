@@ -23,7 +23,15 @@ structure Tools = ToolsFun( structure SDD      = SDD
                           ; structure Variable = IntVariable
                           ; structure Values   = DiscreteIntValues
                           ; structure Hom      = Hom
+                          ; structure Order    = IntOrder
                           )
+
+structure StringTools = ToolsFun( structure SDD      = SDD
+                                ; structure Variable = IntVariable
+                                ; structure Values   = DiscreteIntValues
+                                ; structure Hom      = Hom
+                                ; structure Order    = StringOrder
+                                )
 
 (* ------------------------------------------------------------------------ *)
 structure BWSDD = SDDFun( structure Variable  = IntVariable
@@ -50,6 +58,14 @@ structure BWTools = ToolsFun( structure SDD      = BWSDD
                             ; structure Variable = IntVariable
                             ; structure Values   = BitWordValues
                             ; structure Hom      = BWHom
+                            ; structure Order    = BWIntOrder
                             )
+
+structure BWStringTools = ToolsFun( structure SDD      = BWSDD
+                                  ; structure Variable = IntVariable
+                                  ; structure Values   = BitWordValues
+                                  ; structure Hom      = BWHom
+                                  ; structure Order    = BWStringOrder
+                                  )
 
 (* ------------------------------------------------------------------------ *)

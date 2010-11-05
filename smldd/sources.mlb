@@ -38,8 +38,8 @@ in
   ./unionFlatDiscreteSDD.sml
   ./SDD.sml
   ./Hom.sml
-  ./Tools.sml
   ./Order.sml
+  ./Tools.sml
 
   ./configurations.sml
 
