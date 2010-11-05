@@ -10,13 +10,13 @@ signature TOOLS = sig
 
   datatype mode  = Sharing | Hierarchy
 
-  val nbPaths    : SDD -> IntInf.int
-  val paths      : SDD -> (variable * values) list list
-  val orderPaths : order -> SDD -> (identifier * values) list list
-  val nbNodes    : mode -> SDD -> LargeInt.int
-  val toDot      : mode -> SDD -> string
-
-  val homToDot   : hom -> string
+  val nbPaths     : SDD -> IntInf.int
+  val paths       : SDD -> (variable * values) list list
+  val orderPaths  : order -> SDD -> (identifier * values) list list
+  val valuesPaths : SDD -> values list list
+  val nbNodes     : mode -> SDD -> LargeInt.int
+  val toDot       : mode -> SDD -> string
+  val homToDot    : hom -> string
 
 end (* signature TOOLS *)
 
@@ -179,6 +179,49 @@ let
 in
   visit (node []) x
 end
+
+(*--------------------------------------------------------------------------*)
+fun valuesPaths x =
+let
+
+  fun zero () = raise Domain
+  fun one  () = []
+
+  val visit = SDD.mkVisitor SDD.Cached zero one
+
+  fun node _ _ alpha =
+    foldl (fn ( (vl,succ), paths ) =>
+          let
+            val succPaths = visit node succ
+          in
+            case succPaths of
+
+              (* Succ was |1| *)
+              [] => (case vl of
+                      SDD.Values v => [v]::paths
+                    | SDD.Nested n => (visit node n) @ paths
+                    )
+
+            | _  => foldl (fn ( path, paths ) =>
+                            case vl of
+                              SDD.Values v => (v::path)::paths
+                            | SDD.Nested n =>
+                                foldl (fn ( nestedPath, paths ) =>
+                                        (nestedPath @ path)::paths
+                                      )
+                                      paths
+                                      (visit node n)
+                          )
+                          paths
+                          succPaths
+          end
+          )
+          []
+          alpha
+
+in
+  visit node x
+end (* fun paths *)
 
 (*--------------------------------------------------------------------------*)
 fun nbNodes mode x =
