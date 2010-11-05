@@ -129,9 +129,6 @@ fun valuesPaths x = pathsBase (fn (_,v) => v ) x
 end (* local paths, valuesPaths *)
 
 (*--------------------------------------------------------------------------*)
-(* /!\ Needs to perform n iterations where n = nbPaths x as we can't cache
-  the result on each node
-*)
 fun orderPaths ord x =
 let
 
@@ -143,7 +140,8 @@ let
   fun node varPath _ var alpha =
     foldl (fn ( (vl,succ), paths ) =>
           let
-            val succPaths = visit (node varPath) succ
+            val visitCached = SDD.mkVisitor SDD.Cached zero one
+            val succPaths = visitCached (node varPath) succ
           in
             case succPaths of
 
@@ -158,7 +156,7 @@ let
                         [ ( id, v ) ]::paths
                       end
                     | SDD.Nested n =>
-                        ( visit (node (varPath@[var])) n ) @ paths
+                        ( visitCached (node (varPath@[var])) n ) @ paths
                     )
 
             | _  => foldl (fn ( path, paths ) =>
@@ -177,7 +175,7 @@ let
                                         (nestedPath @ path)::paths
                                       )
                                       paths
-                                      (visit (node (varPath@[var])) n)
+                                      (visitCached (node (varPath@[var])) n)
                           )
                           paths
                           succPaths
