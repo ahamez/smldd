@@ -76,7 +76,9 @@ in
 end (* fun visitNbPaths *)
 
 (*--------------------------------------------------------------------------*)
-fun paths x =
+local (* paths, valuesPaths *)
+
+fun pathsBase mk x =
 let
 
   fun zero () = raise Domain
@@ -93,13 +95,13 @@ let
 
               (* Succ was |1| *)
               [] => (case vl of
-                      SDD.Values v => [(var,v)]::paths
+                      SDD.Values v => [mk (var,v)]::paths
                     | SDD.Nested n => (visit node n) @ paths
                     )
 
             | _  => foldl (fn ( path, paths ) =>
                             case vl of
-                              SDD.Values v => ((var,v)::path)::paths
+                              SDD.Values v => ((mk (var,v))::path)::paths
                             | SDD.Nested n =>
                                 foldl (fn ( nestedPath, paths ) =>
                                         (nestedPath @ path)::paths
@@ -117,6 +119,14 @@ let
 in
   visit node x
 end (* fun paths *)
+
+in (* local paths, valuesPaths *)
+
+fun paths x = pathsBase (fn (var,v) => (var,v)) x
+
+fun valuesPaths x = pathsBase (fn (_,v) => v ) x
+
+end (* local paths, valuesPaths *)
 
 (*--------------------------------------------------------------------------*)
 (* /!\ Needs to perform n iterations where n = nbPaths x as we can't cache
@@ -179,49 +189,6 @@ let
 in
   visit (node []) x
 end
-
-(*--------------------------------------------------------------------------*)
-fun valuesPaths x =
-let
-
-  fun zero () = raise Domain
-  fun one  () = []
-
-  val visit = SDD.mkVisitor SDD.Cached zero one
-
-  fun node _ _ alpha =
-    foldl (fn ( (vl,succ), paths ) =>
-          let
-            val succPaths = visit node succ
-          in
-            case succPaths of
-
-              (* Succ was |1| *)
-              [] => (case vl of
-                      SDD.Values v => [v]::paths
-                    | SDD.Nested n => (visit node n) @ paths
-                    )
-
-            | _  => foldl (fn ( path, paths ) =>
-                            case vl of
-                              SDD.Values v => (v::path)::paths
-                            | SDD.Nested n =>
-                                foldl (fn ( nestedPath, paths ) =>
-                                        (nestedPath @ path)::paths
-                                      )
-                                      paths
-                                      (visit node n)
-                          )
-                          paths
-                          succPaths
-          end
-          )
-          []
-          alpha
-
-in
-  visit node x
-end (* fun paths *)
 
 (*--------------------------------------------------------------------------*)
 fun nbNodes mode x =
