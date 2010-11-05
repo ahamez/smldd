@@ -155,6 +155,79 @@ struct
     assertTrue( not (StringOrder.eq( ord, ord' )) )
   end
 
+  fun testIdentifier00 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = flatOrder vars
+    val id   = identifier ord [3]
+  in
+    assertTrue( id = SOME "a" )
+  end
+
+  fun testIdentifier01 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = flatOrder vars
+    val id   = identifier ord [2]
+  in
+    assertTrue( id = SOME "b" )
+  end
+
+  fun testIdentifier02 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = flatOrder vars
+    val id   = identifier ord [0]
+  in
+    assertTrue( id = SOME "d" )
+  end
+
+  fun testIdentifier03 () =
+  let
+    val vars = []
+    val ord  = flatOrder vars
+    val id   = identifier ord [0]
+  in
+    assertTrue( id = NONE )
+  end
+
+  fun testIdentifier04 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = transform Anonymise (transform (MaxLeaves 3) (flatOrder vars))
+    val id   = identifier ord [1,0]
+  in
+    assertTrue( id = SOME "a" )
+  end
+
+  fun testIdentifier05 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = transform Anonymise (transform (MaxLeaves 3) (flatOrder vars))
+    val id   = identifier ord [0,0]
+  in
+    assertTrue( id = SOME "d" )
+  end
+
+  fun testIdentifier06 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = transform Anonymise (transform (MaxLeaves 3) (flatOrder vars))
+    val id   = identifier ord [0,3]
+  in
+    assertTrue( id = NONE )
+  end
+
+  fun testIdentifier07 () =
+  let
+    val vars = ["a","b","c","d"]
+    val ord  = transform Anonymise (transform (MaxLeaves 3) (flatOrder vars))
+    val id   = identifier ord [0,2]
+  in
+    assertTrue( id = SOME "b" )
+  end
+
+
   fun suite () =
       Test.labelTests
       [ ("testFlatOrder00"     , testFlatOrder00   )
@@ -170,6 +243,14 @@ struct
       , ("testId00"            , testId00          )
       , ("testShuffle00"       , testShuffle00     )
       , ("testShuffle01"       , testShuffle01     )
+      , ("testIdentifier00"    , testIdentifier00  )
+      , ("testIdentifier01"    , testIdentifier01  )
+      , ("testIdentifier02"    , testIdentifier02  )
+      , ("testIdentifier03"    , testIdentifier03  )
+      , ("testIdentifier04"    , testIdentifier04  )
+      , ("testIdentifier05"    , testIdentifier05  )
+      , ("testIdentifier06"    , testIdentifier06  )
+      , ("testIdentifier07"    , testIdentifier07  )
       ]
 
 end
