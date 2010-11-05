@@ -29,6 +29,7 @@ in
   structure IntOrder
   structure StringOrder
   structure Tools
+  structure StringTools
 
   structure BitWord
   structure BitWordValues
@@ -37,5 +38,6 @@ in
   structure BWIntOrder
   structure BWStringOrder
   structure BWTools
+  structure BWStringTools
 
 end
