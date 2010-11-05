@@ -247,6 +247,7 @@ fun suite () =
     , ("testPaths08"          , testPaths08        )
     , ("testOrderPaths00"     , testOrderPaths00   )
     , ("testOrderPaths01"     , testOrderPaths01   )
+    , ("testOrderPaths02"     , testOrderPaths02   )
     ]
 
 end
