@@ -28,7 +28,6 @@ signature SMLDD = sig
 end (* signature SMLDD *)
 
 (* ------------------------------------------------------------------------ *)
-
 functor SMLDDFun ( structure Identifier : IDENTIFIER
                  ; structure Variable   : VARIABLE
                  ; structure Values     : VALUES
@@ -66,3 +65,5 @@ functor SMLDDFun ( structure Identifier : IDENTIFIER
                             )
 
 end (* functor SMLDDFun *)
+
+(* ------------------------------------------------------------------------ *)
