@@ -234,6 +234,23 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
     assertTrue( id = SOME "b" )
   end
 
+  fun testMaxLevels00 () =
+  let
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val o0    = transform (MaxLevels 0) ord
+  in
+    assertTrue( ord = o0 )
+  end
+
+  fun testMaxLevels01 () =
+  let
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val _    = transform (MaxLevels 5) ord
+  in
+    assertTrue( true )
+  end
 
   fun suite () =
       Test.labelTests
@@ -258,6 +275,8 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
       , ("testIdentifier05"    , testIdentifier05  )
       , ("testIdentifier06"    , testIdentifier06  )
       , ("testIdentifier07"    , testIdentifier07  )
+      , ("testMaxLevels00"     , testMaxLevels00   )
+      , ("testMaxLevels01"     , testMaxLevels01   )
       ]
 
 end
