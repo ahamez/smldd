@@ -10,14 +10,15 @@ signature TOOLS = sig
 
   datatype mode  = Sharing | Hierarchy
 
-  val nbPaths     : SDD -> IntInf.int
-  val paths       : SDD -> (variable * values) list list
-  val orderPaths  : order -> (values -> values) -> SDD
-                          -> (identifier * values) list list
-  val valuesPaths : SDD -> values list list
-  val nbNodes     : mode -> SDD -> LargeInt.int
-  val toDot       : mode -> SDD -> string
-  val homToDot    : hom -> string
+  val nbPaths          : SDD -> IntInf.int
+  val paths            : SDD -> (variable * values) list list
+  val orderPaths       : order -> SDD -> (identifier * values) list list
+  val orderFilterPaths : order -> (values -> values) -> SDD
+                               -> (identifier * values) list list
+  val valuesPaths      : SDD -> values list list
+  val nbNodes          : mode -> SDD -> LargeInt.int
+  val toDot            : mode -> SDD -> string
+  val homToDot         : hom -> string
 
 end (* signature TOOLS *)
 
@@ -130,7 +131,7 @@ fun valuesPaths x = pathsBase (fn (_,v) => v ) x
 end (* local paths, valuesPaths *)
 
 (*--------------------------------------------------------------------------*)
-fun orderPaths ord filter x =
+fun orderPaths' ord filter x =
 let
 
   fun zero () = raise Domain
@@ -153,7 +154,9 @@ let
                         val id = case Order.identifier ord (varPath@[var]) of
                                    NONE   => raise Fail "orderPaths no ID 1"
                                  | SOME i => i
-                        val v' = filter v
+                        val v' = case filter of
+                                   NONE   => v
+                                 | SOME f => f v
                       in
                         if Values.empty v' then
                           paths
@@ -172,7 +175,9 @@ let
                                   case Order.identifier ord (varPath@[var]) of
                                     NONE   => raise Fail "orderPaths no ID 2"
                                   | SOME i => i
-                                val v' = filter v
+                                val v' = case filter of
+                                           NONE   => v
+                                         | SOME f => f v
                               in
                                 if Values.empty v' then
                                   path::paths
@@ -196,6 +201,10 @@ let
 in
   visit (node []) x
 end
+
+(*--------------------------------------------------------------------------*)
+fun orderPaths order x = orderPaths' order NONE x
+fun orderFilterPaths order filter x = orderPaths' order (SOME filter) x
 
 (*--------------------------------------------------------------------------*)
 fun nbNodes mode x =
