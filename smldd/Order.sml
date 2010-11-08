@@ -165,26 +165,30 @@ end
 |   transform (MaxLeaves 0) _ = raise Domain
 |   transform (MaxLeaves 1) _ = raise Domain
 |   transform (MaxLeaves leaves) (Order ns) =
-  if length ns < leaves then
-    Order ns
-  else
-  let
-
-    fun helper ns =
+  (case ns of
+    ( Node( _, NONE ), SOME nested )::[] => nested
+  | _    =>
+    if length ns < leaves then
+      Order ns
+    else
     let
-      val packets  = Util.explodeRightBy ns leaves
-      val packets' = map (fn x => Order x) packets
-    in
-      foldr (fn (x,acc) =>
-              addHierarchicalNode' acc (Node( nextVar acc, NONE )) x
-            )
-            (mkOrder ())
-            packets'
-    end
 
-  in
-    transform (MaxLeaves leaves) (helper ns)
-  end
+      fun helper ns =
+      let
+        val packets  = Util.explodeRightBy ns leaves
+        val packets' = map (fn x => Order x) packets
+      in
+        foldr (fn (x,acc) =>
+                addHierarchicalNode' acc (Node( nextVar acc, NONE )) x
+              )
+              (mkOrder ())
+              packets'
+      end
+
+    in
+      transform (MaxLeaves leaves) (helper ns)
+    end
+  )
 
 (*--------------------------------------------------------------------------*)
 |   transform Shuffle (Order ns) =
