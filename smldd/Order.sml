@@ -20,6 +20,7 @@ signature ORDER = sig
   datatype mode            = Anonymise
                            | Flatten
                            | MaxLeaves of int
+                           | MaxLevels of int
                            | Shuffle
                            | Id
 
@@ -124,6 +125,7 @@ fun addHierarchicalNode ord i nestedOrd =
 datatype mode = Anonymise
               | Flatten
               | MaxLeaves of int
+              | MaxLevels of int
               | Shuffle
               | Id
 
@@ -189,6 +191,26 @@ end
       transform (MaxLeaves leaves) (helper ns)
     end
   )
+
+(*--------------------------------------------------------------------------*)
+|   transform (MaxLevels 0) order = transform Flatten order
+|   transform (MaxLevels h) order =
+let
+  val Order ns = transform Flatten order
+  val leaves =
+  let
+    val flatK = length ns
+    fun loop k =
+      if IntInf.pow( IntInf.fromInt k, (h+1) ) < IntInf.fromInt flatK then
+        loop ( k + 1 )
+      else
+        k
+  in
+    loop 1
+  end
+in
+  transform (MaxLeaves leaves) order
+end
 
 (*--------------------------------------------------------------------------*)
 |   transform Shuffle (Order ns) =
