@@ -692,10 +692,10 @@ fun skipVariable var (ref (Hom(h,_,_))) =
   | Const _              => false
   | Cons(_,_,_)          => false
   | Nested(_,v)          => not (Variable.eq (var,v))
-  | Union hs             => List.all (fn x => skipVariable var x) hs
-  | Inter hs             => List.all (fn x => skipVariable var x) hs
+  | Union hs             => List.all (skipVariable var) hs
+  | Inter hs             => List.all (skipVariable var) hs
   | Comp(a,b)            => skipVariable var a andalso skipVariable var b
-  | ComComp hs           => List.all (fn x => skipVariable var x) hs
+  | ComComp hs           => List.all (skipVariable var) hs
   | Fixpoint f           => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
@@ -820,7 +820,7 @@ fun rewriteFixpoint orig v f =
 (*--------------------------------------------------------------------------*)
 fun rewriteComComp orig v hs =
 let
-  val (F,G) = List.partition (fn h => skipVariable v h ) hs
+  val (F,G) = List.partition (skipVariable v) hs
 in
   case Util.sort uid (op<) F of
     [] => orig
