@@ -3,8 +3,9 @@ struct
 
   (* ---------------------------------------------------------------- *)
   
-  open Hom
-  open SDD
+  open SMLDD
+  open SMLDD.Hom
+  open SMLDD.SDD
   open SMLUnit.Assert
   structure SV = IntSortedVector
   structure Test = SMLUnit.Test

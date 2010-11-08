@@ -1,7 +1,8 @@
 structure TestTools =
 struct
 
-open Tools
+open SMLDD
+open SMLDD.Tools
 open SMLUnit.Assert
 structure Test = SMLUnit.Test
 
@@ -192,10 +193,10 @@ end
 
 fun testOrderPaths00 () =
 let
-  val ord0 = IntOrder.flatOrder [0,1,2,3]
+  val ord0 = Order.flatOrder [0,1,2,3]
   val cst  = IntSortedVector.fromList [0]
   fun f _  = cst
-  val s0   = IntOrder.SDD ord0 f
+  val s0   = Order.SDD ord0 f
   val p0   = orderPaths ord0 s0
   val o0   = [ [ ( 0, cst ), ( 1, cst ), ( 2, cst ), ( 3, cst ) ] ]
 in
@@ -205,13 +206,13 @@ end
 fun testOrderPaths01 () =
 let
   val vars = [0,1,2,3,4]
-  val ord0 = IntOrder.transform IntOrder.Anonymise
-               (IntOrder.transform (IntOrder.MaxLeaves 3)
-                 (IntOrder.flatOrder vars)
+  val ord0 = Order.transform Order.Anonymise
+               (Order.transform (Order.MaxLeaves 3)
+                 (Order.flatOrder vars)
                 )
   val cst  = IntSortedVector.fromList [0]
   fun f _  = cst
-  val s0   = IntOrder.SDD ord0 f
+  val s0   = Order.SDD ord0 f
 
   val p0   = orderPaths ord0 s0
   val o0   = [[ ( 0, cst ), ( 1, cst ), ( 2, cst ), ( 3, cst ), ( 4, cst ) ]]
@@ -222,12 +223,12 @@ end
 fun testOrderPaths02 () =
 let
   val vars = [0,1,2,3]
-  val ord0 = IntOrder.transform IntOrder.Anonymise
-               (IntOrder.transform (IntOrder.MaxLeaves 3)
-                 (IntOrder.flatOrder vars)
+  val ord0 = Order.transform Order.Anonymise
+               (Order.transform (Order.MaxLeaves 3)
+                 (Order.flatOrder vars)
                 )
   fun f x  = IntSortedVector.fromList [x+100]
-  val s0   = IntOrder.SDD ord0 f
+  val s0   = Order.SDD ord0 f
   val p0   = orderPaths ord0 s0
   val o0   = [ [ ( 0, f 0 ), ( 1, f 1 ), ( 2, f 2 ), ( 3, f 3 ) ] ]
 in

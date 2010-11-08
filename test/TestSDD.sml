@@ -3,7 +3,8 @@ struct
 
   (* ---------------------------------------------------------------- *)
   
-  open SDD
+  open SMLDD
+  open SMLDD.SDD
   open SMLUnit.Assert
   structure Test = SMLUnit.Test
   structure DIV = DiscreteIntValues

@@ -41,6 +41,7 @@ in
   ./Order.sml
   ./Tools.sml
 
+  ./SMLDD.sml
   ./configurations.sml
 
 end

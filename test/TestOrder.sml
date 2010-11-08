@@ -1,10 +1,17 @@
 structure TestOrder =
 struct
 
+structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
+                           ; structure Variable   = IntVariable
+                           ; structure Values     = DiscreteIntValues
+                           )
+
+
   open SMLUnit.Assert
+  open SMLDD
   structure Test = SMLUnit.Test
   structure SV = IntSortedVector
-  open StringOrder
+  open SMLDD.Order
 
   (* ---------------------------------------------------------------- *)
   fun f3 (Hom.Eval _) =
@@ -134,7 +141,7 @@ struct
     val ord  = transform (MaxLeaves 3) (flatOrder vars)
     val ord' = transform Id ord
   in
-    assertTrue( StringOrder.eq( ord, ord' ) )
+    assertTrue( Order.eq( ord, ord' ) )
   end
 
   fun testShuffle00 () =
@@ -143,7 +150,7 @@ struct
     val ord  = flatOrder vars
     val ord' = transform Shuffle ord
   in
-    assertTrue( not (StringOrder.eq( ord, ord' )) )
+    assertTrue( not (Order.eq( ord, ord' )) )
   end
 
   fun testShuffle01 () =
@@ -152,7 +159,7 @@ struct
     val ord  = transform (MaxLeaves 3) (flatOrder vars)
     val ord' = transform Shuffle ord
   in
-    assertTrue( not (StringOrder.eq( ord, ord' )) )
+    assertTrue( not (Order.eq( ord, ord' )) )
   end
 
   fun testIdentifier00 () =

@@ -5,39 +5,22 @@ in
   signature VARIABLE
   signature VALUES
   signature IDENTIFIER
-  signature SDD
-  signature HOM
-  signature ORDER
-  signature TOOLS
+  signature SMLDD
 
-  functor SDDFun
-  functor HomFun
-  functor OrderFun
-  functor ToolsFun
+  functor SMLDDFun
 
-  structure IntVariable
   structure IntIdentifier
   structure StringIdentifier
+  structure IntVariable
+  structure IntSortedVector
+  structure DiscreteIntValues
+  structure BitWord
+  structure BitWordValues
 
   structure Hash
   structure Util
 
-  structure IntSortedVector
-  structure DiscreteIntValues
-  structure SDD
-  structure Hom
-  structure IntOrder
-  structure StringOrder
-  structure Tools
-  structure StringTools
-
-  structure BitWord
-  structure BitWordValues
-  structure BWSDD
-  structure BWHom
-  structure BWIntOrder
-  structure BWStringOrder
-  structure BWTools
-  structure BWStringTools
+  structure SMLDD
+  structure BWSMLDD
 
 end

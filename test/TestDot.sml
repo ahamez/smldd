@@ -1,7 +1,8 @@
 structure TestDot =
 struct
 
-open SDD
+open SMLDD
+open SMLDD.SDD
 
 val values = Values o IntVector.fromList
 
