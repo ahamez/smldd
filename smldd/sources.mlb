@@ -38,6 +38,7 @@ in
   ./unionFlatDiscreteSDD.sml
   ./SDD.sml
   ./Hom.sml
+  ./PowTable.sml
   ./Order.sml
   ./Tools.sml
 

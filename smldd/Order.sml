@@ -21,6 +21,7 @@ signature ORDER = sig
                            | Flatten
                            | MaxLeaves of int
                            | MaxLevels of int
+                           | Auto of (int option * int option)
                            | Shuffle
                            | Id
 
@@ -126,6 +127,7 @@ datatype mode = Anonymise
               | Flatten
               | MaxLeaves of int
               | MaxLevels of int
+              | Auto of (int option * int option )
               | Shuffle
               | Id
 
@@ -207,6 +209,45 @@ let
         k
   in
     loop 1
+  end
+in
+  transform (MaxLeaves leaves) order
+end
+
+(*--------------------------------------------------------------------------*)
+|   transform (Auto (minKOpt,minHOpt)) order =
+let
+  val minK = case minKOpt of NONE   => 0
+                           | SOME x => x
+  val minH = case minHOpt of NONE   => 0
+                           | SOME x => x
+  val Order ns = transform Flatten order
+  val flatK = length ns
+  val leaves =
+  let
+    val best  = ref ( 0,0 )
+    val diff  = ref 2000000000
+    val found = ref false
+    fun findBest [] = ()
+    |   findBest ((k,h,pow)::table) =
+    (  if pow >= flatK andalso (pow - flatK < !diff)
+          andalso k >= minK andalso h >= minH
+       then
+      ( diff  := pow - flatK
+      ; best  := (k,h)
+      ; found := true
+      )
+      else
+        ()
+    ; findBest table
+    )
+
+    val _ = findBest PowTable.table
+  in
+    if !found then
+      #1 (!best)
+    else
+      raise (Fail "Auto order: hard-coded cases insufficient")
   end
 in
   transform (MaxLeaves leaves) order
