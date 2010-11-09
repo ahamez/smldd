@@ -463,7 +463,9 @@ let
     | ComComp ys      => (foldr helper [] ys) @ operands
     | _               => h::operands
 
-  val operands = foldr helper [] hs
+  val operands0 = foldr helper [] hs
+  val (sel,NotSel) = List.partition isSelector operands0
+  val operands = sel @ NotSel
 
 in
   case operands of
@@ -792,6 +794,8 @@ fun rewriteFixpoint orig v f =
       if List.exists (fn x => x = id) xs then
       let
         val (F,G,L) = partition v xs
+        val (GSel,GNotSel) = List.partition isSelector G
+      (*val _ =  ("\nrewriteFixpoint=" ^ (Int.toString (length GSel)))*)
       in
         if not (Option.isSome F) andalso not (Option.isSome L) then
           orig
@@ -808,7 +812,7 @@ fun rewriteFixpoint orig v f =
             | SOME l => SOME (mkNested (mkFixpoint (mkUnion' (id::l))) v)
           val _ = rewritten := !rewritten + 1;
         in
-          mkSatFixpoint v F' G L'
+          mkSatFixpoint v F' (GSel@GNotSel) L'
         end
       end
 
@@ -821,10 +825,11 @@ fun rewriteFixpoint orig v f =
 fun rewriteComComp orig v hs =
 let
   val (F,G) = List.partition (skipVariable v) hs
+  val (GSel,GNotSel) = List.partition isSelector G
 in
   case Util.sort uid (op<) F of
     [] => orig
-  | fs => mkSatComComp v (mkCommutativeComposition fs) G
+  | fs => mkSatComComp v (mkCommutativeComposition fs) (GSel@GNotSel)
 end
 
 (*--------------------------------------------------------------------------*)
