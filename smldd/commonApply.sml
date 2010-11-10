@@ -1,5 +1,4 @@
-fun commonApply _ _ _ _ ( [], _ ) = []
-|   commonApply valInter valEmpty cont zero ( aArc::aAlpha, bAlpha ) =
+fun commonApply valInter valEmpty cont zero ( aAlpha, bAlpha ) =
 let
 
   fun propagate acc ( _, [] ) =  acc
@@ -20,7 +19,15 @@ let
       end
   end
 
+  fun helper acc ( [], _ ) = acc
+  |   helper acc ( aArc::aAlpha, bAlpha ) =
+  let
+    val acc' = (propagate [] ( aArc, bAlpha ) )@acc
+  in
+    helper acc' ( aAlpha, bAlpha )
+  end
+
 in
-    (propagate [] ( aArc, bAlpha  ))
-  @ commonApply valInter valEmpty cont zero ( aAlpha, bAlpha )
+  helper [] ( aAlpha, bAlpha )
 end
+
