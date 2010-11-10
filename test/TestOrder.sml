@@ -256,7 +256,7 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
   let
     val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
     val ord  = flatOrder vars
-    val o0   = transform (Auto (NONE, SOME 3)) ord
+    val _    = transform (Auto (NONE, SOME 3)) ord
   in
     assertTrue( true )
   end
