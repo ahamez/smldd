@@ -11,6 +11,7 @@ signature SDD = sig
   val zero                : SDD
   val one                 : SDD
   val node                : variable * valuation * SDD -> SDD
+  val nodeAlpha           : variable * (valuation * SDD) list -> SDD
   val fromList            : (variable * valuation ) list -> SDD
 
   val union               : SDD list -> SDD
@@ -633,6 +634,44 @@ fun difference(x,y) =
 
 (*--------------------------------------------------------------------------*)
 end (* local SDD manipulations *)
+
+(*--------------------------------------------------------------------------*)
+fun nodeAlpha ( _ , []    ) = zero
+|   nodeAlpha ( vr, alpha ) =
+  case hd alpha of
+    (Values _, _) =>
+    let
+      val squareUnion' = squareUnion uid union
+                                     Values.storedUnion Values.storedLt
+      val alpha' =
+        List.mapPartial (fn ((Values v),succ) =>
+                          if Values.empty v orelse succ = zero then
+                            NONE
+                          else
+                            SOME ( Values.mkStorable v, [succ] )
+                        |   ((Nested _),_) =>
+                          raise (Fail "Nested in a flat node")
+                        )
+                        alpha
+    in
+      flatNodeAlpha( vr, squareUnion' alpha' )
+    end
+  | (Nested _, _) =>
+    let
+      val squareUnion' = squareUnion uid union union lt
+      val alpha' =
+        List.mapPartial (fn ((Nested n),succ) =>
+                          if n = zero orelse succ = zero then
+                            NONE
+                          else
+                            SOME ( n, [succ] )
+                        |   ((Values _),_) =>
+                          raise (Fail "Values in an hierarchical node")
+                        )
+                        alpha
+    in
+      hierNodeAlpha( vr, squareUnion' alpha' )
+    end
 
 (*--------------------------------------------------------------------------*)
 (* Return the variable of an SDD. Needed by HomFun*)
