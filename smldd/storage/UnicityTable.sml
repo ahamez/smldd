@@ -15,44 +15,31 @@ functor UnicityTableFunID ( structure Data : DATA )
   : UnicityTableID
 = struct
 
-  structure W = MLton.Weak
-  structure H = HashTable
+  structure W  = MLton.Weak
+  structure HT = HashTable
 
   type data   = Data.t
   type wrdata = data ref MLton.Weak.t
 
-  (* Raised when a data is not found*)
-  exception data_not_found
-
   (* Hash a data *)
-  fun hash ( x:wrdata ) =
-    let
-      val unweak        = W.get x
-      val unoption      = (valOf(unweak))
-      val unref         = !unoption
-      val hash          = Data.hash unref
-    in
-      hash
-    end
+  val hash = Data.hash o ! o valOf o W.get
 
   (* Compare two datas *)
   fun eq ( l:wrdata, r:wrdata ) =
-    case W.get l of
-      NONE    => false
-    | SOME L  => case W.get r of
-                    NONE   => false
-                  | SOME R => Data.eq( !L, !R )
+    case ( W.get l, W.get r ) of
+      ( NONE, _ )       => false
+    | ( _, NONE )       => false
+    | ( SOME L, SOME R) => Data.eq( !L, !R )
 
   (* The type of the unicity table for valuations*)
-  val values_table : ( wrdata, wrdata * int ) H.hash_table
-    = H.mkTable ( hash, eq )
-                ( 1000000, data_not_found )
+  val values_table : ( wrdata, wrdata * int ) HT.hash_table
+    = HT.mkTable ( hash, eq )
+                ( 1000000, Fail "Can't happen" )
 
   val cleanup = ref 1000
 
-  val id     = ref (case Int.minInt of
-                     NONE   => 0
-                   | SOME v => v
+  val id     = ref (case Int.minInt of NONE   => 0
+                                     | SOME v => v
                    )
   val unused = ref []
 
@@ -73,17 +60,17 @@ functor UnicityTableFunID ( structure Data : DATA )
                        | SOME _  => true
     in
       (* Remove weak pointers to nothing *)
-      if (H.numItems values_table) > (!cleanup) then
+      if (HT.numItems values_table) > (!cleanup) then
       (
         cleanup := !cleanup * 2;
-        H.filter keep values_table
+        HT.filter keep values_table
       )
       else
         ();
 
-      case H.find values_table wrvalues of
+      case HT.find values_table wrvalues of
         SOME (v,_) => ( unused := i::(!unused) ; valOf(W.get v))
-      | NONE       => ( H.insert values_table ( wrvalues, (wrvalues,i) );
+      | NONE       => ( HT.insert values_table ( wrvalues, (wrvalues,i) );
                         rvalues
                       )
     end
