@@ -1,1 +1,2 @@
+exception ExplicitZero
 exception DoNotPanic
