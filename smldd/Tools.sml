@@ -292,7 +292,7 @@ let
 
   (* Associate an SDD to a list of all hierarchies it belongs to *)
   val nodes : ( ( SDD , int list ref ) HT.hash_table )
-        = (HT.mkTable( SDD.hash , op = ) ( 10000, DoNotPanic ))
+        = (HT.mkTable( SDD.hash , op = ) ( 10000, Fail "Impossible" ))
 
   val maxDepth = ref 0
 
@@ -350,7 +350,7 @@ let
           let
 
             fun helper depth sdd =
-              visitString (fn () => raise DoNotPanic)
+              visitString (fn () => raise ExplicitZero )
                           (fn () => "terminal1" ^ (depthStr depth))
                           (fn x => fn _ => fn _ => nodeStr x depth)
                           sdd
