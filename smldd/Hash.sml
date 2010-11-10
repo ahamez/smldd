@@ -8,6 +8,7 @@ struct
   val hashInt     = MLton.hash
   val hashWord    = MLton.hash
 
+  (* Taken from boost::hash_combine *)
   fun hashCombine ( seed , v ) =
   let
     val res = v
