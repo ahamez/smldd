@@ -17,6 +17,7 @@ signature SDD = sig
   val intersection        : SDD list -> SDD
   val difference          : SDD * SDD -> SDD
 
+  val lt                  : SDD * SDD -> bool
   val uid                 : SDD -> int
   val variable            : SDD -> variable
   val alpha               : SDD -> (valuation * SDD) list
@@ -145,6 +146,9 @@ end
 (*--------------------------------------------------------------------------*)
 (* Extract the identifier of an SDD *)
 fun uid (ref(iSDD(_,_,x))) = x
+
+(*--------------------------------------------------------------------------*)
+fun lt (x,y) = uid x < uid y
 
 (*--------------------------------------------------------------------------*)
 (* Help construct sorted operands of SDDs *)
