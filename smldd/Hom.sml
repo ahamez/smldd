@@ -962,47 +962,63 @@ end (* local fixpoint stuff *)
 fun nested lookup h var sdd =
   if sdd = SDD.one then
     SDD.one
-  else (* skipVariable made nested propagated to the correct variable *)
-  let
-    val res = foldl
-              (fn ( (vl,succ), acc ) =>
-                case vl of
-                  SDD.Values(_)   => raise NestedHomOnValues
-                | SDD.Nested(nvl) =>
-                  let
-                    val nvl' = evalCallback lookup h nvl
-                  in
-                    SDD.insert acc (SDD.node( var, SDD.Nested nvl', succ))
-                  end
+
+  (* skipVariable made nested propagated to the correct variable *)
+  else if isSelector h then
+     SDD.nodeAlpha( var
+                  , map (fn ( vl, succ) =>
+                          case vl of
+                            SDD.Values _ => raise NestedHomOnValues
+                          | SDD.Nested nvl =>
+                              ( SDD.Nested (evalCallback lookup h nvl), succ )
+                        )
+                        (SDD.alpha sdd)
+                  )
+  else
+    SDD.union (foldl
+                (fn ( (vl,succ), acc ) =>
+                  case vl of
+                    SDD.Values _   => raise NestedHomOnValues
+                  | SDD.Nested nvl =>
+                    let
+                      val nvl' = evalCallback lookup h nvl
+                    in
+                      SDD.insert acc (SDD.node( var, SDD.Nested nvl', succ))
+                    end
+                )
+                []
+                (SDD.alpha sdd)
               )
-              []
-              (SDD.alpha sdd)
-  in
-    SDD.union res
-  end
 
 (*--------------------------------------------------------------------------*)
 fun function f var sdd =
   if sdd = SDD.one then
     SDD.one
+  else if funcSelector f then
+    SDD.nodeAlpha( var
+                 , map (fn ( vl, succ) =>
+                         case vl of
+                           SDD.Nested _ => raise FunctionHomOnNested
+                         | SDD.Values values =>
+                             ( SDD.Values (funcValues f values), succ )
+                       )
+                       (SDD.alpha sdd)
+                 )
   else
-  let
-    val res = foldl
-              (fn ( (vl,succ), acc ) =>
-              case vl of
-                SDD.Nested(_)      => raise FunctionHomOnNested
-              | SDD.Values(values) =>
-              let
-                val values' = funcValues f values
-              in
-                SDD.insert acc (SDD.node( var, SDD.Values values', succ))
-              end
+    SDD.union (foldl
+                (fn ( (vl,succ), acc ) =>
+                case vl of
+                  SDD.Nested _      => raise FunctionHomOnNested
+                | SDD.Values values =>
+                let
+                  val values' = funcValues f values
+                in
+                  SDD.insert acc (SDD.node( var, SDD.Values values', succ))
+                end
+                )
+                []
+                (SDD.alpha sdd)
               )
-              []
-              (SDD.alpha sdd)
-  in
-    SDD.union res
-  end
 
 (*--------------------------------------------------------------------------*)
 val evals   = ref 0
@@ -1021,19 +1037,25 @@ in
     let
       val _ = skipped := !skipped + 1
       val var = SDD.variable sdd
-      val res =
-        foldl
-        (fn ( (vl, succ), acc ) =>
-        let
-          val succ' = evalCallback lookup h succ
-        in
-          SDD.insert acc (SDD.node( var, vl, succ'))
-        end
-        )
-        []
-        (SDD.alpha sdd)
     in
-      SDD.union res
+      if isSelector h then
+        SDD.nodeAlpha( var
+                     , map (fn ( vl, succ) =>
+                             ( vl, evalCallback lookup h succ )
+                           )
+                           (SDD.alpha sdd)
+                     )
+      else
+        SDD.union (foldl (fn ( (vl, succ), acc ) =>
+                         let
+                           val succ' = evalCallback lookup h succ
+                         in
+                           SDD.insert acc (SDD.node( var, vl, succ'))
+                         end
+                         )
+                         []
+                         (SDD.alpha sdd)
+                  )
     end
   else
   let
