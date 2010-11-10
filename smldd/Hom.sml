@@ -795,7 +795,6 @@ fun rewriteFixpoint orig v f =
       let
         val (F,G,L) = partition v xs
         val (GSel,GNotSel) = List.partition isSelector G
-      (*val _ =  ("\nrewriteFixpoint=" ^ (Int.toString (length GSel)))*)
       in
         if not (Option.isSome F) andalso not (Option.isSome L) then
           orig
