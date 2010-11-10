@@ -685,8 +685,7 @@ let
   fun SDDFromList xs =
   let
     fun loop _ []      = one
-    |   loop i (x::xs) =
-      node( i, values [x], loop (i+1) xs )
+    |   loop i (x::xs) = node( i, values [x], loop (i+1) xs )
   in
     loop 0 xs
   end
@@ -783,8 +782,7 @@ let
   fun SDDFromList xs =
   let
     fun loop _ []      = one
-    |   loop i (x::xs) =
-      node( i, values [x], loop (i+1) xs )
+    |   loop i (x::xs) = node( i, values [x], loop (i+1) xs )
   in
     loop 0 xs
   end
