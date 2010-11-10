@@ -30,4 +30,3 @@ let
 in
   helper [] ( aAlpha, bAlpha )
 end
-
