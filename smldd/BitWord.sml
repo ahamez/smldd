@@ -13,7 +13,7 @@ let
   val w = Word32.fromInt x
 in
   if w > Word32.fromInt 31 then
-    raise Overflow
+    raise (Fail ((Int.toString x) ^ " > 31"))
   else
     Word32.orb( values, Word32.<<( Word32.fromInt 1, w) )
 end
