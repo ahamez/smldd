@@ -12,20 +12,20 @@ let
   |   insertValue (X as (( x, xsuccs )::xs)) ( y, ysucc ) =
     let
 
-      fun insertSucc [] x = [x]
-      |   insertSucc (L as (l::ls)) x =
+      fun insertSucc acc [] x = x::acc
+      |   insertSucc acc (L as (l::ls)) x =
         if x = l then
-          L
+          L @ acc
         else if uid x < uid l then
-          x::L
+          x::(L@acc)
         else
-          l::(insertSucc ls x)
+          insertSucc (l::acc) ls x
 
     in
       if y = x then
-        ( y, insertSucc xsuccs ysucc )::xs
+        ( y, rev(insertSucc [] xsuccs ysucc) )::xs
       else if valueLt( y, x ) then
-        ( y, [ysucc] )::X
+        ( y, [ysucc] )::XS
       else
         ( x, xsuccs )::( insertValue xs ( y, ysucc ) )
     end
