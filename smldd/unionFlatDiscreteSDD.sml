@@ -62,7 +62,7 @@ let
       else if uid succ < uid xsucc then
         ( succ, [value] )::X
       else
-        (xsucc,xvls)::(insert xs (succ,value))
+        (xsucc,xvls)::insert xs (succ,value)
 
   in
     insert acc (succ,value)
@@ -80,7 +80,7 @@ let
       else if vlLt( vl, xvl ) then
         (vl,succ)::X
       else
-        (xvl,xsucc)::( insert xs (vl,succ) )
+        (xvl,xsucc)::insert xs (vl,succ)
 
   in
     insert acc ( vl, succ )
