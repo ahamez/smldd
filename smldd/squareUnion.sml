@@ -15,7 +15,7 @@ let
     val succ = SDDUnion succs
 
     fun insert [] (succ,vl) = [ (succ, [vl]) ]
-    |   insert (X as ((xsucc,xvls)::xs)) (succ,vl) =
+    |   insert (XS as ((X as (xsucc,xvls))::xs)) (Y as (succ,vl)) =
     let
 
       (* Insert sort of valuations *)
@@ -26,15 +26,15 @@ let
       else if valLt(x,l) then
         x::L
       else
-        l::(insertHelper ls x)
+        l::insertHelper ls x
 
     in
       if uid succ = uid xsucc then
         ( succ, insertHelper xvls vl )::xs
       else if uid succ < uid xsucc then
-        ( succ, [vl] )::X
+        ( succ, [vl] )::XS
       else
-        (xsucc,xvls)::(insert xs (succ,vl))
+        X::insert xs Y
     end
 
   in
@@ -50,13 +50,13 @@ let
     val vl = valUnion vls
 
     fun insert [] x = [x]
-    |   insert (X as ((xvl,xsucc)::xs)) (vl,succ) =
+    |   insert (XS as ((X as (xvl,xsucc))::xs)) (Y as (vl,succ)) =
       if vl = xvl then
         raise DoNotPanic
       else if valLt( vl, xvl ) then
-        (vl,succ)::X
+        Y::XS
       else
-        (xvl,xsucc)::( insert xs (vl,succ) )
+        X::( insert xs Y )
 
   in
     insert acc ( vl, succ )
