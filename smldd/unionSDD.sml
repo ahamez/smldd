@@ -101,6 +101,5 @@ let
     end
 
 in
-  (*nodeAlpha( var, squareUnion (foldl (partition []) initial operands) )*)
   foldl (partition []) initial operands
 end
