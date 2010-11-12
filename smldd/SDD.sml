@@ -160,7 +160,7 @@ fun insert [] x = [x]
   else if uid x < uid l then
     x::L
   else
-    l::(insert ls x)
+    l::insert ls x
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an SDD with an id *)
@@ -329,9 +329,9 @@ fun alphaNodeToList n =
 (* Warning: duplicate with SDD.union! Operands should be sorted by caller. *)
 fun unionCallback lookup xs =
   case List.filter (fn x => x <> zero ) xs of
-    []      => zero   (* No need to cache *)
-  | (x::[]) => x      (* No need to cache *)
-  | xs'     => lookup(Union( xs', lookup ))
+    []     => zero   (* No need to cache *)
+  | x::[]  => x      (* No need to cache *)
+  | xs'    => lookup(Union( xs', lookup ))
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection!
@@ -432,8 +432,8 @@ in
       val _ = checkCompatibilty xs
 
       val ( initial, operands ) = case map flatAlphaNodeToList xs of
-                                    []       => raise DoNotPanic
-                                  | (y::ys)  => (y,ys)
+                                    []     => raise DoNotPanic
+                                  | y::ys  => (y,ys)
 
       val commonApply' = commonApply Values.storedIntersection
                                      Values.storedEmpty
@@ -454,8 +454,8 @@ in
       val _ = checkCompatibilty xs
 
       val ( initial, operands ) = case map alphaNodeToList xs of
-                                    []       => raise DoNotPanic
-                                  | (y::ys)  => (y,ys)
+                                    []     => raise DoNotPanic
+                                  | y::ys  => (y,ys)
 
       val commonApply' = commonApply (intersectionCallback cacheLookup)
                                      (fn x => x = zero )
@@ -493,8 +493,8 @@ let
            expects an n-ary operation *)
         fun callback xs =
           case xs of
-            (x::y::[]) => differenceCallback cacheLookup (x, y)
-          | _          => raise DoNotPanic
+            x::y::[] => differenceCallback cacheLookup (x, y)
+          | _        => raise DoNotPanic
 
         val commonApply' = commonApply vlInter
                                        vlEmpty
@@ -610,9 +610,9 @@ val cacheLookup = SDDOpCache.lookup
    Operands should be sorted by caller. *)
 fun union xs =
   case List.filter (fn x => x <> zero ) xs of
-    []      => zero (* No need to cache *)
-  | (x::[]) => x    (* No need to cache *)
-  | xs'     => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
+    []    => zero (* No need to cache *)
+  | x::[] => x    (* No need to cache *)
+  | xs'   => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.intersectionCallback!
@@ -645,12 +645,12 @@ fun nodeAlpha ( _ , []    ) = zero
       val squareUnion' = squareUnion uid union
                                      Values.storedUnion Values.storedLt
       val alpha' =
-        List.mapPartial (fn ((Values v),succ) =>
+        List.mapPartial (fn ( Values v, succ ) =>
                           if Values.empty v orelse succ = zero then
                             NONE
                           else
                             SOME ( Values.mkStorable v, [succ] )
-                        |   ((Nested _),_) =>
+                        |   ( Nested _, _ ) =>
                           raise (Fail "Nested in a flat node")
                         )
                         alpha
@@ -661,12 +661,12 @@ fun nodeAlpha ( _ , []    ) = zero
     let
       val squareUnion' = squareUnion uid union union lt
       val alpha' =
-        List.mapPartial (fn ((Nested n),succ) =>
+        List.mapPartial (fn ( Nested n, succ ) =>
                           if n = zero orelse succ = zero then
                             NONE
                           else
                             SOME ( n, [succ] )
-                        |   ((Values _),_) =>
+                        |   ( Values _, _ ) =>
                           raise (Fail "Values in an hierarchical node")
                         )
                         alpha
@@ -717,14 +717,14 @@ fun hashValuation (Nested(ref n)) = Definition.hash n
 (*--------------------------------------------------------------------------*)
 (* Compare two valuations. Needed by HomFun *)
 fun eqValuation (x,y) =
-  case (x,y) of ( Nested(nx), Nested(ny) ) => nx = ny
-              | ( Values(vx), Values(vy) ) => Values.eq( vx, vy )
+  case (x,y) of ( Nested nx, Nested ny ) => nx = ny
+              | ( Values vx, Values vy ) => Values.eq( vx, vy )
               | ( _ , _ )                  => false
 
 (*--------------------------------------------------------------------------*)
 (* Export a valuation to a string. Needed by HomFun *)
-fun valuationToString (Nested(n)) = toString n
-|   valuationToString (Values(v)) = Values.toString v
+fun valuationToString (Nested n) = toString n
+|   valuationToString (Values v) = Values.toString v
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor       =    (unit -> 'a)
@@ -745,10 +745,10 @@ let
     val ref(iSDD(x,_,uid)) = s
   in
     case x of
-      Zero                        => zero ()
-    | One                         => one ()
-    | Node  {variable=v,alpha=_}  => node uid v (alpha s)
-    | HNode {variable=v,alpha=_}  => node uid v (alpha s)
+      Zero                      => zero ()
+    | One                       => one ()
+    | Node  {variable=v,...}  => node uid v (alpha s)
+    | HNode {variable=v,...}  => node uid v (alpha s)
   end
 
 in
