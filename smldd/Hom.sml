@@ -314,7 +314,7 @@ fun domainUnion []         = Empty
       else if Variable.lt( x, l ) then
         x::L
       else
-        l::(insert ls x)
+        l::insert ls x
 
     fun merge xs [] = xs
     |   merge xs (y::ys) =
@@ -567,8 +567,8 @@ fun mkComposition x y =
          Nested(g,w) => if Variable.eq( v, w ) then
                           (mkNested (mkComposition g f) v)::xs
                         else
-                          rx::(loop xs)
-       | _ => rx::(loop xs)
+                          rx::loop xs
+       | _ => rx::loop xs
     in
       loop xs
     end
