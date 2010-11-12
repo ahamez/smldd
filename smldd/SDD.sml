@@ -506,7 +506,7 @@ let
 
       val diffPart =
       let
-        val bUnion = vlUnion( map (fn (x,_)=>x) ralpha )
+        val bUnion = vlUnion (map #1 ralpha)
       in
         foldl (fn ((aVal,aSuccs),acc) =>
                 let
