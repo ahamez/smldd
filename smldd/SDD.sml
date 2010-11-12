@@ -722,7 +722,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Return the hash value of an SDD. Needed by HomFun *)
-fun hash x = Definition.hash (!x)
+val hash = Definition.hash o !
 
 (*--------------------------------------------------------------------------*)
 (* Return the hash value of a valuation. Needed by HomFun *)
