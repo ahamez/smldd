@@ -1,4 +1,4 @@
-(* Do the n-ary union of a list of SDDs.
+(* Do the n-ary union of a list of SDDs' alphas.
    The general idea is to create a potential alpha
    of type ([values|SDD] * SDD list ) list which stores all
    successors for a given values set, which is then given to
@@ -9,19 +9,11 @@
    while 'aAlpha' is the head of the remaining operands (thus we use a
    foldl). 'bAlpha' is initialized by the alpha of the first operand.
 *)
-fun unionSDD alphaNodeToList
-             uid
-             squareUnion
-             valInter valDiff valEmpty
-             nodeAlpha
-             xs var
-=
+fun unionSDD uid valInter valDiff valEmpty xs =
 let
 
-  val ( initial, operands ) = case map alphaNodeToList xs of
-                                []       => raise DoNotPanic
-                              | (y::ys)  => (y,ys)
-
+  val ( initial, operands ) = case xs of []     => raise DoNotPanic
+                                       | y::ys  => ( y, ys )
 
   fun mergeSuccs [] [] = []
   |   mergeSuccs xs [] = xs
@@ -109,5 +101,6 @@ let
     end
 
 in
-  nodeAlpha( var, squareUnion (foldl (partition []) initial operands) )
+  (*nodeAlpha( var, squareUnion (foldl (partition []) initial operands) )*)
+  foldl (partition []) initial operands
 end

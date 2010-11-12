@@ -1,11 +1,4 @@
-fun unionFlatDiscreteSDD alphaNodeToList
-                         vlToList vlFromList vlLt
-                         valueLt
-                         uid
-                         unionSDD
-                         nodeAlpha
-                         xs var
-=
+fun unionFlatDiscreteSDD vlToList vlFromList vlLt valueLt uid unionSDD xs =
 let
   
   fun insertValue [] ( y , ysucc ) = [ (y, [ysucc]) ]
@@ -86,10 +79,10 @@ let
     insert acc ( vl, succ )
   end
 
-  val alpha   = foldl insertAlpha [] (map alphaNodeToList xs)  
+  val alpha   = foldl insertAlpha [] xs
   val alpha'  = foldl mergeSuccs  [] alpha
   val alpha'' = foldl mergeValues [] alpha'
 
 in
-  nodeAlpha( var, Vector.fromList alpha'' )
+  Vector.fromList alpha''
 end

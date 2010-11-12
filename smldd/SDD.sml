@@ -368,42 +368,57 @@ in
   (* Flat node case *)
   | Node{variable=var,...}  =>
     if Values.discrete then
-      unionFlatDiscreteSDD flatAlphaNodeToList
-                           Values.storedToList Values.storedFromList
-                           Values.storedLt
-                           Values.valueLt
-                           uid
-                           (unionCallback cacheLookup)
-                           flatNodeAlpha
-                           xs var
+    let
+      val xs' = map flatAlphaNodeToList xs
+    in
+      flatNodeAlpha
+      ( var
+      , unionFlatDiscreteSDD Values.storedToList Values.storedFromList
+                             Values.storedLt
+                             Values.valueLt
+                             uid
+                             (unionCallback cacheLookup)
+                             xs'
+      )
+    end
     else
-      unionSDD flatAlphaNodeToList
-               uid
-               (squareUnion uid
-                            (unionCallback cacheLookup)
-                            Values.storedUnion
-                            Values.storedLt
-               )
-               Values.storedIntersection
-               Values.storedDifference
-               Values.storedEmpty
-               flatNodeAlpha
-               xs var
+    let
+      val xs' = map flatAlphaNodeToList xs
+      val squareUnion' = squareUnion uid
+                                     (unionCallback cacheLookup)
+                                     Values.storedUnion
+                                     Values.storedLt
+    in
+      flatNodeAlpha
+      ( var
+      , squareUnion' (unionSDD uid
+                               Values.storedIntersection
+                               Values.storedDifference
+                               Values.storedEmpty
+                               xs'
+                     )
+      )
+    end
 
   (* Hierarchical node case *)
   | HNode{variable=var,...} =>
-    unionSDD alphaNodeToList
-             uid
-             (squareUnion uid
-                          (unionCallback cacheLookup)
-                          (unionCallback cacheLookup)
-                          lt
-             )
-             (intersectionCallback cacheLookup)
-             (differenceCallback cacheLookup)
-             (fn x => x = zero)
-             hierNodeAlpha
-             xs var
+  let
+    val xs' = map alphaNodeToList xs
+    val squareUnion' = squareUnion uid
+                                   (unionCallback cacheLookup)
+                                   (unionCallback cacheLookup)
+                                   lt
+  in
+    hierNodeAlpha
+    ( var
+    , squareUnion' (unionSDD uid
+                             (intersectionCallback cacheLookup)
+                             (differenceCallback cacheLookup)
+                             (fn x => x = zero)
+                             xs'
+                   )
+    )
+  end
 
 end (* end fun union *)
 
