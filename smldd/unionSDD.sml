@@ -28,16 +28,16 @@ let
   |   mergeSuccs [] ys = ys
   |   mergeSuccs (x::xs) ys =
     let
-      fun mergeHelper [] x = [x]
-      |   mergeHelper (L as (l::ls)) x =
+      fun mergeHelper acc [] x = x::acc
+      |   mergeHelper acc (L as (l::ls)) x =
         if x = l then
-          L
+          L @ acc
         else if uid x < uid l then
-          x::L
+          x::(L @ acc)
         else
-          l::(mergeHelper ls x)
+          mergeHelper (l::acc) ls x
     in
-      mergeSuccs xs (mergeHelper ys x)
+      rev( mergeSuccs xs (mergeHelper [] ys x) )
     end
 
   (* Process an arc of the a operand onto the whole alpha of b.
