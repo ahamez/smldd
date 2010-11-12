@@ -397,7 +397,7 @@ in
              (squareUnion uid
                           (unionCallback cacheLookup)
                           (unionCallback cacheLookup)
-                          (fn (x,y) => uid x < uid y)
+                          lt
              )
              (intersectionCallback cacheLookup)
              (differenceCallback cacheLookup)
@@ -465,7 +465,7 @@ in
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      (unionCallback cacheLookup)
-                                     (fn (x,y) => uid x < uid y)
+                                     lt
     in
       hierNodeAlpha( var
                    , squareUnion' ( foldl commonApply' initial operands ) )
@@ -543,7 +543,8 @@ in
   | ( Node{variable=lvr,alpha=la}, Node{variable=rvr,alpha=ra} ) =>
     nodeDifference lvr rvr la ra
                    Values.storedUnion Values.storedIntersection
-                   Values.storedDifference Values.storedEmpty Values.storedLt
+                   Values.storedDifference
+                   Values.storedEmpty Values.storedLt
                    flatNodeAlpha
 
   | ( HNode{variable=lvr,alpha=la}, HNode{variable=rvr,alpha=ra} ) =>
@@ -551,7 +552,7 @@ in
                    (unionCallback cacheLookup)
                    (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
-                   (fn x => x = zero) (fn (x,y) => uid x < uid y)
+                   (fn x => x = zero) lt
                    hierNodeAlpha
 
   | ( Node{...}, _ ) => raise IncompatibleSDD
