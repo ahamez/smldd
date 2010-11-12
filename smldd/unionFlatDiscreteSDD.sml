@@ -9,7 +9,7 @@ fun unionFlatDiscreteSDD alphaNodeToList
 let
   
   fun insertValue [] ( y , ysucc ) = [ (y, [ysucc]) ]
-  |   insertValue (X as (( x, xsuccs )::xs)) ( y, ysucc ) =
+  |   insertValue (XS as ((X as ( x, xsuccs ))::xs)) (Y as ( y, ysucc )) =
     let
 
       fun insertSucc acc [] x = x::acc
@@ -27,7 +27,7 @@ let
       else if valueLt( y, x ) then
         ( y, [ysucc] )::XS
       else
-        ( x, xsuccs )::( insertValue xs ( y, ysucc ) )
+        X::insertValue xs Y
     end
 
   fun insertVl acc (vl,succ::[]) =
@@ -53,16 +53,16 @@ let
     val succ = unionSDD succs
 
     fun insert [] (succ,value) = [ (succ, [value]) ]
-    |   insert (X as ((xsucc,xvls)::xs)) (succ,value) =
+    |   insert (XS as ((X as (xsucc,xvls))::xs)) (Y as (succ,value)) =
       if uid succ = uid xsucc then
         (* No need to sort xvls as we expect from vlFromList to
            do check and process its operands as needed
         *)
         ( succ, value::xvls )::xs
       else if uid succ < uid xsucc then
-        ( succ, [value] )::X
+        ( succ, [value] )::XS
       else
-        (xsucc,xvls)::insert xs (succ,value)
+        X::insert xs Y
 
   in
     insert acc (succ,value)
@@ -74,13 +74,13 @@ let
     val vl = vlFromList vls
 
     fun insert [] x = [x]
-    |   insert (X as ((xvl,xsucc)::xs)) (vl,succ) =
+    |   insert (XS as ((X as (xvl,xsucc))::xs)) (Y as (vl,succ)) =
       if vl = xvl then
         raise DoNotPanic
       else if vlLt( vl, xvl ) then
-        (vl,succ)::X
+        Y::XS
       else
-        (xvl,xsucc)::insert xs (vl,succ)
+        X::insert xs Y
 
   in
     insert acc ( vl, succ )
