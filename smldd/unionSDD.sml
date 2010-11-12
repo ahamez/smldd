@@ -41,7 +41,7 @@ let
     end
 
   (* Process an arc of the a operand onto the whole alpha of b.
-     When it's done, it return a pair where the first element is the current
+     When it's done, it returns a pair where the first element is the current
      alpha result, while the second element is what remains to be processed
      with the next arc of a.
 
