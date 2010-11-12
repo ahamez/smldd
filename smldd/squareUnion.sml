@@ -47,8 +47,6 @@ let
   fun mergeVls ( (succ,vls), acc ) =
   let
 
-    val vl = valUnion vls
-
     fun insert [] x = [x]
     |   insert (XS as ((X as (xvl,xsucc))::xs)) (Y as (vl,succ)) =
       if vl = xvl then
@@ -59,7 +57,7 @@ let
         X::( insert xs Y )
 
   in
-    insert acc ( vl, succ )
+    insert acc ( valUnion vls, succ )
   end
   
   val alpha'  = foldl mergeSuccs [] alpha
