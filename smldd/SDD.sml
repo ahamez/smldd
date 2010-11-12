@@ -742,11 +742,11 @@ fun valuationToString (Nested n) = toString n
 |   valuationToString (Values v) = Values.toString v
 
 (*--------------------------------------------------------------------------*)
-type 'a visitor       =    (unit -> 'a)
-                        -> (unit -> 'a)
-                        -> (int -> variable -> (valuation * SDD) list -> 'a)
-                        -> SDD
-                        -> 'a
+type 'a visitor =    (unit -> 'a)
+                  -> (unit -> 'a)
+                  -> (int -> variable -> (valuation * SDD) list -> 'a)
+                  -> SDD
+                  -> 'a
 
 (*--------------------------------------------------------------------------*)
 datatype 'a visitorMode  = Cached | NonCached | Once of 'a
