@@ -98,16 +98,16 @@ let
       end
     end
 
-  fun partition ( [] , [] )    = []
-  |   partition ( [], bAlpha ) = bAlpha
-  |   partition ( aAlpha, [] ) = aAlpha
-  |   partition ( a::aAlpha, bAlpha ) =
+  fun partition acc ( [] , [] )    = acc
+  |   partition acc ( [], bAlpha ) = acc @ bAlpha
+  |   partition acc ( aAlpha, [] ) = acc @ aAlpha
+  |   partition acc ( a::aAlpha, bAlpha ) =
     let
       val (res,rem) = oneArcOfA a bAlpha
     in
-      res @ (partition ( aAlpha, rem ))
+      partition (acc@res) ( aAlpha, rem )
     end
 
 in
-  nodeAlpha( var, squareUnion (foldl partition initial operands) )
+  nodeAlpha( var, squareUnion (foldl (partition []) initial operands) )
 end
