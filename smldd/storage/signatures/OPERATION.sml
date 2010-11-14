@@ -22,8 +22,8 @@ signature OPERATION = sig
 
   val apply         : operation -> result
 
-  val configure     :  CacheConfiguration.parameter
-                       -> CacheConfiguration.result
+  val configure     : CacheConfiguration.parameter
+                      -> CacheConfiguration.result
 
 end
 
