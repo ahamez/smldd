@@ -13,7 +13,6 @@ sig
 end
 
 (*--------------------------------------------------------------------------*)
-
 functor CacheFun ( structure Operation : OPERATION )
   : CACHE
 = struct
@@ -21,6 +20,17 @@ functor CacheFun ( structure Operation : OPERATION )
   structure W = MLton.Weak
   structure H = HashTable
   structure O = Operation
+  structure C = CacheConfiguration
+
+  val name = let val C.NameRes n = O.configure C.Name in n end
+             handle Match => ""
+
+  val buckets = let val C.BucketsRes b = O.configure C.Buckets in b end
+                handle Match => 1000000
+
+  val threshold = let val C.ThresholdRes b = O.configure C.Threshold in b end
+                  handle Match => 1000000
+
 
   type operation = O.operation
   type result    = O.result
@@ -31,10 +41,9 @@ functor CacheFun ( structure Operation : OPERATION )
 
   val hits = ref 0
   val miss = ref 0
-  val name = O.name
 
   val cache : ( operation , (wresult * int ref) ) H.hash_table
-    = H.mkTable ( O.hash , O.eq ) ( 1000000, entry_not_found )
+    = H.mkTable ( O.hash , O.eq ) ( buckets, entry_not_found )
 
   fun stats () =
   let
@@ -77,7 +86,7 @@ functor CacheFun ( structure Operation : OPERATION )
     end
 
     (* Cleanup cache if necessary *)
-    val _ = if ( H.numItems cache ) > 1000000 then
+    val _ = if ( H.numItems cache ) > threshold then
               cleanup ()
             else
               ()

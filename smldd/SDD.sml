@@ -262,7 +262,8 @@ local (* SDD manipulation *)
 structure SDDOperations (* : OPERATION *) = struct
 
 (*--------------------------------------------------------------------------*)
-val name = "SDD"
+fun configure CacheConfiguration.Name =
+  CacheConfiguration.NameRes "SDD"
 
 (*--------------------------------------------------------------------------*)
 (* Types required by the OPERATION signature *)

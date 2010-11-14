@@ -92,7 +92,8 @@ fun storedMkEmpty() = e
 structure Operations (* : OPERATION *) = struct
 
 (*--------------------------------------------------------------------------*)
-val name = "Values"
+fun configure CacheConfiguration.Name =
+  CacheConfiguration.NameRes "DiscreteIntValues"
 
 (*--------------------------------------------------------------------------*)
 type result        = stored

@@ -2,7 +2,7 @@ ann
   "allowFFI false"
   "redundantMatch error"
   (*"warnUnused true"*)
-  "nonexhaustiveMatch error"
+  "nonexhaustiveMatch ignore"
 in
 
   $(MLTON_ROOT)/basis/basis.mlb

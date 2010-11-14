@@ -673,7 +673,8 @@ end
 structure Evaluation (* : OPERATION *) = struct
 
 (*--------------------------------------------------------------------------*)
-val name = "Hom"
+fun configure CacheConfiguration.Name =
+  CacheConfiguration.NameRes "Hom"
 
 (*--------------------------------------------------------------------------*)
 type result        = SDD
@@ -729,7 +730,10 @@ val processed = ref 0
 structure Rewrite (* : OPERATION *) = struct
 
 (*--------------------------------------------------------------------------*)
-val name = "Rewrite"
+fun configure CacheConfiguration.Name =
+  CacheConfiguration.NameRes "Rewrite"
+|   configure CacheConfiguration.Buckets =
+  CacheConfiguration.BucketsRes 100000
 
 (*--------------------------------------------------------------------------*)
 type operation = ( hom * variable )
