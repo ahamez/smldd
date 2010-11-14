@@ -126,8 +126,7 @@ fun funcHash (ref f) =
   | _         => raise NotUserHash
 
 (*--------------------------------------------------------------------------*)
-structure Definition =
-struct
+structure Definition (* : DATA *) = struct
 
   datatype t = Hom of ( hom * Hash.t * int )
   and hom    = Id
@@ -242,6 +241,11 @@ struct
                                         (map (fn h => toString (!h)) G))
                                 ^ ")"
   end
+
+  fun configure UnicityTableConfiguration.Name =
+    UnicityTableConfiguration.NameRes "Hom"
+  |   configure UnicityTableConfiguration.Buckets =
+    UnicityTableConfiguration.BucketsRes 10000
 
 end (* structure Definition *)
 open Definition

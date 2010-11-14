@@ -64,7 +64,7 @@ type storedValues = Values.stored
 
 (*--------------------------------------------------------------------------*)
 (* Define an SDD *)
-structure Definition = struct
+structure Definition (* : DATA *) = struct
 
   datatype t    = iSDD of ( sdd * Hash.t * int )
   and sdd       = Zero
@@ -103,6 +103,11 @@ structure Definition = struct
      use the address of the reference (like in C). Thus, it has to
      be computed by functions who construct SDD nodes. *)
   fun hash (iSDD(_,h,_)) = h
+
+  fun configure UnicityTableConfiguration.Name =
+    UnicityTableConfiguration.NameRes "SDD"
+  |   configure UnicityTableConfiguration.Buckets =
+    UnicityTableConfiguration.BucketsRes 2000000
 
 end (* end struct Definition *)
 open Definition

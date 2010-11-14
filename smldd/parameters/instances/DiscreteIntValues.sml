@@ -7,11 +7,16 @@ structure H  = Hash
 
 (*--------------------------------------------------------------------------*)
 (* Used by the unicity table *)
-structure Definition = struct
+structure Definition (* : DATA *) = struct
 
   type t = ( SV.t * H.t * int )
   fun eq   ((x,_,_),(y,_,_)) = SV.eq(x,y)
   fun hash (x,_,_) = SV.hash x
+
+  fun configure UnicityTableConfiguration.Name =
+    UnicityTableConfiguration.NameRes "DiscreteIntValues"
+  |   configure UnicityTableConfiguration.Buckets =
+    UnicityTableConfiguration.BucketsRes 1000
 
 end (* structure Definition *)
 

@@ -17,9 +17,28 @@ functor UnicityTableFunID ( structure Data : DATA )
 
   structure W  = MLton.Weak
   structure HT = HashTable
+  structure C  = UnicityTableConfiguration
+  structure D  = Data
 
   type data   = Data.t
   type wrdata = data ref MLton.Weak.t
+
+  val name =
+    let val C.NameRes n = D.configure C.Name in n end
+    handle Match => ""
+
+  val buckets =
+    let val C.BucketsRes b = D.configure C.Buckets in b end
+    handle Match => 1000000
+
+  val cleanup =
+    ref (let val C.CleanupStartRes c = D.configure C.CleanupStart in c end
+        handle Match => 1000000
+        )
+
+  val factor =
+    let val C.CleanupFactorRes f = D.configure C.CleanupFactor in f end
+    handle Match => 2
 
   (* Hash a data *)
   val hash = Data.hash o ! o valOf o W.get
@@ -34,9 +53,7 @@ functor UnicityTableFunID ( structure Data : DATA )
   (* The type of the unicity table for valuations*)
   val values_table : ( wrdata, wrdata * int ) HT.hash_table
     = HT.mkTable ( hash, eq )
-                ( 1000000, Fail "Can't happen" )
-
-  val cleanup = ref 1000
+                ( buckets, Fail "Can't happen" )
 
   val id     = ref (case Int.minInt of NONE   => 0
                                      | SOME v => v
@@ -44,7 +61,7 @@ functor UnicityTableFunID ( structure Data : DATA )
   val unused = ref []
 
   (* Return a ref to the unified valuation *)
-  (* Values must be canonized before this unification *)
+  (* Values should be canonized before this unification *)
   fun unify mk =
     let
       val i = case !unused of
@@ -62,7 +79,7 @@ functor UnicityTableFunID ( structure Data : DATA )
       (* Remove weak pointers to nothing *)
       if HT.numItems values_table > !cleanup then
       (
-        cleanup := !cleanup * 2;
+        cleanup := !cleanup * factor;
         HT.filter keep values_table
       )
       else
