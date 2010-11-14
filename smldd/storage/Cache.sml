@@ -43,7 +43,7 @@ functor CacheFun ( structure Operation : OPERATION )
   val miss = ref 0
 
   val cache : ( operation , (wresult * int ref) ) HT.hash_table
-    = HT.mkTable ( O.hash , O.eq ) ( buckets, entry_not_found )
+    = HT.mkTable ( O.hash , O.eq ) ( buckets, Fail "Can't happen" )
 
   fun stats () =
   let
