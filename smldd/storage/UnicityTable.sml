@@ -60,7 +60,7 @@ functor UnicityTableFunID ( structure Data : DATA )
                        | SOME _  => true
     in
       (* Remove weak pointers to nothing *)
-      if (HT.numItems values_table) > (!cleanup) then
+      if HT.numItems values_table > !cleanup then
       (
         cleanup := !cleanup * 2;
         HT.filter keep values_table
