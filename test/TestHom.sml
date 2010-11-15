@@ -691,7 +691,7 @@ let
   end
 
   fun mkComp []      = raise Empty
-  |   mkComp (x::[]) = x
+  |   mkComp [x]     = x
   |   mkComp (x::xs) = mkComposition x (mkComp xs)
 
                       (*0 1 2 3 4 5 6 7 8 9*)

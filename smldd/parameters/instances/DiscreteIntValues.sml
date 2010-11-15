@@ -169,17 +169,17 @@ structure cache = CacheFun(structure Operation = Operations )
 (* Operands should be sorted by caller *)
 fun storedUnion xs =
   case xs of
-    []      => raise DoNotPanic
-  | (x::[]) => x (* No need to cache *)
-  | _       => cache.lookup( Operations.Union xs )
+    []  => raise DoNotPanic
+  | [x] => x (* No need to cache *)
+  | _   => cache.lookup( Operations.Union xs )
 
 (*--------------------------------------------------------------------------*)
 (* Operands should be sorted by caller *)
 fun storedIntersection xs =
   case xs of
-    []      => raise DoNotPanic
-  | (x::[]) => x (* No need to cache *)
-  | _       => cache.lookup( Operations.Inter xs )
+    []  => raise DoNotPanic
+  | [x] => x (* No need to cache *)
+  | _   => cache.lookup( Operations.Inter xs )
 
 (*--------------------------------------------------------------------------*)
 fun storedDifference(x,y) =

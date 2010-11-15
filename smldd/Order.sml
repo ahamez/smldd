@@ -170,7 +170,7 @@ end
 |   transform (MaxLeaves 1) _ = raise Domain
 |   transform (MaxLeaves leaves) (Order ns) =
   (case ns of
-    ( Node( _, NONE ), SOME nested )::[] => nested
+    [( Node( _, NONE ), SOME nested )] => nested
   | _    =>
     if length ns < leaves then
       Order ns

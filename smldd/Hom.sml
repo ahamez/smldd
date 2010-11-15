@@ -301,7 +301,7 @@ fun emptyDomainIntersection x y =
 
 (*--------------------------------------------------------------------------*)
 fun domainUnion []         = Empty
-|   domainUnion (x::[])    = x
+|   domainUnion [x]        = x
 |   domainUnion (x::y::xs) =
   case ( x, y ) of
     ( All, _ )   => All
@@ -473,22 +473,22 @@ let
 
 in
   case operands of
-    []    => raise EmptyOperands
-  | x::[] => x
-  | _     => let
-                val operands' = Util.sort uid (op<) operands
-                val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
-                                (H.const 795921317)
-                                operands'
-             in
-               UT.unify( mkHom (ComComp operands') hsh )
-             end
+    []  => raise EmptyOperands
+  | [x] => x
+  | _   => let
+             val operands' = Util.sort uid (op<) operands
+             val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
+                             (H.const 795921317)
+                             operands'
+           in
+             UT.unify( mkHom (ComComp operands') hsh )
+           end
 end
 
 (*--------------------------------------------------------------------------*)
-fun mkUnion' []      = raise EmptyOperands
-|   mkUnion' (x::[]) = x
-|   mkUnion' xs      =
+fun mkUnion' []  = raise EmptyOperands
+|   mkUnion' [x] = x
+|   mkUnion' xs  =
 let
 
   val nesteds : ( ( variable , hom list ref ) HT.hash_table )
@@ -519,17 +519,17 @@ let
 
 in
   case operands' of
-    []    => raise EmptyOperands
-  | x::[] => x
-  | _     => let
-               val unionHash = foldl (fn (x,acc) =>
-                                       H.hashCombine(hash (!x), acc)
-                                     )
-                                     (H.const 16564717)
-                                     operands'
-             in
-               UT.unify( mkHom (Union operands') unionHash )
-             end
+    []  => raise EmptyOperands
+  | [x] => x
+  | _   => let
+             val unionHash = foldl (fn (x,acc) =>
+                                     H.hashCombine(hash (!x), acc)
+                                   )
+                                   (H.const 16564717)
+                                   operands'
+           in
+             UT.unify( mkHom (Union operands') unionHash )
+           end
 end
 
 (*--------------------------------------------------------------------------*)
@@ -538,9 +538,9 @@ end
 val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
 (*--------------------------------------------------------------------------*)
-fun mkIntersection []      = raise EmptyOperands
-|   mkIntersection (x::[]) = x
-|   mkIntersection xs      =
+fun mkIntersection []  = raise EmptyOperands
+|   mkIntersection [x] = x
+|   mkIntersection xs  =
 let
   val hsh = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
                   (H.const 129292632)
@@ -585,15 +585,15 @@ fun mkComposition x y =
       fun mkComp x y = UT.unify( mkHom (Comp( x, y )) (hsh x y) )
     in
       case notC of
-        []    => ry::c
-      | x::[] => (mkComp x ry)::c
-      | _     => (mkComp (mkCommutativeComposition notC) ry)::c
+        []  => ry::c
+      | [x] => (mkComp x ry)::c
+      | _   => (mkComp (mkCommutativeComposition notC) ry)::c
     end
 
   in
     case addParameter (addParameter [] x) y of
-      x::[] => x
-    | xs    => mkCommutativeComposition xs
+      [x] => x
+    | xs  => mkCommutativeComposition xs
   end
 
 (*--------------------------------------------------------------------------*)

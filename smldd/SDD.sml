@@ -331,15 +331,15 @@ fun alphaNodeToList n =
 (* Warning: duplicate with SDD.union! Operands should be sorted by caller. *)
 fun unionCallback lookup xs =
   case List.filter (fn x => x <> zero ) xs of
-    []     => zero   (* No need to cache *)
-  | x::[]  => x      (* No need to cache *)
-  | xs'    => lookup(Union( xs', lookup ))
+    []  => zero   (* No need to cache *)
+  | [x] => x      (* No need to cache *)
+  | xs' => lookup(Union( xs', lookup ))
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection!
    Operands should be sorted by caller. *)
 fun intersectionCallback _      [] = zero
-|   intersectionCallback _ (x::[]) = x
+|   intersectionCallback _     [x] = x
 |   intersectionCallback lookup xs = lookup(Inter( xs, lookup))
 
 (*--------------------------------------------------------------------------*)
@@ -510,8 +510,8 @@ let
            expects an n-ary operation *)
         fun callback xs =
           case xs of
-            x::y::[] => differenceCallback cacheLookup (x, y)
-          | _        => raise DoNotPanic
+            [x,y] => differenceCallback cacheLookup (x, y)
+          | _     => raise DoNotPanic
 
         val commonApply' = commonApply vlInter
                                        vlEmpty
@@ -627,16 +627,16 @@ val cacheLookup = SDDOpCache.lookup
    Operands should be sorted by caller. *)
 fun union xs =
   case List.filter (fn x => x <> zero ) xs of
-    []    => zero (* No need to cache *)
-  | x::[] => x    (* No need to cache *)
-  | xs'   => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
+    []  => zero (* No need to cache *)
+  | [x] => x    (* No need to cache *)
+  | xs' => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.intersectionCallback!
    Operands should be sorted by caller. *)
-fun intersection []      = zero
-|   intersection (x::[]) = x
-|   intersection xs = SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
+fun intersection []  = zero
+|   intersection [x] = x
+|   intersection xs  = SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)

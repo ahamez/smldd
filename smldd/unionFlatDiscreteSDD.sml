@@ -23,7 +23,7 @@ let
         X::insertValue xs Y
     end
 
-  fun insertVl acc (vl,succ::[]) =
+  fun insertVl acc ( vl, [succ] ) =
     let
       fun helper ( value, acc ) = insertValue acc ( value, succ )
     in
