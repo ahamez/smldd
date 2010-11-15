@@ -256,8 +256,7 @@ fun node ( vr , vl , next ) =
   | Nested nested => hierNode( vr, nested, next )
 
 (*--------------------------------------------------------------------------*)
-fun fromList []             = one
-|   fromList ((var,vl)::xs) = node( var, vl, fromList xs )
+val fromList = foldr (fn ((vr,vl),acc) => node( vr, vl, acc)) one
 
 (*--------------------------------------------------------------------------*)
 local (* SDD manipulation *)
