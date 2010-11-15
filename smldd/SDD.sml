@@ -305,7 +305,7 @@ fun checkCompatibilty []     = raise DoNotPanic
 (* Convert an alpha (a vector) into a more easy to manipulate type
    (a list of values, each one leading to a list of successors).
    Thus, it makes it usable by squareUnion. *)
-fun alphaToList( alpha ) =
+fun alphaToList alpha =
   Vector.foldr
     (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
     []
