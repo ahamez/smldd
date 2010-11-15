@@ -640,7 +640,7 @@ fun intersection []      = zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
-fun difference(x,y) =
+fun difference (x,y) =
  if x = y then          (* No need to cache *)
    zero
  else if x = zero then  (* No need to cache *)
@@ -736,7 +736,7 @@ fun hashValuation (Nested(ref n)) = Definition.hash n
 fun eqValuation (x,y) =
   case (x,y) of ( Nested nx, Nested ny ) => nx = ny
               | ( Values vx, Values vy ) => Values.eq( vx, vy )
-              | ( _ , _ )                  => false
+              | ( _ , _ )                => false
 
 (*--------------------------------------------------------------------------*)
 (* Export a valuation to a string. Needed by HomFun *)
