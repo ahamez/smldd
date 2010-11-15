@@ -429,8 +429,8 @@ end (* end fun union *)
 fun intersection cacheLookup xs =
 let
   val hasZero = case List.find (fn x => x = zero ) xs of
-                  NONE    => false
-                | SOME _  => true
+                  NONE   => false
+                | SOME _ => true
 in
   (* Intersection of anything with |0| is always |0| *)
   if hasZero then
