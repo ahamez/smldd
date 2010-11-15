@@ -1,5 +1,4 @@
 (*--------------------------------------------------------------------------*)
-
 signature UnicityTableID =
 sig
 
@@ -10,7 +9,6 @@ sig
 end
 
 (*--------------------------------------------------------------------------*)
-
 functor UnicityTableFunID ( structure Data : DATA )
   : UnicityTableID
 = struct
