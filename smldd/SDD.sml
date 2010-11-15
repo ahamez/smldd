@@ -272,12 +272,9 @@ fun configure CacheConfiguration.Name =
 (*--------------------------------------------------------------------------*)
 (* Types required by the OPERATION signature *)
 type result        = SDD
-datatype operation = Union of
-                        ( SDD list * (operation -> result) )
-                   | Inter of
-                        ( SDD list * (operation -> result) )
-                   | Diff  of
-                        ( SDD * SDD * (operation -> result) )
+datatype operation = Union of ( SDD list * (operation -> result)  )
+                   | Inter of ( SDD list * (operation -> result)  )
+                   | Diff  of ( SDD * SDD * (operation -> result) )
 
 (*--------------------------------------------------------------------------*)
 (* Check compatibility of operands *)
