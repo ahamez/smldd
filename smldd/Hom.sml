@@ -98,6 +98,9 @@ datatype UserOut    = EvalRes     of values
 type userFunction   = (UserIn -> UserOut) ref
 
 (*--------------------------------------------------------------------------*)
+structure H  = Hash
+
+(*--------------------------------------------------------------------------*)
 fun funcValues (ref f) v =
   case f (Eval v ) of
     EvalRes v => v
@@ -128,7 +131,7 @@ fun funcHash (ref f) =
 (*--------------------------------------------------------------------------*)
 structure Definition (* : DATA *) = struct
 
-  datatype t = Hom of ( hom * Hash.t * int )
+  datatype t = Hom of ( hom * int )
   and hom    = Id
              | Cons        of ( variable * valuation * t ref )
              | Const       of SDD
@@ -156,7 +159,7 @@ structure Definition (* : DATA *) = struct
                               * t ref list        (* G *)
                               )
 
-  fun eq (Hom(x,_,_),Hom(y,_,_)) =
+  fun eq (Hom(x,_),Hom(y,_)) =
     case (x,y) of
       ( Id, Id )                   => true
     | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
@@ -184,9 +187,109 @@ structure Definition (* : DATA *) = struct
                                       andalso G = G'
     | ( _ , _ )                    => false
 
-  fun hash (Hom(_,h,_)) = h
 
-  fun toString (Hom(h,_,_)) =
+  fun hash (Hom(h,_)) =
+  let
+    fun hashOption NONE                      = H.const 183931413
+    |   hashOption (SOME (ref (Hom(_,uid)))) = H.hashInt uid
+  in
+    case h of
+      Id          => H.const 1
+
+    | Cons(v,s,h) =>
+      H.hashCombine( Variable.hash v
+                   , H.hashCombine( SDD.hashValuation s, hash (!h) ) )
+
+    | Const s     => H.hashCombine( SDD.hash s, H.const 149199441 )
+
+    | Union hs    => foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                           )
+                           (H.const 16564717)
+                           hs
+
+    | Inter hs    => foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                           )
+                           (H.const 129292632)
+                           hs
+
+    | Comp(f,g)   => H.hashCombine( hash (!f), hash(!g) )
+
+    | ComComp hs  => foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                           )
+                           (H.const 795921317)
+                           hs
+
+    | Fixpoint (ref(Hom(_,uid)))  =>
+        H.hashCombine( H.hashInt uid, H.const 5959527)
+
+    | Nested(ref(Hom(_,uid)),v) =>
+        H.hashCombine(H.hashInt uid, Variable.hash v )
+
+    | Func(f,v)   => H.hashCombine( H.const 7837892
+                                  , H.hashCombine( Variable.hash v
+                                                 , funcHash f )
+                                  )
+    | SatUnion( v, F, G, L) =>
+    let
+      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                       )
+                       (H.const 59489417)
+                       G
+    in
+      H.hashCombine( H.const 48511341
+              , H.hashCombine( hashOption F
+                 , H.hashCombine( hshG,
+                     H.hashCombine(hashOption L, Variable.hash v ))))
+    end
+
+    | SatInter( v, F, G, L) =>
+    let
+      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                       )
+                       (H.const 565165613)
+                       G
+    in
+      H.hashCombine( H.const 51454531
+              , H.hashCombine( hashOption F
+                 , H.hashCombine( hshG,
+                     H.hashCombine(hashOption L, Variable.hash v ))))
+    end
+
+    | SatFixpoint( v, F, G, L) =>
+    let
+      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                       )
+                       (H.const 19592927)
+                       G
+    in
+      H.hashCombine( H.const 99495913
+                , H.hashCombine( hashOption F
+                  , H.hashCombine( hshG,
+                      H.hashCombine(hashOption L, Variable.hash v ))))
+    end
+
+    | SatComComp( v, F, G) =>
+    let
+      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+                             H.hashCombine(H.hashInt uid, acc)
+                       )
+                       (H.const 87284791)
+                       G
+    in
+      H.hashCombine( H.const 30918931
+                , H.hashCombine( hash (!F)
+                  , H.hashCombine( hshG, Variable.hash v )))
+    end
+
+  end
+
+  fun toString (Hom(h,_)) =
   let
     fun optPartToString NONE      = ""
     |   optPartToString (SOME x) = toString (!x)
@@ -254,21 +357,20 @@ open Definition
 type hom     = Definition.t ref
 
 structure UT = UnicityTableFunID( structure Data = Definition )
-structure H  = Hash
 structure HT = HashTable
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an homomorphism with an id *)
-fun mkHom hom hsh uid = Hom( hom, hsh, uid )
+fun mkHom hom uid = Hom( hom, uid )
 
 (*--------------------------------------------------------------------------*)
-fun uid (ref(Hom(_,_,x))) = x
+fun uid (ref(Hom(_,x))) = x
 
 (*--------------------------------------------------------------------------*)
 fun toString x = Definition.toString (!x)
 
 (*--------------------------------------------------------------------------*)
-val id = UT.unify( mkHom Id (H.const 1) )
+val id = UT.unify( mkHom Id )
 
 (*--------------------------------------------------------------------------*)
 datatype domain = All
@@ -329,7 +431,7 @@ fun domainUnion []         = Empty
   end
 
 (*--------------------------------------------------------------------------*)
-fun domain (ref(Hom((h,_,_)))) =
+fun domain ( ref(Hom(h,_)) ) =
   case h of
     Nested( _, v )  => Variables [v]
   | Func( _, v )    => Variables [v]
@@ -388,7 +490,7 @@ fun domain (ref(Hom((h,_,_)))) =
   | _               => All
 
 (*--------------------------------------------------------------------------*)
-fun isSelector (ref(Hom((h,_,_)))) =
+fun isSelector (ref(Hom((h,_)))) =
 let
   fun selectorOption NONE     = true
   |   selectorOption (SOME h) = isSelector h
@@ -422,8 +524,8 @@ fun commutatives x y =
     true
   else
   let
-    val ref(Hom(h1,_,_)) = x
-    val ref(Hom(h2,_,_)) = y
+    val ref(Hom(h1,_)) = x
+    val ref(Hom(h2,_)) = y
   in
     case ( h1, h2 ) of
       ( Nested( g1, v1 ), Nested( g2, v2) ) =>
@@ -433,28 +535,18 @@ fun commutatives x y =
 
 (*--------------------------------------------------------------------------*)
 fun mkCons var vl next =
-let
-  val hsh = H.hashCombine( Variable.hash var
-              , H.hashCombine( SDD.hashValuation vl, hash (!next) ) )
-in
-  UT.unify( mkHom (Cons(var,vl,next)) hsh )
-end
+  UT.unify( mkHom (Cons(var,vl,next)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkConst sdd =
-let
-  val hash = H.hashCombine( SDD.hash sdd, H.const 149199441 )
-in
-  UT.unify( mkHom (Const(sdd)) hash )
-end
+  UT.unify( mkHom (Const(sdd)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkNested h vr =
   if h = id then
     id
   else
-    UT.unify( mkHom (Nested(h,vr))
-                    (H.hashCombine(hash (!h), Variable.hash vr )) )
+    UT.unify( mkHom (Nested(h,vr)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkCommutativeComposition [] = raise EmptyOperands
@@ -462,7 +554,7 @@ fun mkCommutativeComposition [] = raise EmptyOperands
 let
 
   fun helper ( h, operands ) =
-    case let val ref(Hom(x,_,_)) = h in x end of
+    case let val ref(Hom(x,_)) = h in x end of
       Id              => operands
     | ComComp ys      => (foldr helper [] ys) @ operands
     | _               => h::operands
@@ -477,11 +569,8 @@ in
   | [x] => x
   | _   => let
              val operands' = Util.sort uid (op<) operands
-             val hsh = foldl (fn (h,acc) => H.hashCombine(hash (!h), acc))
-                             (H.const 795921317)
-                             operands'
            in
-             UT.unify( mkHom (ComComp operands') hsh )
+             UT.unify( mkHom (ComComp operands') )
            end
 end
 
@@ -495,7 +584,7 @@ let
       = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))
 
   fun unionHelper ( h, operands ) =
-  case let val ref(Hom(x,_,_)) = h in x end of
+  case let val ref(Hom(x,_)) = h in x end of
 
     Union ys      => foldr unionHelper operands ys
 
@@ -521,15 +610,7 @@ in
   case operands' of
     []  => raise EmptyOperands
   | [x] => x
-  | _   => let
-             val unionHash = foldl (fn (x,acc) =>
-                                     H.hashCombine(hash (!x), acc)
-                                   )
-                                   (H.const 16564717)
-                                   operands'
-           in
-             UT.unify( mkHom (Union operands') unionHash )
-           end
+  | _   => UT.unify( mkHom (Union operands') )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -541,13 +622,7 @@ val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 fun mkIntersection []  = raise EmptyOperands
 |   mkIntersection [x] = x
 |   mkIntersection xs  =
-let
-  val hsh = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                  (H.const 129292632)
-                  xs
-in
-  UT.unify( mkHom (Inter xs) hsh )
-end
+  UT.unify( mkHom (Inter xs) )
 
 (*--------------------------------------------------------------------------*)
 fun mkComposition x y =
@@ -558,7 +633,7 @@ fun mkComposition x y =
   else
   let
 
-    fun addParameter xs (ry as (ref (Hom(y,_,_)))) =
+    fun addParameter xs (ry as (ref (Hom(y,_)))) =
     case y of
 
       ComComp ys  => foldl (fn (x,acc) => addParameter acc x) xs ys
@@ -566,7 +641,7 @@ fun mkComposition x y =
     | Nested(f,v) =>
     let
       fun loop [] = [ry]
-      |   loop ((rx as (ref(Hom(x,_,_))))::xs) =
+      |   loop ((rx as (ref(Hom(x,_))))::xs) =
        case x of
          Nested(g,w) => if Variable.eq( v, w ) then
                           (mkNested (mkComposition g f) v)::xs
@@ -580,9 +655,7 @@ fun mkComposition x y =
     | _ =>
     let
       val (c,notC) = List.partition (fn x => commutatives x ry) xs
-      fun hsh x y = H.hashCombine( H.const 539351353
-                                 , H.hashCombine( hash (!x), hash(!y) ) )
-      fun mkComp x y = UT.unify( mkHom (Comp( x, y )) (hsh x y) )
+      fun mkComp x y = UT.unify( mkHom (Comp( x, y )) )
     in
       case notC of
         []  => ry::c
@@ -597,80 +670,34 @@ fun mkComposition x y =
   end
 
 (*--------------------------------------------------------------------------*)
-fun mkFixpoint (rh as (ref (Hom(h,hsh,_)))) =
+fun mkFixpoint (rh as (ref (Hom(h,_)))) =
   case h of
     Id          => rh
   | Fixpoint _  => rh
-  | _           => UT.unify( mkHom (Fixpoint(rh))
-                                   (H.hashCombine( hsh, H.const 5959527)) )
+  | _           => UT.unify( mkHom (Fixpoint rh) )
 
 (*--------------------------------------------------------------------------*)
 fun mkFunction f var =
-let
-  val hsh = H.hashCombine( H.const 7837892,
-              H.hashCombine( Variable.hash var, funcHash f ) )
-in
-  UT.unify( mkHom (Func(f,var)) hsh )
-end
-
-(*--------------------------------------------------------------------------*)
-fun hashOption NONE           = H.const 183931413
-|   hashOption (SOME (ref x)) = hash x
+  UT.unify( mkHom (Func(f,var)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkSatUnion var F G L =
-let
-  val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                   (H.const 59489417)
-                   G
-  val hsh = H.hashCombine( H.const 48511341
-              , H.hashCombine( hashOption F
-                 , H.hashCombine( hshG,
-                     H.hashCombine(hashOption L, Variable.hash var ))))
-in
-  UT.unify( mkHom (SatUnion(var, F, G, L)) hsh )
-end
+  UT.unify( mkHom (SatUnion(var, F, G, L)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkSatIntersection var F G L =
-let
-  val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                   (H.const 565165613)
-                   G
-  val hsh = H.hashCombine( H.const 51454531
-              , H.hashCombine( hashOption F
-                 , H.hashCombine( hshG,
-                     H.hashCombine(hashOption L, Variable.hash var ))))
-in
-  UT.unify( mkHom (SatInter(var, F, G, L)) hsh )
-end
+  UT.unify( mkHom (SatInter(var, F, G, L)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkSatFixpoint var F G L =
-let
-  val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                   (H.const 19592927)
-                   G
-  val hsh = H.hashCombine( H.const 99495913
-              , H.hashCombine( hashOption F
-                 , H.hashCombine( hshG,
-                     H.hashCombine(hashOption L, Variable.hash var ))))
-in
-  UT.unify( mkHom (SatFixpoint(var, F, G, L)) hsh )
-end
+  UT.unify( mkHom (SatFixpoint(var, F, G, L)) )
 
 (*--------------------------------------------------------------------------*)
 fun mkSatComComp var F G =
 let
   val G' = Util.sort uid (op<) G
-  val hshG = foldl (fn (x,acc) => H.hashCombine(hash (!x), acc))
-                   (H.const 87284791)
-                   G'
-  val hsh = H.hashCombine( H.const 30918931
-              , H.hashCombine( hash (!F)
-                 , H.hashCombine( hshG, Variable.hash var )))
 in
-  UT.unify( mkHom (SatComComp(var, F, G' )) hsh )
+  UT.unify( mkHom (SatComComp(var, F, G' )) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -689,11 +716,11 @@ fun eq ( Op(xh,xsdd,_), Op(yh,ysdd,_) ) =
   xh = yh andalso xsdd = ysdd
 
 (*--------------------------------------------------------------------------*)
-fun hash (Op(h,s,_)) =
-  H.hashCombine( Definition.hash(!h), SDD.hash s )
+fun hash (Op(ref(Hom(_,uid)),s,_)) =
+  H.hashCombine( H.hashInt uid, SDD.hash s )
 
 (*--------------------------------------------------------------------------*)
-fun skipVariable var (ref (Hom(h,_,_))) =
+fun skipVariable var (ref (Hom(h,_))) =
   case h of
     Id                   => true
   | Const _              => false
@@ -716,7 +743,7 @@ fun evalCallback lookup h sdd =
   if sdd = SDD.zero then
     SDD.zero
   else
-    case let val ref(Hom(x,_,_)) = h in x end of
+    case let val ref(Hom(x,_)) = h in x end of
       Id                => sdd
     | Const c           => c
     | Cons(var,vl,next) => if next = id then
@@ -747,7 +774,8 @@ type result    = hom
 fun eq ((hx,vx),(hy,vy)) = hx = hy andalso Variable.eq(vx,vy)
 
 (*--------------------------------------------------------------------------*)
-fun hash (h,v) = H.hashCombine( Definition.hash(!h), Variable.hash v )
+fun hash (ref(Hom(_,uid)),v) =
+  H.hashCombine( H.hashInt uid, Variable.hash v )
 
 (*--------------------------------------------------------------------------*)
 fun partition v hs =
@@ -757,7 +785,7 @@ let
     if skipVariable v h then
       ( h::F, G, L )
     else
-      case let val ref(Hom(x,_,_)) = h in x end of
+      case let val ref(Hom(x,_)) = h in x end of
         Nested(n,_) => ( F, G, n::L )
       | _           => ( F, h::G, L )
 
@@ -796,7 +824,7 @@ end
 (*--------------------------------------------------------------------------*)
 fun rewriteFixpoint orig v f =
 
-  case let val ref(Hom(h,_,_)) = f in h end of
+  case let val ref(Hom(h,_)) = f in h end of
 
     Union xs =>
       if List.exists (fn x => x = id) xs then
@@ -841,7 +869,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun apply ( h, v ) =
-  case let val ref(Hom(x,_,_)) = h in x end of
+  case let val ref(Hom(x,_)) = h in x end of
     Union hs    => rewriteUI mkUnion' mkSatUnion h v hs
   | Inter hs    => rewriteUI mkIntersection mkSatIntersection h v hs
   | Fixpoint f  => rewriteFixpoint h v f
@@ -858,7 +886,7 @@ fun rewrite h v =
 let
   val _ = processed := !processed + 1
 in
-  case let val ref(Hom(x,_,_)) = h in x end of
+  case let val ref(Hom(x,_)) = h in x end of
     Union _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Inter _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Fixpoint _ => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
@@ -1070,7 +1098,7 @@ in
     val h' = rewrite h (SDD.variable sdd)
              handle SDD.IsNotANode => h
   in
-    case let val ref(Hom(x,_,_)) = h' in x end of
+    case let val ref(Hom(x,_)) = h' in x end of
       Id                    => raise DoNotPanic
     | Const _               => raise DoNotPanic
     | Cons(var,nested,next) => cons lookup (var, nested, next) sdd
@@ -1103,7 +1131,7 @@ fun eval h sdd =
   if sdd = SDD.zero then
     SDD.zero
   else
-    case let val ref(Hom(x,_,_)) = h in x end of
+    case let val ref(Hom(x,_)) = h in x end of
       Id                => sdd
     | Const c           => c
     | Cons(var,vl,next) =>
@@ -1134,7 +1162,7 @@ let
 
   fun visitor id cons const union inter comp comcomp fixpoint nested func h =
   let
-    val ref(Hom(x,_,_)) = h
+    val ref(Hom(x,_)) = h
   in
     case x of
       Id              => id ()
