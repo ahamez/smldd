@@ -63,10 +63,13 @@ type values       = Values.values
 type storedValues = Values.stored
 
 (*--------------------------------------------------------------------------*)
+structure H  = Hash
+
+(*--------------------------------------------------------------------------*)
 (* Define an SDD *)
 structure Definition (* : DATA *) = struct
 
-  datatype t    = iSDD of ( sdd * Hash.t * int )
+  datatype t    = iSDD of ( sdd * int )
   and sdd       = Zero
                 | One
                 | Node of  { variable : variable
@@ -80,11 +83,8 @@ structure Definition (* : DATA *) = struct
      At this point, we can't use the identifier to know if two SDDs are
      equals because this equality is called by the unicity table which is
      responsible for the generation of this id.= *)
-  fun eq ( iSDD(lsdd,lh,_), iSDD(rsdd,rh,_) ) =
-    if lh <> rh then
-      false
-    else
-      case ( lsdd, rsdd ) of
+  fun eq ( iSDD(lsdd,_), iSDD(rsdd,_) ) =
+    case ( lsdd, rsdd ) of
 
         ( Zero, Zero ) => true
       | ( One, One   ) => true
@@ -102,7 +102,44 @@ structure Definition (* : DATA *) = struct
   (* The hash value of a node is stored with it, because we can't
      use the address of the reference (like in C). Thus, it has to
      be computed by functions who construct SDD nodes. *)
-  fun hash (iSDD(_,h,_)) = h
+  fun hash (iSDD(sdd,_)) =
+    case sdd of
+      Zero => H.const 0
+    | One  => H.const 1
+    | Node{ variable=var, alpha=alpha } =>
+    let
+      val hsh =
+        Vector.foldl (fn ( ( vl, ref(iSDD(_,uid))), acc ) =>
+                       H.hashCombine( acc
+                                    , H.hashCombine( Values.storedHash vl
+                                                   , H.hashInt uid
+                                                   )
+                                    )
+                     )
+                     (H.const 9289317)
+                     alpha
+    in
+      H.hashCombine( Variable.hash var, hsh)
+    end
+    | HNode{ variable=var, alpha=alpha } =>
+    let
+      val hsh =
+        Vector.foldl (fn ( ( ref(iSDD(_,vluid))
+                           , ref(iSDD(_,succuid))
+                           )
+                         , acc
+                         ) =>
+                       H.hashCombine( acc
+                                    , H.hashCombine( H.hashInt vluid
+                                                   , H.hashInt succuid
+                                                   )
+                                    )
+                     )
+                     (H.const 3984921)
+                     alpha
+    in
+      H.hashCombine( Variable.hash var, hsh)
+    end
 
   fun configure UnicityTableConfiguration.Name =
     UnicityTableConfiguration.NameRes "SDD"
@@ -118,7 +155,6 @@ datatype valuation = Nested of SDD | Values of values
 
 (*--------------------------------------------------------------------------*)
 structure SDDUT = UnicityTableFunID( structure Data = Definition )
-structure H  = Hash
 structure HT = HashTable
 
 (*--------------------------------------------------------------------------*)
@@ -129,7 +165,7 @@ exception IsNotNested
 
 (*--------------------------------------------------------------------------*)
 (* Export an SDD to a string *)
-fun toString (ref (iSDD(sdd,_,_))) =
+fun toString (ref (iSDD(sdd,_))) =
 let
   fun nodeHelper vlToString vr alpha =
    "(" ^ (Variable.toString vr) ^ ")" ^ " [ " ^
@@ -151,7 +187,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Extract the identifier of an SDD *)
-fun uid (ref(iSDD(_,_,x))) = x
+fun uid (ref(iSDD(_,x))) = x
 
 (*--------------------------------------------------------------------------*)
 fun lt (x,y) = uid x < uid y
@@ -169,43 +205,27 @@ fun insert [] x = [x]
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an SDD with an id *)
-fun mkNode node hsh uid = iSDD( node, hsh, uid )
+fun mkNode node uid = iSDD( node, uid )
 
 (*--------------------------------------------------------------------------*)
 (* Return the |0| ("zero") terminal *)
-val zero = SDDUT.unify (mkNode Zero (H.const 0))
+val zero = SDDUT.unify (mkNode Zero)
 
 (*--------------------------------------------------------------------------*)
 (* Return the |1| ("one") terminal *)
-val one = SDDUT.unify (mkNode One (H.const 1))
-
-(*--------------------------------------------------------------------------*)
-fun hashNode vlHash var alpha =
-let
-  val hsh =
-    Vector.foldl (fn ( ( vl, succ), acc ) =>
-                   H.hashCombine( acc
-                                , H.hashCombine( vlHash vl, hash (!succ) )
-                                )
-                 )
-                 (H.const 0)
-                 alpha
-in
-  H.hashCombine( Variable.hash var, hsh)
-end
+val one = SDDUT.unify (mkNode One)
 
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
-fun flatNode ( var, values, rnext as (ref (iSDD(next,_,_))) ) =
+fun flatNode ( var, values, rnext as (ref (iSDD(next,_))) ) =
   case ( Values.storedEmpty values , next ) of
     (_,Zero) => zero
   | (true,_) => zero
   | _        =>
     let
       val alpha = Vector.fromList [( values, rnext )]
-      val hsh = hashNode Values.storedHash var alpha
     in
-      SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) hsh )
+      SDDUT.unify ( mkNode (Node{ variable=var, alpha=alpha}) )
     end
 
 (*--------------------------------------------------------------------------*)
@@ -214,16 +234,12 @@ fun flatNodeAlpha ( var, alpha ) =
   if Vector.length alpha = 0 then
     zero
   else
-  let
-    val hsh = hashNode Values.storedHash var alpha
-  in
-    SDDUT.unify ( mkNode (Node{variable=var,alpha=alpha}) hsh )
-  end
+    SDDUT.unify ( mkNode (Node{variable=var,alpha=alpha}) )
 
 (*--------------------------------------------------------------------------*)
 (* Return an hierarchical node. Not exported *)
-fun hierNode ( var, rnested as (ref (iSDD(nested,_,_)))
-                  , rnext as (ref (iSDD(next,_,_)))
+fun hierNode ( var, rnested as (ref (iSDD(nested,_)))
+                  , rnext as (ref (iSDD(next,_)))
              )
 = case ( next, nested ) of
     ( Zero , _ ) => zero
@@ -231,9 +247,8 @@ fun hierNode ( var, rnested as (ref (iSDD(nested,_,_)))
   | ( _ , _ )    =>
     let
       val alpha = Vector.fromList [( rnested, rnext )]
-      val hsh = hashNode (hash o !) var alpha
     in
-      SDDUT.unify ( mkNode (HNode{ variable=var, alpha=alpha}) hsh )
+      SDDUT.unify ( mkNode (HNode{ variable=var, alpha=alpha}) )
     end
 
 (*--------------------------------------------------------------------------*)
@@ -242,11 +257,7 @@ fun hierNodeAlpha ( var , alpha ) =
   if Vector.length alpha = 0 then
     zero
   else
-  let
-    val hsh = hashNode (hash o !) var alpha
-  in
-    SDDUT.unify ( mkNode (HNode{variable=var,alpha=alpha}) hsh )
-  end
+    SDDUT.unify ( mkNode (HNode{variable=var,alpha=alpha}) )
 
 (*--------------------------------------------------------------------------*)
 (* Return a node *)
@@ -281,7 +292,7 @@ datatype operation = Union of ( SDD list * (operation -> result)  )
 fun checkCompatibilty []     = raise DoNotPanic
 |   checkCompatibilty(x::xs) =
 
-  foldl (fn ( ref (iSDD(sx,_,_)), y as (ref (iSDD(sy,_,_)))) =>
+  foldl (fn ( ref (iSDD(sx,_)), y as (ref (iSDD(sy,_)))) =>
         case (sx,sy) of
             (Zero,_)  => raise DoNotPanic
           | (_,Zero)  => raise DoNotPanic
@@ -316,7 +327,7 @@ fun alphaToList alpha =
    Warning! Duplicate logic with alphaNodeToList! *)
 fun flatAlphaNodeToList n =
   case !n of
-    iSDD(Node{alpha=alpha,...},_,_) => alphaToList alpha
+    iSDD(Node{alpha=alpha,...},_) => alphaToList alpha
   | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
@@ -324,7 +335,7 @@ fun flatAlphaNodeToList n =
    Warning! Duplicate logic with flatAlphaNodeToList! *)
 fun alphaNodeToList n =
   case !n of
-    iSDD(HNode{alpha=alpha,...},_,_) => alphaToList alpha
+    iSDD(HNode{alpha=alpha,...},_) => alphaToList alpha
   | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
@@ -359,7 +370,7 @@ fun union cacheLookup xs =
 let
   val _ = checkCompatibilty xs
 in
-  case let val ref(iSDD(x,_,_)) = hd xs in x end of
+  case let val ref(iSDD(x,_)) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => one
@@ -436,7 +447,7 @@ in
   if hasZero then
     zero
   else
-    case let val ref(iSDD(x,_,_)) = hd xs in x end of
+    case let val ref(iSDD(x,_)) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => checkCompatibilty xs
@@ -491,7 +502,7 @@ end (* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
-fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
+fun difference cacheLookup ( ref (iSDD(l,_)), ref (iSDD(r,_)) ) =
 let
   fun nodeDifference lvr rvr la ra
                      vlUnion vlInter vlDiff vlEmpty vlLt hierNodeAlpha
@@ -693,7 +704,7 @@ fun nodeAlpha ( _ , []    ) = zero
 
 (*--------------------------------------------------------------------------*)
 (* Return the variable of an SDD. Needed by HomFun*)
-fun variable (ref (iSDD(x,_,_))) =
+fun variable (ref (iSDD(x,_))) =
   case x of
     Node{variable=var,...}  => var
   | HNode{variable=var,...} => var
@@ -708,7 +719,7 @@ fun nested x = case x of Values _ => raise IsNotValues
                        | Nested s => s
 
 (*--------------------------------------------------------------------------*)
-fun alpha (ref (iSDD(sdd,_,_))) =
+fun alpha (ref (iSDD(sdd,_))) =
 let
   fun alphaHelper a f =
       Vector.foldr
@@ -759,7 +770,7 @@ let
 
   fun visitorBase zero one node s =
   let
-    val ref(iSDD(x,_,uid)) = s
+    val ref(iSDD(x,uid)) = s
   in
     case x of
       Zero                      => zero ()
@@ -813,6 +824,10 @@ in
         visitorOnce cache
       end
 end
+
+(*--------------------------------------------------------------------------*)
+val hash = H.hashInt o uid
+
 
 (*--------------------------------------------------------------------------*)
 fun stats () = SDDOpCache.stats()
