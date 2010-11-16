@@ -196,9 +196,9 @@ structure Definition (* : DATA *) = struct
     case h of
       Id          => H.const 1
 
-    | Cons(v,s,h) =>
+    | Cons(v,s,ref(Hom(_,uid))) =>
       H.hashCombine( Variable.hash v
-                   , H.hashCombine( SDD.hashValuation s, hash (!h) ) )
+                   , H.hashCombine( SDD.hashValuation s, H.hashInt uid ) )
 
     | Const s     => H.hashCombine( SDD.hash s, H.const 149199441 )
 
@@ -214,7 +214,10 @@ structure Definition (* : DATA *) = struct
                            (H.const 129292632)
                            hs
 
-    | Comp(f,g)   => H.hashCombine( hash (!f), hash(!g) )
+    | Comp( ref(Hom(_,fuid)), ref(Hom(_,guid)) ) =>
+      H.hashCombine( H.hashInt 3413417
+                   , H.hashCombine( H.hashInt fuid, H.hashInt guid )
+                   )
 
     | ComComp hs  => foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
