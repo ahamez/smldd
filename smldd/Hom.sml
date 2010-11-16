@@ -367,7 +367,7 @@ fun mkHom hom uid = Hom( hom, uid )
 fun uid (ref(Hom(_,x))) = x
 
 (*--------------------------------------------------------------------------*)
-fun toString x = Definition.toString (!x)
+val toString = Definition.toString o !
 
 (*--------------------------------------------------------------------------*)
 val id = UT.unify( mkHom Id )
