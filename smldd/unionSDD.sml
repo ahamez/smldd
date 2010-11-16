@@ -9,7 +9,7 @@
    while 'aAlpha' is the head of the remaining operands (thus we use a
    foldl). 'bAlpha' is initialized by the alpha of the first operand.
 *)
-fun unionSDD uid valInter valDiff valEmpty xs =
+fun unionSDD uid valEq valInter valDiff valEmpty xs =
 let
 
   val ( initial, operands ) = case xs of []     => raise DoNotPanic
@@ -22,7 +22,7 @@ let
     let
       fun mergeHelper acc [] x = x::acc
       |   mergeHelper acc (L as (l::ls)) x =
-        if x = l then
+        if uid x = uid l then
           L @ acc
         else if uid x < uid l then
           x::(L @ acc)
@@ -46,7 +46,7 @@ let
 
   |   oneArcOfA (aVal,aSuccs) ((bVal,bSuccs)::bAlpha)
   =
-    if aVal = bVal then
+    if valEq( aVal, bVal ) then
       ( [( aVal, mergeSuccs aSuccs bSuccs )], bAlpha )
 
     else
@@ -66,7 +66,7 @@ let
         val diffba = valDiff (bVal,aVal)
       in
 
-        if aVal = inter then (* aVal \in bVal *)
+        if valEq( aVal, inter ) then (* aVal \in bVal *)
           ( [( aVal, mergeSuccs aSuccs bSuccs )], (diffba,bSuccs)::bAlpha )
 
         else

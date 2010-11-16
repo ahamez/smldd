@@ -1,4 +1,4 @@
-fun commonApply valInter valEmpty cont zero ( aAlpha, bAlpha ) =
+fun commonApply valInter valEmpty cont empty ( aAlpha, bAlpha ) =
 let
 
   fun propagate acc ( _, [] ) =  acc
@@ -12,7 +12,7 @@ let
       let
         val succ = cont (aSuccs@bSuccs)
       in
-        if succ = zero then
+        if empty succ then
           propagate acc ( aArc, bAlpha )
         else
           propagate ( (inter,[succ])::acc ) ( aArc, bAlpha)

@@ -14,16 +14,16 @@ struct
   val values = Values o IntVector.fromList
 
   fun testTerminal00 () =
-    assertTrue( zero <> one )
+    assertTrue( not (SDD.eq( zero, one )) )
 
   fun testMknode00 () =
-    assertTrue( node( 0, values [] , one  ) = zero )
+    assertTrue( SDD.eq( node( 0, values [] , one  ), zero ) )
 
   fun testMknode01 () =
-    assertTrue( node( 0, values [0], zero ) = zero )
+    assertTrue( SDD.empty (node( 0, values [0], zero )) )
 
   fun testMknode02 () =
-    assertTrue( node( 0, values [] , zero ) = zero )
+    assertTrue( SDD.empty( node( 0, values [] , zero ) ) )
 
   fun testFlatUnion00 () =
   let
@@ -32,7 +32,7 @@ struct
     val u0 = union [s0,s1]
     val o0 = node( 0, values [0,1,2,3], one)
   in
-    assertTrue( u0 = o0 )
+    assertTrue( SDD.eq( u0, o0 ) )
   end
 
   fun testFlatUnion01 () =
@@ -54,8 +54,9 @@ struct
 
   fun testFlatUnion03 () =
   let
-    val s0 = node( 0, values [1,2,3], one )
-    val u0 = union [s0,zero]
+    val s0 : SDD.SDD = node( 0, values [1,2,3], one )
+    val u0 : SDD.SDD = union [s0,zero]
+    val _ = u0 = s0
   in
     assertTrue( u0 = s0 )
   end

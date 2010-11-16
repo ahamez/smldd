@@ -1,7 +1,7 @@
 (*--------------------------------------------------------------------------*)
 signature SDD = sig
 
-  eqtype SDD
+  type SDD
   type variable
   type values
 
@@ -17,7 +17,9 @@ signature SDD = sig
   val union               : SDD list -> SDD
   val intersection        : SDD list -> SDD
   val difference          : SDD * SDD -> SDD
+  val empty               : SDD -> bool
 
+  val eq                  : SDD * SDD -> bool
   val lt                  : SDD * SDD -> bool
   val uid                 : SDD -> int
   val variable            : SDD -> variable
@@ -70,10 +72,10 @@ structure Definition (* : DATA *) = struct
   and sdd       = Zero
                 | One
                 | Node of  { variable : variable
-                           , alpha : (storedValues * t ref) Vector.vector
+                           , alpha : (storedValues * t) Vector.vector
                            }
                 | HNode of { variable : variable
-                           , alpha : ( t ref * t ref ) Vector.vector
+                           , alpha : (t * t) Vector.vector
                            }
 
   (* Compare two SDDs.
@@ -91,11 +93,51 @@ structure Definition (* : DATA *) = struct
 
       | ( Node{ variable=lvr, alpha=lalpha }
         , Node{ variable=rvr, alpha=ralpha } ) =>
-            Variable.eq(lvr,rvr) andalso lalpha = ralpha
+            Variable.eq(lvr,rvr) andalso
+            let
+              fun loop i =
+              if i = Vector.length lalpha then
+                true
+              else
+              let
+                val ( lvl, iSDD(_,_,luid) ) = Vector.sub( lalpha, i)
+                val ( rvl, iSDD(_,_,ruid) ) = Vector.sub( ralpha, i)
+              in
+                if lvl = rvl andalso luid = ruid then
+                  loop (i+1)
+                else
+                  false
+              end
+            in
+              if Vector.length lalpha <> Vector.length ralpha then
+                false
+              else
+                loop 0
+            end
 
       | ( HNode{ variable=lvr, alpha=lalpha }
         , HNode{ variable=rvr, alpha=ralpha } ) =>
-            Variable.eq(lvr,rvr) andalso lalpha = ralpha
+            Variable.eq(lvr,rvr) andalso
+            let
+              fun loop 0 = true
+              |   loop i =
+              let
+                val ( iSDD(_,_,lvluid), iSDD(_,_,luid) ) =
+                  Vector.sub( lalpha, i - 1)
+                val ( iSDD(_,_,rvluid), iSDD(_,_,ruid) ) =
+                  Vector.sub( ralpha, i - 1)
+              in
+                if lvluid = rvluid andalso luid = ruid then
+                  loop (i-1)
+                else
+                  false
+              end
+            in
+              if Vector.length lalpha <> Vector.length ralpha then
+                false
+              else
+                loop (Vector.length lalpha)
+            end
 
       | ( _ , _ ) => false
 
@@ -113,11 +155,11 @@ end (* end struct Definition *)
 open Definition
 
 (*--------------------------------------------------------------------------*)
-type SDD = Definition.t ref
+type SDD = Definition.t
 datatype valuation = Nested of SDD | Values of values
 
 (*--------------------------------------------------------------------------*)
-structure SDDUT = UnicityTableFunID( structure Data = Definition )
+structure SDDUT = UnicityTableFunID2( structure Data = Definition )
 structure H  = Hash
 structure HT = HashTable
 
@@ -129,7 +171,7 @@ exception IsNotNested
 
 (*--------------------------------------------------------------------------*)
 (* Export an SDD to a string *)
-fun toString (ref (iSDD(sdd,_,_))) =
+fun toString (iSDD(sdd,_,_)) =
 let
   fun nodeHelper vlToString vr alpha =
    "(" ^ (Variable.toString vr) ^ ")" ^ " [ " ^
@@ -151,7 +193,10 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Extract the identifier of an SDD *)
-fun uid (ref(iSDD(_,_,x))) = x
+fun uid (iSDD(_,_,x)) = x
+
+(*--------------------------------------------------------------------------*)
+fun eq (x,y) = uid x = uid y
 
 (*--------------------------------------------------------------------------*)
 fun lt (x,y) = uid x < uid y
@@ -160,7 +205,7 @@ fun lt (x,y) = uid x < uid y
 (* Help construct sorted operands of SDDs *)
 fun insert [] x = [x]
 |   insert (L as (l::ls)) x =
-  if x = l then
+  if eq( x, l ) then
     L
   else if uid x < uid l then
     x::L
@@ -180,12 +225,15 @@ val zero = SDDUT.unify (mkNode Zero (H.const 0))
 val one = SDDUT.unify (mkNode One (H.const 1))
 
 (*--------------------------------------------------------------------------*)
+fun empty x = eq( x, zero )
+
+(*--------------------------------------------------------------------------*)
 fun hashNode vlHash var alpha =
 let
   val hsh =
     Vector.foldl (fn ( ( vl, succ), acc ) =>
                    H.hashCombine( acc
-                                , H.hashCombine( vlHash vl, hash (!succ) )
+                                , H.hashCombine( vlHash vl, hash succ )
                                 )
                  )
                  (H.const 0)
@@ -196,7 +244,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
-fun flatNode ( var, values, rnext as (ref (iSDD(next,_,_))) ) =
+fun flatNode ( var, values, rnext as (iSDD(next,_,_)) ) =
   case ( Values.storedEmpty values , next ) of
     (_,Zero) => zero
   | (true,_) => zero
@@ -222,8 +270,8 @@ fun flatNodeAlpha ( var, alpha ) =
 
 (*--------------------------------------------------------------------------*)
 (* Return an hierarchical node. Not exported *)
-fun hierNode ( var, rnested as (ref (iSDD(nested,_,_)))
-                  , rnext as (ref (iSDD(next,_,_)))
+fun hierNode ( var, rnested as (iSDD(nested,_,_))
+                  , rnext as   (iSDD(next,_,_))
              )
 = case ( next, nested ) of
     ( Zero , _ ) => zero
@@ -231,7 +279,7 @@ fun hierNode ( var, rnested as (ref (iSDD(nested,_,_)))
   | ( _ , _ )    =>
     let
       val alpha = Vector.fromList [( rnested, rnext )]
-      val hsh = hashNode (hash o !) var alpha
+      val hsh = hashNode hash var alpha
     in
       SDDUT.unify ( mkNode (HNode{ variable=var, alpha=alpha}) hsh )
     end
@@ -243,7 +291,7 @@ fun hierNodeAlpha ( var , alpha ) =
     zero
   else
   let
-    val hsh = hashNode (hash o !) var alpha
+    val hsh = hashNode hash var alpha
   in
     SDDUT.unify ( mkNode (HNode{variable=var,alpha=alpha}) hsh )
   end
@@ -281,7 +329,7 @@ datatype operation = Union of ( SDD list * (operation -> result)  )
 fun checkCompatibilty []     = raise DoNotPanic
 |   checkCompatibilty(x::xs) =
 
-  foldl (fn ( ref (iSDD(sx,_,_)), y as (ref (iSDD(sy,_,_)))) =>
+  foldl (fn ( iSDD(sx,_,_), y as (iSDD(sy,_,_)) ) =>
         case (sx,sy) of
             (Zero,_)  => raise DoNotPanic
           | (_,Zero)  => raise DoNotPanic
@@ -315,7 +363,7 @@ fun alphaToList alpha =
 (* Apply alphaToList to a node: SDD -> ( storedValues * SDD list ) list
    Warning! Duplicate logic with alphaNodeToList! *)
 fun flatAlphaNodeToList n =
-  case !n of
+  case n of
     iSDD(Node{alpha=alpha,...},_,_) => alphaToList alpha
   | _ => raise DoNotPanic
 
@@ -323,14 +371,14 @@ fun flatAlphaNodeToList n =
 (* Apply alphaToList to a node: SDD -> ( SDD * SDD list ) list
    Warning! Duplicate logic with flatAlphaNodeToList! *)
 fun alphaNodeToList n =
-  case !n of
+  case n of
     iSDD(HNode{alpha=alpha,...},_,_) => alphaToList alpha
   | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.union! Operands should be sorted by caller. *)
 fun unionCallback lookup xs =
-  case List.filter (fn x => x <> zero ) xs of
+  case List.filter (not o empty) xs of
     []  => zero   (* No need to cache *)
   | [x] => x      (* No need to cache *)
   | xs' => lookup(Union( xs', lookup ))
@@ -345,11 +393,11 @@ fun intersectionCallback _      [] = zero
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection! *)
 fun differenceCallback lookup ( x, y ) =
-  if x = y then          (* No need to cache *)
+  if eq( x, y ) then          (* No need to cache *)
     zero
-  else if x = zero then  (* No need to cache *)
+  else if empty x then  (* No need to cache *)
     zero
-  else if y = zero then  (* No need to cache *)
+  else if empty y then  (* No need to cache *)
     x
   else
     lookup(Diff( x, y, lookup ))
@@ -359,7 +407,7 @@ fun union cacheLookup xs =
 let
   val _ = checkCompatibilty xs
 in
-  case let val ref(iSDD(x,_,_)) = hd xs in x end of
+  case let val iSDD(x,_,_) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => one
@@ -378,6 +426,7 @@ in
       , unionFlatDiscreteSDD Values.storedToList Values.storedFromList
                              Values.storedLt
                              Values.valueLt
+                             eq
                              uid
                              (unionCallback cacheLookup)
                              xs'
@@ -389,11 +438,13 @@ in
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      Values.storedUnion
+                                     (op =)
                                      Values.storedLt
     in
       flatNodeAlpha
       ( var
       , squareUnion' (unionSDD uid
+                               (op =)
                                Values.storedIntersection
                                Values.storedDifference
                                Values.storedEmpty
@@ -409,14 +460,16 @@ in
     val squareUnion' = squareUnion uid
                                    (unionCallback cacheLookup)
                                    (unionCallback cacheLookup)
+                                   eq
                                    lt
   in
     hierNodeAlpha
     ( var
     , squareUnion' (unionSDD uid
+                             eq
                              (intersectionCallback cacheLookup)
                              (differenceCallback cacheLookup)
-                             (fn x => x = zero)
+                             empty
                              xs'
                    )
     )
@@ -428,7 +481,7 @@ end (* end fun union *)
 (* N-ary intersection of SDDs *)
 fun intersection cacheLookup xs =
 let
-  val hasZero = case List.find (fn x => x = zero ) xs of
+  val hasZero = case List.find empty xs of
                   NONE   => false
                 | SOME _ => true
 in
@@ -436,7 +489,7 @@ in
   if hasZero then
     zero
   else
-    case let val ref(iSDD(x,_,_)) = hd xs in x end of
+    case let val iSDD(x,_,_) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => checkCompatibilty xs
@@ -455,11 +508,12 @@ in
       val commonApply' = commonApply Values.storedIntersection
                                      Values.storedEmpty
                                      (intersectionCallback cacheLookup)
-                                     zero
+                                     empty
 
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      Values.storedUnion
+                                     (op =)
                                      Values.storedLt
     in
       flatNodeAlpha( var
@@ -475,13 +529,14 @@ in
                                   | y::ys  => (y,ys)
 
       val commonApply' = commonApply (intersectionCallback cacheLookup)
-                                     (fn x => x = zero )
+                                     empty
                                      (intersectionCallback cacheLookup)
-                                     zero
+                                     empty
 
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      (unionCallback cacheLookup)
+                                     eq
                                      lt
     in
       hierNodeAlpha( var
@@ -491,9 +546,9 @@ end (* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
-fun difference cacheLookup ( ref (iSDD(l,_,_)), ref (iSDD(r,_,_)) ) =
+fun difference cacheLookup ( iSDD(l,_,_), iSDD(r,_,_) ) =
 let
-  fun nodeDifference lvr rvr la ra
+  fun nodeDifference lvr rvr la ra vlEq
                      vlUnion vlInter vlDiff vlEmpty vlLt hierNodeAlpha
   =
     if not( Variable.eq(lvr,rvr) ) then
@@ -516,7 +571,7 @@ let
         val commonApply' = commonApply vlInter
                                        vlEmpty
                                        callback
-                                       zero
+                                       empty
       in
         commonApply' ( lalpha, ralpha )
       end
@@ -542,6 +597,7 @@ let
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      vlUnion
+                                     vlEq
                                      vlLt
 
       val alpha = squareUnion' ( diffPart @ commonPart )
@@ -559,6 +615,7 @@ in
 
   | ( Node{variable=lvr,alpha=la}, Node{variable=rvr,alpha=ra} ) =>
     nodeDifference lvr rvr la ra
+                   (op =)
                    Values.storedUnion Values.storedIntersection
                    Values.storedDifference
                    Values.storedEmpty Values.storedLt
@@ -566,10 +623,11 @@ in
 
   | ( HNode{variable=lvr,alpha=la}, HNode{variable=rvr,alpha=ra} ) =>
     nodeDifference lvr rvr la ra
+                   eq
                    (unionCallback cacheLookup)
                    (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
-                   (fn x => x = zero) lt
+                   empty lt
                    hierNodeAlpha
 
   | ( Node{...}, _ ) => raise IncompatibleSDD
@@ -589,24 +647,38 @@ fun apply (Union( xs, cacheLookup))  = union        cacheLookup xs
 fun hash x =
 let
   fun hashOperands( h0, xs ) =
-    foldl (fn(x,h) => H.hashCombine( Definition.hash(!x), h)) h0 xs
+    foldl (fn(x,h) => H.hashCombine( Definition.hash x, h)) h0 xs
 in
   case x of
     Union(xs,_)  => hashOperands( H.const 15411567, xs)
   | Inter(xs,_ ) => hashOperands( H.const 78995947, xs)
   | Diff(l,r,_)  => H.hashCombine( H.const 94169137
-                                 , H.hashCombine( Definition.hash(!l)
-                                                , Definition.hash(!r) ) )
+                                 , H.hashCombine( Definition.hash l
+                                                , Definition.hash r ) )
 end
 
 (*--------------------------------------------------------------------------*)
+(* We need an alias for the equality of SDDs as the next eq will mask it... *)
+val SDDeq = eq
+
 (* Compare two SDD operations *)
 fun eq (x,y) =
+let
+  fun helper [] [] = true
+  |   helper [] _  = false
+  |   helper _  [] = false
+  |   helper (x::xs) (y::ys) =
+    if SDDeq( x, y ) then
+      helper xs ys
+    else
+      false
+in
   case (x,y) of
-    ( Union(xs,_), Union(ys,_) )     => xs = ys
-  | ( Inter(xs,_), Inter(ys,_) )     => xs = ys
-  | ( Diff(lx,ly,_), Diff(rx,ry,_) ) => lx = rx andalso ly = ry
+    ( Union(xs,_), Union(ys,_) )     => helper xs ys
+  | ( Inter(xs,_), Inter(ys,_) )     => helper xs ys
+  | ( Diff(lx,ly,_), Diff(rx,ry,_) ) => SDDeq(lx,rx) andalso SDDeq(ly,ry)
   | ( _, _ )                         => false
+end
 
 (*--------------------------------------------------------------------------*)
 end (* end struct SDDOperations *)
@@ -626,7 +698,7 @@ val cacheLookup = SDDOpCache.lookup
 (* Warning! Duplicate with SDD.SDDOperations.unionCallback!
    Operands should be sorted by caller. *)
 fun union xs =
-  case List.filter (fn x => x <> zero ) xs of
+  case List.filter (not o empty) xs of
     []  => zero (* No need to cache *)
   | [x] => x    (* No need to cache *)
   | xs' => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
@@ -641,11 +713,11 @@ fun intersection []  = zero
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
 fun difference (x,y) =
- if x = y then          (* No need to cache *)
+ if eq( x, y ) then          (* No need to cache *)
    zero
- else if x = zero then  (* No need to cache *)
+ else if eq( x, zero ) then  (* No need to cache *)
    zero
- else if y = zero then  (* No need to cache *)
+ else if eq( y, zero ) then  (* No need to cache *)
    x
  else
    SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
@@ -660,10 +732,10 @@ fun nodeAlpha ( _ , []    ) = zero
     (Values _, _) =>
     let
       val squareUnion' = squareUnion uid union
-                                     Values.storedUnion Values.storedLt
+                                     Values.storedUnion (op =) Values.storedLt
       val alpha' =
         List.mapPartial (fn ( Values v, succ ) =>
-                          if Values.empty v orelse succ = zero then
+                          if Values.empty v orelse empty succ then
                             NONE
                           else
                             SOME ( Values.mkStorable v, [succ] )
@@ -676,10 +748,10 @@ fun nodeAlpha ( _ , []    ) = zero
     end
   | (Nested _, _) =>
     let
-      val squareUnion' = squareUnion uid union union lt
+      val squareUnion' = squareUnion uid union union eq lt
       val alpha' =
         List.mapPartial (fn ( Nested n, succ ) =>
-                          if n = zero orelse succ = zero then
+                          if empty n orelse empty succ then
                             NONE
                           else
                             SOME ( n, [succ] )
@@ -693,7 +765,7 @@ fun nodeAlpha ( _ , []    ) = zero
 
 (*--------------------------------------------------------------------------*)
 (* Return the variable of an SDD. Needed by HomFun*)
-fun variable (ref (iSDD(x,_,_))) =
+fun variable (iSDD(x,_,_)) =
   case x of
     Node{variable=var,...}  => var
   | HNode{variable=var,...} => var
@@ -708,7 +780,7 @@ fun nested x = case x of Values _ => raise IsNotValues
                        | Nested s => s
 
 (*--------------------------------------------------------------------------*)
-fun alpha (ref (iSDD(sdd,_,_))) =
+fun alpha (iSDD(sdd,_,_)) =
 let
   fun alphaHelper a f =
       Vector.foldr
@@ -723,18 +795,14 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-(* Return the hash value of an SDD. Needed by HomFun *)
-val hash = Definition.hash o !
-
-(*--------------------------------------------------------------------------*)
 (* Return the hash value of a valuation. Needed by HomFun *)
-fun hashValuation (Nested(ref n)) = Definition.hash n
-|   hashValuation (Values(v))     = Values.hash v
+fun hashValuation (Nested n ) = Definition.hash n
+|   hashValuation (Values v ) = Values.hash v
 
 (*--------------------------------------------------------------------------*)
 (* Compare two valuations. Needed by HomFun *)
 fun eqValuation (x,y) =
-  case (x,y) of ( Nested nx, Nested ny ) => nx = ny
+  case (x,y) of ( Nested nx, Nested ny ) => eq( nx, ny )
               | ( Values vx, Values vy ) => Values.eq( vx, vy )
               | ( _ , _ )                => false
 
@@ -759,7 +827,7 @@ let
 
   fun visitorBase zero one node s =
   let
-    val ref(iSDD(x,_,uid)) = s
+    val iSDD(x,_,uid) = s
   in
     case x of
       Zero                      => zero ()
@@ -776,7 +844,7 @@ in
     | Cached =>
       let
         val cache : (( SDD, 'a ) HT.hash_table)
-            = ( HT.mkTable( fn x => hash x , op = )
+            = ( HT.mkTable( fn x => hash x , eq )
                           ( 10000, DoNotPanic ) )
 
         fun visitorCache cache zero one node s =
@@ -798,7 +866,7 @@ in
     | Once (neutral:'a) =>
       let
         val cache : (( SDD, unit ) HT.hash_table)
-            = ( HT.mkTable( fn x => hash x , op = )
+            = ( HT.mkTable( fn x => hash x , eq )
                           ( 10000, DoNotPanic ) )
 
         fun visitorOnce cache zero one node s =

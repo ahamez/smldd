@@ -1,4 +1,4 @@
-fun unionFlatDiscreteSDD vlToList vlFromList vlLt valueLt uid unionSDD xs =
+fun unionFlatDiscreteSDD vlToList vlFromList vlLt valueLt eq uid unionSDD xs =
 let
   
   fun insertValue [] ( y , ysucc ) = [ (y, [ysucc]) ]
@@ -7,7 +7,7 @@ let
 
       fun insertSucc acc [] x = x::acc
       |   insertSucc acc (L as (l::ls)) x =
-        if x = l then
+        if eq( x, l ) then
           L @ acc
         else if uid x < uid l then
           x::(L@acc)

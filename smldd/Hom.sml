@@ -162,7 +162,7 @@ structure Definition (* : DATA *) = struct
     | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
                                       andalso h=i
                                       andalso SDD.eqValuation(s,t)
-    | ( Const s, Const t )         => s = t
+    | ( Const s, Const t )         => SDD.eq( s, t )
     | ( Union xs, Union ys )       => xs = ys
     | ( Inter xs, Inter ys )       => xs = ys
     | ( Comp(a,b), Comp(c,d) )     => a = c andalso b = d
@@ -686,7 +686,7 @@ datatype operation = Op of hom * SDD * (operation -> result)
 
 (*--------------------------------------------------------------------------*)
 fun eq ( Op(xh,xsdd,_), Op(yh,ysdd,_) ) =
-  xh = yh andalso xsdd = ysdd
+  xh = yh andalso SDD.eq( xsdd, ysdd )
 
 (*--------------------------------------------------------------------------*)
 fun hash (Op(h,s,_)) =
@@ -713,7 +713,7 @@ fun skipVariable var (ref (Hom(h,_,_))) =
 (*--------------------------------------------------------------------------*)
 (* Evaluate an homomorphism on an SDD. Warning! Duplicate with Hom.eval! *)
 fun evalCallback lookup h sdd =
-  if sdd = SDD.zero then
+  if SDD.empty sdd then
     SDD.zero
   else
     case let val ref(Hom(x,_,_)) = h in x end of
@@ -886,7 +886,7 @@ fun intersection lookup hs sdd =
 
 (*--------------------------------------------------------------------------*)
 fun satUnion lookup F G L sdd =
-  if sdd = SDD.one then
+  if SDD.eq( sdd, SDD.one ) then
     raise DoNotPanic
   else
   let
@@ -900,7 +900,7 @@ fun satUnion lookup F G L sdd =
 
 (*--------------------------------------------------------------------------*)
 fun satIntersection lookup F G L sdd =
-  if sdd = SDD.one then
+  if SDD.eq( sdd, SDD.one ) then
     raise DoNotPanic
   else
   let
@@ -922,7 +922,7 @@ fun commutativeComposition lookup hs sdd =
 
 (*--------------------------------------------------------------------------*)
 fun satCommutativeComposition lookup F G sdd =
-  if sdd = SDD.one then
+  if SDD.eq( sdd, SDD.one ) then
     (* Standard composition *)
     foldl (fn (h,acc) => evalCallback lookup h acc) SDD.one (F::G)
   else
@@ -940,7 +940,7 @@ fun fixpointHelper f sdd =
 let
   val res = f sdd
 in
-  if res = sdd then
+  if SDD.eq( res, sdd ) then
     res
   else
     fixpointHelper f res
@@ -968,7 +968,7 @@ end (* local fixpoint stuff *)
 
 (*--------------------------------------------------------------------------*)
 fun nested lookup h var sdd =
-  if sdd = SDD.one then
+  if SDD.eq( sdd, SDD.one ) then
     SDD.one
 
   (* skipVariable made nested propagated to the correct variable *)
@@ -1000,7 +1000,7 @@ fun nested lookup h var sdd =
 
 (*--------------------------------------------------------------------------*)
 fun function f var sdd =
-  if sdd = SDD.one then
+  if SDD.eq( sdd, SDD.one ) then
     SDD.one
   else if funcSelector f then
     SDD.nodeAlpha( var
@@ -1100,7 +1100,7 @@ val cacheLookup = cache.lookup
    Warning! Duplicate logic with Evaluation.evalCallback!
 *)
 fun eval h sdd =
-  if sdd = SDD.zero then
+  if SDD.eq( sdd, SDD.zero ) then
     SDD.zero
   else
     case let val ref(Hom(x,_,_)) = h in x end of

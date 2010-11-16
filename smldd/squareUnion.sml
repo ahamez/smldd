@@ -6,7 +6,7 @@
      -> ( values' * SDD ) Vector.vector
 
 *)
-fun squareUnion uid SDDUnion valUnion valLt alpha =
+fun squareUnion uid SDDUnion valUnion valEq valLt alpha =
 let
 
   fun mergeSuccs ( ( vl , succs  ) , acc ) =
@@ -21,7 +21,7 @@ let
       (* Insert sort of valuations *)
       fun insertHelper  [] x = [x]
       |   insertHelper (L as (l::ls)) x =
-      if x = l then
+      if valEq( x, l ) then
         raise DoNotPanic
       else if valLt(x,l) then
         x::L
@@ -49,7 +49,7 @@ let
 
     fun insert [] x = [x]
     |   insert (XS as ((X as (xvl,xsucc))::xs)) (Y as (vl,succ)) =
-      if vl = xvl then
+      if valEq( vl, xvl ) then
         raise DoNotPanic
       else if valLt( vl, xvl ) then
         Y::XS

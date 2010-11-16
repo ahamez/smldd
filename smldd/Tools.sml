@@ -292,7 +292,7 @@ let
 
   (* Associate an SDD to a list of all hierarchies it belongs to *)
   val nodes : ( ( SDD , int list ref ) HT.hash_table )
-        = (HT.mkTable( SDD.hash , op = ) ( 10000, Fail "Impossible" ))
+        = (HT.mkTable( SDD.hash , SDD.eq ) ( 10000, Fail "Impossible" ))
 
   val maxDepth = ref 0
 
@@ -410,9 +410,9 @@ let
   val l = ["digraph sdd {\n"]
           @
           (
-          if x = SDD.one then
+          if SDD.eq( x, SDD.one ) then
             [terminal 1 0]
-          else if x = SDD.zero then
+          else if SDD.empty x then
             [terminal 0 0]
           else
               (dotHelper x 0)
