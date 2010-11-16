@@ -9,9 +9,9 @@ structure H  = Hash
 (* Used by the unicity table *)
 structure Definition (* : DATA *) = struct
 
-  type t = ( SV.t * H.t * int )
-  fun eq   ((x,_,_),(y,_,_)) = SV.eq(x,y)
-  fun hash (x,_,_) = SV.hash x
+  type t = ( SV.t * int )
+  fun eq   ((x,_),(y,_)) = SV.eq(x,y)
+  fun hash (x,_) = SV.hash x
 
   fun configure UnicityTableConfiguration.Name =
     UnicityTableConfiguration.NameRes "DiscreteIntValues"
@@ -32,43 +32,43 @@ type value  = int
 structure UT = UnicityTableFunID ( structure Data = Definition )
 
 (*--------------------------------------------------------------------------*)
-fun uid (ref(_,_,x)) = x
+fun uid (ref(_,x)) = x
 
 (*--------------------------------------------------------------------------*)
 (* Needed by the unicity table as a factory to create new values *)
-fun mkValues v hsh uid = ( v, hsh, uid )
+fun mkValues v uid = ( v, uid )
 
 (*--------------------------------------------------------------------------*)
-fun mkStorable v        = UT.unify (mkValues v (SV.hash v))
+fun mkStorable v = UT.unify (mkValues v)
 
 (*--------------------------------------------------------------------------*)
-fun mkUsable (ref(v,_,_)) = v
+fun mkUsable (ref(v,_)) = v
 
 (*--------------------------------------------------------------------------*)
-fun storedToList (ref(v,_,_)) = Util.IntVectorToList v
+fun storedToList (ref(v,_)) = Util.IntVectorToList v
 
 (*--------------------------------------------------------------------------*)
 fun storedFromList xs =
 let
   val v = (SV.fromList xs)
 in
-  UT.unify ( mkValues v (SV.hash v) )
+  UT.unify ( mkValues v)
 end
 
 (*--------------------------------------------------------------------------*)
 val valueLt  = (op <)
 
 (*--------------------------------------------------------------------------*)
-fun storedLt (x,y)               = uid x < uid y
+fun storedLt (x,y) = uid x < uid y
 
 (*--------------------------------------------------------------------------*)
-fun storedHash (ref(x,_,_))      = SV.hash x
+fun storedHash (ref(_,uid)) = H.hashInt uid
 
 (*--------------------------------------------------------------------------*)
-fun storedEmpty (ref(x,_,_))     = SV.empty x
+fun storedEmpty (ref(x,_)) = SV.empty x
 
 (*--------------------------------------------------------------------------*)
-fun storedToString (ref(x,_,_))  = SV.toString x
+fun storedToString (ref(x,_)) = SV.toString x
 
 (*--------------------------------------------------------------------------*)
 val toString = SV.toString
@@ -115,14 +115,14 @@ fun eq (l,r) =
 fun hash x =
   let
     fun hashOperands( h0, xs ) =
-      foldl (fn ( ref(_,hv,_), h ) => H.hashCombine( hv, h)) h0 xs
+      foldl (fn ( ref(_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
   in
     case x of
       Union(xs) => hashOperands( H.const 15411567, xs)
     | Inter(xs) => hashOperands( H.const 78995947, xs)
-    | Diff(ref(_,hl,_),ref(_,hr,_)) =>
+    | Diff(ref(_,luid),ref(_,ruid)) =>
         H.hashCombine( H.const 94165961
-                     , H.hashCombine( hl, hr )
+                     , H.hashCombine( H.hashInt luid, H.hashInt ruid )
                      )
   end
 
@@ -132,30 +132,28 @@ fun apply operation =
   case operation of
 
     Union []     => raise DoNotPanic
-  | Union(ref(x,_,_)::xs) =>
+  | Union(ref(x,_)::xs) =>
       let
-        val v   = foldl (fn (ref(v,_,_),res) => SV.union(v,res)) x xs
-        val hsh = SV.hash v
+        val v   = foldl (fn (ref(v,_),res) => SV.union(v,res)) x xs
       in
-        UT.unify (mkValues v hsh)
+        UT.unify (mkValues v)
       end
 
   | Inter []     => raise DoNotPanic
-  | Inter(ref(x,_,_)::xs) =>
+  | Inter(ref(x,_)::xs) =>
       let
-        val v = foldl (fn (ref(v,_,_),res) => SV.intersection(v,res))
+        val v = foldl (fn (ref(v,_),res) => SV.intersection(v,res))
                       x xs
-        val hsh = SV.hash v
       in
-        UT.unify (mkValues v hsh)
+        UT.unify (mkValues v)
       end
 
-  | Diff( ref(l,_,_), ref(r,_,_) ) =>
+  | Diff( ref(l,_), ref(r,_) ) =>
       let
         val v   = SV.difference( l, r )
         val hsh = SV.hash v
       in
-        UT.unify (mkValues v hsh)
+        UT.unify (mkValues v)
       end
 
 (*--------------------------------------------------------------------------*)
