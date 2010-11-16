@@ -752,10 +752,6 @@ fun valuationToString (Nested n) = toString n
 |   valuationToString (Values v) = Values.toString v
 
 (*--------------------------------------------------------------------------*)
-(* Return the hash value of an SDD. Needed by HomFun *)
-val hash = Definition.hash o !
-
-(*--------------------------------------------------------------------------*)
 type 'a visitor =    (unit -> 'a)
                   -> (unit -> 'a)
                   -> (int -> variable -> (valuation * SDD) list -> 'a)
