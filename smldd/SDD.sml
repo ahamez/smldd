@@ -270,6 +270,9 @@ fun node ( vr , vl , next ) =
 val fromList = foldr (fn ((vr,vl),acc) => node( vr, vl, acc)) one
 
 (*--------------------------------------------------------------------------*)
+val hash = H.hashInt o uid
+
+(*--------------------------------------------------------------------------*)
 local (* SDD manipulation *)
 
 (*--------------------------------------------------------------------*)
@@ -600,14 +603,15 @@ fun apply (Union( xs, cacheLookup))  = union        cacheLookup xs
 fun hash x =
 let
   fun hashOperands( h0, xs ) =
-    foldl (fn(x,h) => H.hashCombine( Definition.hash(!x), h)) h0 xs
+    foldl (fn(ref(iSDD(_,uid)),h) => H.hashCombine( H.hashInt uid, h)) h0 xs
 in
   case x of
     Union(xs,_)  => hashOperands( H.const 15411567, xs)
   | Inter(xs,_ ) => hashOperands( H.const 78995947, xs)
-  | Diff(l,r,_)  => H.hashCombine( H.const 94169137
-                                 , H.hashCombine( Definition.hash(!l)
-                                                , Definition.hash(!r) ) )
+  | Diff(ref(iSDD(_,luid)),ref(iSDD(_,ruid)),_) =>
+      H.hashCombine( H.const 94169137
+                   , H.hashCombine( H.hashInt luid
+                                  , H.hashInt ruid ) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -734,13 +738,9 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-(* Return the hash value of an SDD. Needed by HomFun *)
-val hash = Definition.hash o !
-
-(*--------------------------------------------------------------------------*)
 (* Return the hash value of a valuation. Needed by HomFun *)
-fun hashValuation (Nested(ref n)) = Definition.hash n
-|   hashValuation (Values(v))     = Values.hash v
+fun hashValuation (Nested(ref (iSDD(_,uid)))) = H.hashInt uid
+|   hashValuation (Values(v))                 = Values.hash v
 
 (*--------------------------------------------------------------------------*)
 (* Compare two valuations. Needed by HomFun *)
@@ -753,6 +753,10 @@ fun eqValuation (x,y) =
 (* Export a valuation to a string. Needed by HomFun *)
 fun valuationToString (Nested n) = toString n
 |   valuationToString (Values v) = Values.toString v
+
+(*--------------------------------------------------------------------------*)
+(* Return the hash value of an SDD. Needed by HomFun *)
+val hash = Definition.hash o !
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor =    (unit -> 'a)
@@ -824,10 +828,6 @@ in
         visitorOnce cache
       end
 end
-
-(*--------------------------------------------------------------------------*)
-val hash = H.hashInt o uid
-
 
 (*--------------------------------------------------------------------------*)
 fun stats () = SDDOpCache.stats()
