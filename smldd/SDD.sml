@@ -99,9 +99,6 @@ structure Definition (* : DATA *) = struct
 
       | ( _ , _ ) => false
 
-  (* The hash value of a node is stored with it, because we can't
-     use the address of the reference (like in C). Thus, it has to
-     be computed by functions who construct SDD nodes. *)
   fun hash (iSDD(sdd,_)) =
     case sdd of
       Zero => H.const 0
