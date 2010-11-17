@@ -37,8 +37,6 @@ functor CacheFun ( structure Operation : OPERATION )
 
   type wresult = result W.t
 
-  exception entry_not_found
-
   val hits = ref 0
   val miss = ref 0
 
