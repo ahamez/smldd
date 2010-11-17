@@ -52,7 +52,8 @@ check: ./test/main
 
 EXCLUDE="Assert Posix StreamIOExtra IEEEReal HashTable Date Primitive Real\
         Net OS Timer Word ImperativeIO Sequence Assert MLton Array \
-        String Substring Socket TextUITestRunner Test"
+        String Substring Socket TextUITestRunner Test \
+        'Util.shuffle.<case NONE>'"
 FILTER=$(shell for i in "$(EXCLUDE)" ; do echo ^$$i\|\\c ; done ; echo "^ ")
 
 EXCLUDE2="toString stats CacheFun.lookup.cleanup"
