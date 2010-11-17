@@ -7,8 +7,6 @@ in
 
   $(MLTON_ROOT)/basis/basis.mlb
   $(MLTON_ROOT)/basis/mlton.mlb
-  $(SML_LIB)/smlnj-lib/smlnj-lib.mlb
-  $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
 
   ./Util.sml
   ./exceptions.sml
@@ -16,6 +14,12 @@ in
 
   ./storage/signatures/DATA.sml
   ./storage/signatures/OPERATION.sml
+  ./storage/HashTable/hash-key-sig.sml
+  ./storage/HashTable/hash-table-rep.sml
+  ./storage/HashTable/mono-hash-table-sig.sml
+  ./storage/HashTable/hash-table-fn.sml
+  ./storage/HashTable/hash-table-sig.sml
+  ./storage/HashTable/hash-table.sml
   ./storage/Cache.sml
   ./storage/UnicityTable.sml
 
