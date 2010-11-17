@@ -1,8 +1,9 @@
 ML=mlton
 
-TESTFLAGS= -const 'MLton.detectOverflow true'\
-           -const 'Exn.keepHistory true'\
-           -const 'MLton.safe true'
+TESTFLAGS=
+
+PROFFLAGS=-profile count\
+          -profile-branch true\
 
 SOURCES=./smldd/sources.mlb                                  \
         ./smldd/Util.sml                                     \
@@ -31,13 +32,14 @@ SOURCES=./smldd/sources.mlb                                  \
         ./smldd/Tools.sml                                    \
         ./smldd/configurations.sml
 
-TESTSOURCES=./test/main.mlb      \
-            ./test/TestDot.sml   \
-            ./test/TestHom.sml   \
-            ./test/TestOrder.sml \
-            ./test/TestSDD.sml   \
-            ./test/TestUtil.sml  \
-            ./test/TestTools.sml \
+TESTSOURCES=./test/main.mlb               \
+            ./test/testConfigurations.sml \
+            ./test/TestDot.sml            \
+            ./test/TestHom.sml            \
+            ./test/TestOrder.sml          \
+            ./test/TestSDD.sml            \
+            ./test/TestUtil.sml           \
+            ./test/TestTools.sml          \
             ./test/main.sml
 
 all:
@@ -48,8 +50,16 @@ check: ./test/main
 ./test/main: $(TESTSOURCES) $(SOURCES)
 	$(ML) $(TESTFLAGS) ./test/main.mlb
 
+prof: ./test/main-prof
+	@(mkdir -p ./test/run && cd ./test/run && ../main-prof)
+	mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out
+
+./test/main-prof: $(TESTSOURCES) $(SOURCES)
+	$(ML) $(TESTFLAGS) $(PROFFLAGS) -output ./test/main-prof ./test/main.mlb
+
 cleanTests:
 	rm -f ./test/main
+	rm -f ./test/main-prof
 	rm -rf ./test/run
 
 clean: cleanTests
