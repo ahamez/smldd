@@ -101,7 +101,7 @@ fun hash vec =
   let
     fun helper (x1,x2) = Hash.hashCombine ( Hash.hashInt x1, x2 )
   in
-    IntVector.foldl helper (Hash.const 42) vec
+    IntVector.foldl helper (Hash.hashInt 42) vec
   end
 
 (*--------------------------------------------------------------------------*)

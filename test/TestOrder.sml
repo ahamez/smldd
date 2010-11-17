@@ -19,7 +19,7 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
   |   f3 Hom.Print =
     Hom.PrintRes "f3"
   |   f3 Hom.Hash =
-    Hom.HashRes (Hash.const 987)
+    Hom.HashRes (Hash.hashInt 987)
 
   fun testFlatOrder00 () =
   let

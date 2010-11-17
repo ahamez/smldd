@@ -24,7 +24,7 @@ struct
   |   pre _ Selector = SelectorRes true
   |   pre c Print    = PrintRes ("Pre" ^ (Int.toString c))
   |   pre c Hash =
-    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.const 4956317) )
+    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
 
   (* ---------------------------------------------------------------- *)
   fun preTest c (Eval values) =
@@ -32,14 +32,14 @@ struct
   |   preTest c Print = PrintRes ("Pre" ^ (Int.toString c))
   |   preTest _ Selector = SelectorRes true
   |   preTest c Hash =
-    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.const 4956317) )
+    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
 
   (* ---------------------------------------------------------------- *)
   fun post c (Eval values) =
     EvalRes (SV.map (fn x => x + c) values)
   |   post c Print = PrintRes ("Post" ^ (Int.toString c))
   |   post c Hash =
-    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.const 1481673) )
+    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 1481673) )
 
   (* ---------------------------------------------------------------- *)
   fun f0 c (Eval values) =
@@ -47,7 +47,7 @@ struct
   |   f0 _ Print =
     PrintRes "f0"
   |   f0 _ Hash =
-    HashRes (Hash.const 123)
+    HashRes (Hash.hashInt 123)
 
   (* ---------------------------------------------------------------- *)
   fun f1 (Eval values) =
@@ -57,7 +57,7 @@ struct
   |   f1 Print =
     PrintRes "f1"
   |   f1 Hash =
-    HashRes (Hash.const 456)
+    HashRes (Hash.hashInt 456)
 
   (* ---------------------------------------------------------------- *)
   fun f2 (Eval _) =
@@ -65,7 +65,7 @@ struct
   |   f2 Print =
     PrintRes "f2"
   |   f2 Hash =
-    HashRes (Hash.const 789)
+    HashRes (Hash.hashInt 789)
 
   (* ---------------------------------------------------------------- *)
   fun f3 (Eval _) =
@@ -73,7 +73,7 @@ struct
   |   f3 Print =
     PrintRes "f3"
   |   f3 Hash =
-    HashRes (Hash.const 987)
+    HashRes (Hash.hashInt 987)
 
   (* ---------------------------------------------------------------- *)
   fun f4 (Eval values) =
@@ -81,7 +81,7 @@ struct
   |   f4 Print =
     PrintRes "f4"
   |   f4 Hash =
-    HashRes (Hash.const 654)
+    HashRes (Hash.hashInt 654)
 
   (* ---------------------------------------------------------------- *)
   fun f5 (Eval values) =
@@ -89,7 +89,7 @@ struct
   |   f5 Print =
     PrintRes "f5"
   |   f5 Hash =
-    HashRes (Hash.const 321)
+    HashRes (Hash.hashInt 321)
 
   (* ---------------------------------------------------------------- *)
   (* ---------------------------------------------------------------- *)
