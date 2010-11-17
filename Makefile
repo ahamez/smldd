@@ -53,10 +53,11 @@ check: ./test/main
 EXCLUDE="Assert Posix StreamIOExtra IEEEReal HashTable Date Primitive Real\
         Net OS Timer Word ImperativeIO Sequence Assert MLton Array \
         String Substring Socket TextUITestRunner Test \
-        'Util.shuffle.<case NONE>'"
+        'Util.shuffle.<case NONE>' CacheFun UnicityTableFunID\
+        'DiscreteIntValues.Operations.apply.<case Union \[\]>'"
 FILTER=$(shell for i in "$(EXCLUDE)" ; do echo ^$$i\|\\c ; done ; echo "^ ")
 
-EXCLUDE2="toString stats CacheFun.lookup.cleanup"
+EXCLUDE2="toString ToString stats"
 FILTER2=$(shell for i in "$(EXCLUDE2)" ; do echo $$i\|\\c ; done ; echo "^ ")
 
 prof: ./test/main-prof
