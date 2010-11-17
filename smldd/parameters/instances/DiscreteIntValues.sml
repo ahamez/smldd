@@ -148,13 +148,7 @@ fun apply operation =
         UT.unify (mkValues v)
       end
 
-  | Diff( ref(l,_), ref(r,_) ) =>
-      let
-        val v   = SV.difference( l, r )
-        val hsh = SV.hash v
-      in
-        UT.unify (mkValues v)
-      end
+  | Diff( ref(l,_), ref(r,_) ) => UT.unify (mkValues (SV.difference( l, r )))
 
 (*--------------------------------------------------------------------------*)
 end (* end structure Operations *)
