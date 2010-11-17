@@ -8,6 +8,7 @@ in
     ./SMLUnit/SMLUnit.mlb
   in
     ../smldd/sources.mlb
+    ./testConfigurations.sml
     ./TestSDD.sml
     ./TestHom.sml
     ./TestDot.sml
