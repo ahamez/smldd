@@ -50,9 +50,16 @@ check: ./test/main
 ./test/main: $(TESTSOURCES) $(SOURCES)
 	$(ML) $(TESTFLAGS) ./test/main.mlb
 
+EXCLUDE="Assert Posix StreamIOExtra IEEEReal HashTable Date Primitive Real\
+        Net OS Timer Word ImperativeIO Sequence Assert MLton Array \
+        String Substring Socket TextUITestRunner"
+
+FILTER=$(shell for i in "$(EXCLUDE)" ; do echo ^$$i\|\\c ; done ; echo "^ ")
+
 prof: ./test/main-prof
 	@(mkdir -p ./test/run && cd ./test/run && ../main-prof)
-	mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out
+	mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out \
+	| grep '(0)' | grep -v -E -e '$(FILTER)'
 
 ./test/main-prof: $(TESTSOURCES) $(SOURCES)
 	$(ML) $(TESTFLAGS) $(PROFFLAGS) -output ./test/main-prof ./test/main.mlb
