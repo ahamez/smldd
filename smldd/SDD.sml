@@ -289,8 +289,8 @@ datatype operation = Union of ( SDD list * (operation -> result)  )
 
 (*--------------------------------------------------------------------------*)
 (* Check compatibility of operands *)
-fun checkCompatibilty []     = raise DoNotPanic
-|   checkCompatibilty(x::xs) =
+fun checkCompatibility []     = raise DoNotPanic
+|   checkCompatibility(x::xs) =
 
   foldl (fn ( ref (iSDD(sx,_)), y as (ref (iSDD(sy,_)))) =>
         case (sx,sy) of
@@ -371,7 +371,7 @@ fun differenceCallback lookup ( x, y ) =
 (*--------------------------------------------------------------------------*)
 fun union cacheLookup xs =
 let
-  val _ = checkCompatibilty xs
+  val _ = checkCompatibility xs
 in
   case let val ref(iSDD(x,_)) = hd xs in x end of
 
@@ -444,14 +444,14 @@ fun intersection cacheLookup xs =
   case let val ref(iSDD(x,_)) = hd xs in x end of
 
   (* All operands are |1| *)
-    One        => checkCompatibilty xs
+    One        => checkCompatibility xs
 
   (* There shouldn't be any |0| *)
   | Zero       => raise DoNotPanic
 
   | Node{variable=var,...}  =>
     let
-      val _ = checkCompatibilty xs
+      val _ = checkCompatibility xs
 
       val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                     []     => raise DoNotPanic
@@ -473,7 +473,7 @@ fun intersection cacheLookup xs =
 
   | HNode{variable=var,...}  =>
     let
-      val _ = checkCompatibilty xs
+      val _ = checkCompatibility xs
 
       val ( initial, operands ) = case map alphaNodeToList xs of
                                     []     => raise DoNotPanic
