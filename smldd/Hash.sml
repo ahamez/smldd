@@ -18,9 +18,7 @@ struct
     h2
   end
 
-  val const   = hashWord o Word32.fromInt
   val hashInt = hashWord o Word32.fromInt
-
 
   (* Taken from boost::hash_combine *)
   fun hashCombine ( seed , v ) =

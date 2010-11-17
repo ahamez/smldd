@@ -190,28 +190,28 @@ structure Definition (* : DATA *) = struct
 
   fun hash (Hom(h,_)) =
   let
-    fun hashOption NONE                      = H.const 183931413
+    fun hashOption NONE                      = H.hashInt 183931413
     |   hashOption (SOME (ref (Hom(_,uid)))) = H.hashInt uid
   in
     case h of
-      Id          => H.const 1
+      Id          => H.hashInt 1
 
     | Cons(v,s,ref(Hom(_,uid))) =>
       H.hashCombine( Variable.hash v
                    , H.hashCombine( SDD.hashValuation s, H.hashInt uid ) )
 
-    | Const s     => H.hashCombine( SDD.hash s, H.const 149199441 )
+    | Const s     => H.hashCombine( SDD.hash s, H.hashInt 149199441 )
 
     | Union hs    => foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                            )
-                           (H.const 16564717)
+                           (H.hashInt 16564717)
                            hs
 
     | Inter hs    => foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                            )
-                           (H.const 129292632)
+                           (H.hashInt 129292632)
                            hs
 
     | Comp( ref(Hom(_,fuid)), ref(Hom(_,guid)) ) =>
@@ -222,16 +222,16 @@ structure Definition (* : DATA *) = struct
     | ComComp hs  => foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                            )
-                           (H.const 795921317)
+                           (H.hashInt 795921317)
                            hs
 
     | Fixpoint (ref(Hom(_,uid)))  =>
-        H.hashCombine( H.hashInt uid, H.const 5959527)
+        H.hashCombine( H.hashInt uid, H.hashInt 5959527)
 
     | Nested(ref(Hom(_,uid)),v) =>
         H.hashCombine(H.hashInt uid, Variable.hash v )
 
-    | Func(f,v)   => H.hashCombine( H.const 7837892
+    | Func(f,v)   => H.hashCombine( H.hashInt 7837892
                                   , H.hashCombine( Variable.hash v
                                                  , funcHash f )
                                   )
@@ -240,10 +240,10 @@ structure Definition (* : DATA *) = struct
       val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
-                       (H.const 59489417)
+                       (H.hashInt 59489417)
                        G
     in
-      H.hashCombine( H.const 48511341
+      H.hashCombine( H.hashInt 48511341
               , H.hashCombine( hashOption F
                  , H.hashCombine( hshG,
                      H.hashCombine(hashOption L, Variable.hash v ))))
@@ -254,10 +254,10 @@ structure Definition (* : DATA *) = struct
       val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
-                       (H.const 565165613)
+                       (H.hashInt 565165613)
                        G
     in
-      H.hashCombine( H.const 51454531
+      H.hashCombine( H.hashInt 51454531
               , H.hashCombine( hashOption F
                  , H.hashCombine( hshG,
                      H.hashCombine(hashOption L, Variable.hash v ))))
@@ -268,10 +268,10 @@ structure Definition (* : DATA *) = struct
       val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
-                       (H.const 19592927)
+                       (H.hashInt 19592927)
                        G
     in
-      H.hashCombine( H.const 99495913
+      H.hashCombine( H.hashInt 99495913
                 , H.hashCombine( hashOption F
                   , H.hashCombine( hshG,
                       H.hashCombine(hashOption L, Variable.hash v ))))
@@ -282,10 +282,10 @@ structure Definition (* : DATA *) = struct
       val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
-                       (H.const 87284791)
+                       (H.hashInt 87284791)
                        G
     in
-      H.hashCombine( H.const 30918931
+      H.hashCombine( H.hashInt 30918931
                 , H.hashCombine( hash (!F)
                   , H.hashCombine( hshG, Variable.hash v )))
     end

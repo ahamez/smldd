@@ -118,10 +118,10 @@ fun hash x =
       foldl (fn ( ref(_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
   in
     case x of
-      Union(xs) => hashOperands( H.const 15411567, xs)
-    | Inter(xs) => hashOperands( H.const 78995947, xs)
+      Union(xs) => hashOperands( H.hashInt 15411567, xs)
+    | Inter(xs) => hashOperands( H.hashInt 78995947, xs)
     | Diff(ref(_,luid),ref(_,ruid)) =>
-        H.hashCombine( H.const 94165961
+        H.hashCombine( H.hashInt 94165961
                      , H.hashCombine( H.hashInt luid, H.hashInt ruid )
                      )
   end

@@ -101,8 +101,8 @@ structure Definition (* : DATA *) = struct
 
   fun hash (iSDD(sdd,_)) =
     case sdd of
-      Zero => H.const 0
-    | One  => H.const 1
+      Zero => H.hashInt 0
+    | One  => H.hashInt 1
     | Node{ variable=var, alpha=alpha } =>
     let
       val hsh =
@@ -113,7 +113,7 @@ structure Definition (* : DATA *) = struct
                                                    )
                                     )
                      )
-                     (H.const 9289317)
+                     (H.hashInt 9289317)
                      alpha
     in
       H.hashCombine( Variable.hash var, hsh)
@@ -132,7 +132,7 @@ structure Definition (* : DATA *) = struct
                                                    )
                                     )
                      )
-                     (H.const 3984921)
+                     (H.hashInt 3984921)
                      alpha
     in
       H.hashCombine( Variable.hash var, hsh)
@@ -603,10 +603,10 @@ let
     foldl (fn(ref(iSDD(_,uid)),h) => H.hashCombine( H.hashInt uid, h)) h0 xs
 in
   case x of
-    Union(xs,_)  => hashOperands( H.const 15411567, xs)
-  | Inter(xs,_ ) => hashOperands( H.const 78995947, xs)
+    Union(xs,_)  => hashOperands( H.hashInt 15411567, xs)
+  | Inter(xs,_ ) => hashOperands( H.hashInt 78995947, xs)
   | Diff(ref(iSDD(_,luid)),ref(iSDD(_,ruid)),_) =>
-      H.hashCombine( H.const 94169137
+      H.hashCombine( H.hashInt 94169137
                    , H.hashCombine( H.hashInt luid
                                   , H.hashInt ruid ) )
 end
