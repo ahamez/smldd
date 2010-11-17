@@ -92,6 +92,14 @@ struct
     HashRes (Hash.hashInt 321)
 
   (* ---------------------------------------------------------------- *)
+  fun f6 (Eval values) =
+    EvalRes (SV.map (fn x => x) values)
+  |   f6 Hash =
+    HashRes (Hash.hashInt 654)
+  |   f6 Selector =
+    SelectorRes true
+
+  (* ---------------------------------------------------------------- *)
   (* ---------------------------------------------------------------- *)
 
   (* ---------------------------------------------------------------- *)
@@ -274,6 +282,18 @@ struct
   in
     assertTrue( s2 = zero )
   end
+
+  (* ---------------------------------------------------------------- *)
+
+  fun testFunction11 () =
+  let
+    val x0 = node( 0, Nested one, one )
+    val h0 = mkFunction (ref f6) 0
+  in
+    ( eval h0 x0 ; fail "Must fail" )
+    handle x => assertEqualExceptionName x FunctionHomOnNested
+  end
+
 
   (* ---------------------------------------------------------------- *)
 
@@ -939,6 +959,7 @@ end
       , ("testFunction08"      , testFunction08      )
       , ("testFunction09"      , testFunction09      )
       , ("testFunction10"      , testFunction10      )
+      , ("testFunction11"      , testFunction11      )
       , ("testNested00"        , testNested00        )
       , ("testNested01"        , testNested01        )
       , ("testNested02"        , testNested02        )
