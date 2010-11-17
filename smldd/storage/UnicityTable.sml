@@ -143,7 +143,7 @@ functor UnicityTableFunID2 ( structure Data : DATA )
     | ( SOME L, SOME R) => Data.eq( L, R )
 
   (* The type of the unicity table for valuations*)
-  val values_table : ( wdata, wdata * int ) HT.hash_table
+  val values_table : ( wdata, int ) HT.hash_table
     = HT.mkTable ( hash, eq )
                 ( buckets, Fail "Can't happen" )
 
@@ -172,14 +172,14 @@ functor UnicityTableFunID2 ( structure Data : DATA )
       if HT.numItems values_table > !cleanup then
       (
         cleanup := !cleanup * factor;
-        HT.filter keep values_table
+        HT.filteri keep values_table
       )
       else
         ();
 
-      case HT.find values_table wvalues of
+      case HT.findi values_table wvalues of
         SOME (v,_) => ( unused := i::(!unused) ; valOf(W.get v))
-      | NONE       => ( HT.insert values_table ( wvalues, (wvalues,i) );
+      | NONE       => ( HT.insert values_table ( wvalues, i );
                         values
                       )
     end
