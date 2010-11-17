@@ -1,6 +1,6 @@
 local
   ./sources.mlb
-  ./configuration.sml
+  ./configurations.sml
 in
 
   signature VARIABLE
