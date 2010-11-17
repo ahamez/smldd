@@ -129,6 +129,16 @@ struct
     assertTrue( h0 = o0 )
   end
 
+  fun testHom02 () =
+  let
+    val rf0  = ref f3
+    val vars = []
+    val ord  = transform (MaxLeaves 3) (flatOrder vars)
+    val h0   = hom ord "c" (fn v => Hom.mkFunction rf0 v)
+  in
+    assertTrue( h0 = Hom.id )
+  end
+
   fun testId00 () =
   let
     val vars = ["a","b","c","d"]
@@ -267,6 +277,7 @@ struct
       , ("testAnonymise00"     , testAnonymise00   )
       , ("testHom00"           , testHom00         )
       , ("testHom01"           , testHom01         )
+      , ("testHom02"           , testHom02         )
       , ("testId00"            , testId00          )
       , ("testShuffle00"       , testShuffle00     )
       , ("testShuffle01"       , testShuffle01     )
