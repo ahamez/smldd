@@ -708,11 +708,11 @@ fun variable (ref (iSDD(x,_))) =
   | _                       => raise IsNotANode
 
 (*--------------------------------------------------------------------------*)
-fun values x = case x of Nested _ => raise IsNotNested
+fun values x = case x of Nested _ => raise IsNotValues
                        | Values v => v
 
 (*--------------------------------------------------------------------------*)
-fun nested x = case x of Values _ => raise IsNotValues
+fun nested x = case x of Values _ => raise IsNotNested
                        | Nested s => s
 
 (*--------------------------------------------------------------------------*)
