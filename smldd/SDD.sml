@@ -351,7 +351,10 @@ fun unionCallback lookup xs =
    Operands should be sorted by caller. *)
 fun intersectionCallback _      [] = zero
 |   intersectionCallback _     [x] = x
-|   intersectionCallback lookup xs = lookup(Inter( xs, lookup))
+|   intersectionCallback lookup xs =
+  case List.find (fn x => x = zero ) xs of
+    NONE   => lookup(Inter( xs, lookup))
+  | SOME _ => zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection! *)
@@ -438,16 +441,7 @@ end (* end fun union *)
 (*--------------------------------------------------------------------------*)
 (* N-ary intersection of SDDs *)
 fun intersection cacheLookup xs =
-let
-  val hasZero = case List.find (fn x => x = zero ) xs of
-                  NONE   => false
-                | SOME _ => true
-in
-  (* Intersection of anything with |0| is always |0| *)
-  if hasZero then
-    zero
-  else
-    case let val ref(iSDD(x,_)) = hd xs in x end of
+  case let val ref(iSDD(x,_)) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => checkCompatibilty xs
@@ -498,7 +492,8 @@ in
       hierNodeAlpha( var
                    , squareUnion' ( foldl commonApply' initial operands ) )
     end (* Hierachical node case *)
-end (* end fun intersection *)
+
+(* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
@@ -648,7 +643,10 @@ fun union xs =
    Operands should be sorted by caller. *)
 fun intersection []  = zero
 |   intersection [x] = x
-|   intersection xs  = SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
+|   intersection xs  =
+  case List.find (fn x => x = zero ) xs of
+    NONE   => SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
+  | SOME _ => zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
