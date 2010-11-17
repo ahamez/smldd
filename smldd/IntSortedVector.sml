@@ -82,21 +82,6 @@ fun eq (l,r) =
     end
 
 (*--------------------------------------------------------------------------*)
-fun lt (l,r) =
-  if (IntVector.length l) = 0 then
-    true
-  else if (IntVector.length r) = 0 then
-    false
-  else if IntVector.sub(l,0) < IntVector.sub(r,0) then
-    true
-  else if IntVector.sub(l,0) > IntVector.sub(r,0) then
-    false
-  else
-    lt( IntVectorSlice.vector( IntVectorSlice.slice (l, 1, NONE))
-      , IntVectorSlice.vector( IntVectorSlice.slice (r, 1, NONE))
-      )
-
-(*--------------------------------------------------------------------------*)
 fun hash vec =
   let
     fun helper (x1,x2) = Hash.hashCombine ( Hash.hashInt x1, x2 )
