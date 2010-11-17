@@ -1169,6 +1169,36 @@ struct
     assertTrue ( Tools.nbNodes Tools.Hierarchy x1 = 15 )
   end
 
+  fun testValuation00 () =
+  let
+    val x = Values (IntVector.fromList [1])
+  in
+    assertTrue( Values.eq( SDD.values x, IntVector.fromList [1] ))
+  end
+
+  fun testValuation01 () =
+  let
+    val x = Values (IntVector.fromList [1])
+  in
+    (nested x; fail "Must fail")
+    handle x => assertEqualExceptionName x IsNotNested
+  end
+
+  fun testValuation02 () =
+  let
+    val x = Nested one
+  in
+    assertTrue( nested x = one )
+  end
+
+  fun testValuation03 () =
+  let
+    val x = Nested one
+  in
+    (SDD.values x; fail "Must fail")
+    handle x => assertEqualExceptionName x IsNotValues
+  end
+
 
   (* ---------------------------------------------------------------- *)
 
@@ -1256,6 +1286,10 @@ struct
       , ("testNbNodes02"         , testNbNodes02       )
       , ("testNbNodes03"         , testNbNodes03       )
       , ("testNbNodes04"         , testNbNodes04       )
+      , ("testValuation00"       , testValuation00     )
+      , ("testValuation01"       , testValuation01     )
+      , ("testValuation02"       , testValuation02     )
+      , ("testValuation03"       , testValuation03     )
       ]
 
   (* ---------------------------------------------------------------- *)
