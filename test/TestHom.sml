@@ -249,7 +249,7 @@ struct
     val h0 = mkFunction (ref f4) 0
   in
     ( eval h0 x0 ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x FunctionHomOnNested
+    handle x => assertEqualExceptionName x FunctionHomOnNested
   end
 
   (* ---------------------------------------------------------------- *)
@@ -260,7 +260,7 @@ struct
     val h0 = mkFunction (ref f4) 0
   in
     ( eval h0 x0 ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x FunctionHomOnNested
+    handle x => assertEqualExceptionName x FunctionHomOnNested
   end
 
   (* ---------------------------------------------------------------- *)
