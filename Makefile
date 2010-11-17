@@ -2,8 +2,8 @@ ML=mlton
 
 TESTFLAGS=
 
-PROFFLAGS=-profile count\
-          -profile-branch true\
+PROFFLAGS=-profile count       \
+          -profile-branch true \
 
 SOURCES=./smldd/sources.mlb                                  \
         ./smldd/Util.sml                                     \
