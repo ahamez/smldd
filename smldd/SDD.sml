@@ -515,9 +515,7 @@ let
         (* Difference is a binary operation, while commonApply
            expects an n-ary operation *)
         fun callback xs =
-          case xs of
-            [x,y] => differenceCallback cacheLookup (x, y)
-          | _     => raise DoNotPanic
+          differenceCallback cacheLookup ( List.nth(xs,0), List.nth(xs,1) )
 
         val commonApply' = commonApply vlInter
                                        vlEmpty
