@@ -113,6 +113,9 @@ fun testTake04 () =
   ( take( [1,2,3], ~3 ) ; fail "Must fail" )
   handle x => assertEqualExceptionName x Subscript
 
+fun testVectorToList00 () =
+  assertTrue( VectorToList (Vector.fromList [1,2]) = [1,2] )
+
 fun suite () =
     Test.labelTests
     [ ("testShuffle00"          , testShuffle00        )
@@ -131,6 +134,7 @@ fun suite () =
     , ("testTake02"             , testTake02           )
     , ("testTake03"             , testTake03           )
     , ("testTake04"             , testTake04           )
+    , ("testVectorToList00"     , testVectorToList00   )
     ]
 
 end
