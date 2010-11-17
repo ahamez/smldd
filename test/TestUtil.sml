@@ -97,6 +97,22 @@ in
   assertTrue( s = "2.66E95" )
 end
 
+fun testTake00 () =
+  assertTrue( take([],0) = [] )
+
+fun testTake01 () =
+  assertTrue( take([1,2,3],0) = [] )
+
+fun testTake02 () =
+  assertTrue( take([1,2,3],3) = [1,2,3] )
+
+fun testTake03 () =
+  assertTrue( take([1,2,3],100) = [1,2,3] )
+
+fun testTake04 () =
+  ( take( [1,2,3], ~3 ) ; fail "Must fail" )
+  handle x => assertEqualExceptionName x Subscript
+
 fun suite () =
     Test.labelTests
     [ ("testShuffle00"          , testShuffle00        )
@@ -110,6 +126,11 @@ fun suite () =
     , ("testIntInfToString07"   , testIntInfToString07 )
     , ("testIntInfToString08"   , testIntInfToString08 )
     , ("testIntInfToString09"   , testIntInfToString09 )
+    , ("testTake00"             , testTake00           )
+    , ("testTake01"             , testTake01           )
+    , ("testTake02"             , testTake02           )
+    , ("testTake03"             , testTake03           )
+    , ("testTake04"             , testTake04           )
     ]
 
 end
