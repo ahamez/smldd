@@ -1,12 +1,6 @@
 structure TestOrder =
 struct
 
-structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
-                           ; structure Variable   = IntVariable
-                           ; structure Values     = DiscreteIntValues
-                           )
-
-
   open SMLUnit.Assert
   open SMLDD
   structure Test = SMLUnit.Test
