@@ -51,6 +51,24 @@ struct
     assertTrue( true )
   end
 
+  fun testMaxLeaves02 () =
+  let
+    val vars = ["a"]
+    val ord  = flatOrder vars
+  in
+    (transform (MaxLeaves 0) ord ; fail "Must fail")
+    handle x => assertEqualExceptionName x Domain
+  end
+
+  fun testMaxLeaves03 () =
+  let
+    val vars = ["a"]
+    val ord  = flatOrder vars
+  in
+    (transform (MaxLeaves 1) ord ; fail "Must fail")
+    handle x => assertEqualExceptionName x Domain
+  end
+
   fun testFlatten00 () =
   let
     val vars  = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
@@ -271,6 +289,8 @@ struct
       , ("testHierOrder00"     , testHierOrder00   )
       , ("testMaxLeaves00"     , testMaxLeaves00   )
       , ("testMaxLeaves01"     , testMaxLeaves01   )
+      , ("testMaxLeaves02"     , testMaxLeaves02   )
+      , ("testMaxLeaves03"     , testMaxLeaves03   )
       , ("testFlatten00"       , testFlatten00     )
       , ("testSDD00"           , testSDD00         )
       , ("testSDD01"           , testSDD01         )
