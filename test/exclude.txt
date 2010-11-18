@@ -48,10 +48,17 @@
 ^HomFun.Evaluation.apply.<case Id>
 ^HomFun.Evaluation.apply.<case Const _>
 ^HomFun.Evaluation.Rewrite.apply.<case _>
+^HomFun.Evaluation.satUnion.<case true>
+^HomFun.Evaluation.satIntersection.<case true>
+^HomFun.mkVisitor.visitor.<case _>
 ^squareUnion.mergeSuccs.insert.insertHelper.<case true>
 ^squareUnion.mergeVls.insert.<case true>
 ^DiscreteIntValues.Operations.apply.<case Union \\[\\]>
 ^DiscreteIntValues.storedUnion.<case \\[\\]>
+^DiscreteIntValues.storedIntersection.<case \\[\\]>
+^unionFlatDiscreteSDD.insertVl.<case _ \\(_, _\\)>
+^unionFlatDiscreteSDD.mergeValues.insert.<case true>
+^unionSDD.<case \\[\\]>
 
 ##############################################################################
 # SMLDD outputs
