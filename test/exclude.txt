@@ -34,11 +34,24 @@
 ^Util.shuffle.<case NONE>
 
 # The following cases raise DoNotPanic. Therefore, they should NEVER happen.
+^SDDFun.SDDOperations.checkCompatibility.<case \\[\\]>
+^SDDFun.SDDOperations.checkCompatibility.fn.<case \\(Zero, _\\)>
+^SDDFun.SDDOperations.checkCompatibility.fn.<case \\(_, Zero\\)>
+^SDDFun.SDDOperations.flatAlphaNodeToList.<case _>
+^SDDFun.SDDOperations.alphaNodeToList.<case _>
+^SDDFun.SDDOperations.union.<case Zero>
+^SDDFun.SDDOperations.intersection.<case Zero>
+^SDDFun.SDDOperations.intersection.<case \\[\\]>
+^SDDFun.SDDOperations.difference.<case \\(One, One\\)>
+^SDDFun.SDDOperations.difference.<case \\(Zero, _\\)>
+^SDDFun.SDDOperations.difference.<case \\(_, Zero\\)>
 ^HomFun.Evaluation.apply.<case Id>
 ^HomFun.Evaluation.apply.<case Const _>
+^HomFun.Evaluation.Rewrite.apply.<case _>
 ^squareUnion.mergeSuccs.insert.insertHelper.<case true>
 ^squareUnion.mergeVls.insert.<case true>
 ^DiscreteIntValues.Operations.apply.<case Union \\[\\]>
+^DiscreteIntValues.storedUnion.<case \\[\\]>
 
 ##############################################################################
 # SMLDD outputs
@@ -47,6 +60,6 @@ stats
 Dot
 
 ##############################################################################
-# SMLDDD stuff, but need to be tested eventually
+# SMLDDD stuff, but need to be tested eventually with larger examples
 ^CacheFun
 ^UnicityTableFun
