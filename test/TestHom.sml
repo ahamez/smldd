@@ -150,6 +150,26 @@ struct
   end
 
   (* ---------------------------------------------------------------- *)
+  fun testConst00 () =
+  let
+    val s0 = node( 0, values [0], one )
+    val x1 = node( 0, Nested s0, one )
+    val h0 = mkConst one
+    val c0 = eval h0 x1
+  in
+    assertTrue( c0 = one )
+  end
+
+  (* ---------------------------------------------------------------- *)
+  fun testConst01 () =
+  let
+    val h0 = mkConst one
+    val c0 = eval h0 zero
+  in
+    assertTrue( c0 = one )
+  end
+
+  (* ---------------------------------------------------------------- *)
 
   fun testFunction00 () =
   let
@@ -948,6 +968,7 @@ end
       , ("testCons00"          , testCons00          )
       , ("testCons01"          , testCons01          )
       , ("testCons02"          , testCons02          )
+      , ("testConst00"         , testConst00         )
       , ("testFunction00"      , testFunction00      )
       , ("testFunction01"      , testFunction01      )
       , ("testFunction02"      , testFunction02      )
