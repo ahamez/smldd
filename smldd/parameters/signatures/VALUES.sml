@@ -28,8 +28,6 @@ sig
   val storedHash            : stored -> Hash.t
 
   val storedEmpty           : stored -> bool
-  val storedMkEmpty         : unit -> stored
-
   val storedUnion           : stored list -> stored
   val storedIntersection    : stored list -> stored
   val storedDifference      : stored * stored -> stored

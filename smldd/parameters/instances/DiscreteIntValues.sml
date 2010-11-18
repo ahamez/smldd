@@ -87,7 +87,6 @@ val empty = SV.empty
 
 (*--------------------------------------------------------------------------*)
 val e = mkStorable( SV.mkEmpty() )
-fun storedMkEmpty() = e
 
 (*--------------------------------------------------------------------------*)
 (* Operations to manipulate values. Used by the cache. *)
@@ -176,7 +175,7 @@ fun storedIntersection xs =
 (*--------------------------------------------------------------------------*)
 fun storedDifference(x,y) =
   if x = y then
-    storedMkEmpty()
+    e
   else
     cache.lookup( Operations.Diff(x,y) )
 

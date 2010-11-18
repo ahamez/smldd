@@ -28,7 +28,6 @@ structure BitWordValues : VALUES = struct
   val storedHash          = BitWord.hash
 
   val storedEmpty         = BitWord.empty
-  val storedMkEmpty       = BitWord.mkEmpty
 
   fun storedUnion []      = BitWord.mkEmpty ()
   |   storedUnion (x::xs) =
