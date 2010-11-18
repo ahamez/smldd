@@ -2,14 +2,16 @@
 
 # Script to exclude some patterns from code coverage given by mlprof
 
-grep -v '^#' ./test/exclude.txt | grep -v '^[:space:]*$' > .tmp
+TMPFILE=$(mktemp -t exclude) || exit 1
+
+grep -v -E -e '^#|^[:space:]*$' ./test/exclude.txt > $TMPFILE
 EXCLUDE=""
 while read l ; do
   EXCLUDE=$EXCLUDE$(echo $l\|)
-done < .tmp
+done < $TMPFILE
 
 EXCLUDE=$EXCLUDE"^ "
-rm -f .tmp
+rm -f "$TMPFILE"
 
 mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out \
 | grep '(0)' \
