@@ -15,4 +15,5 @@ mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out \
 | grep '(0)' \
 | grep -v -E -e "$EXCLUDE" \
 | grep -o -E -e '^.*: [[:digit:]]{1,5}' \
-| sort
+| sort \
+| cat -n
