@@ -1199,6 +1199,9 @@ struct
     handle x => assertEqualExceptionName x IsNotValues
   end
 
+  fun testAlpha00 () =
+    (SDD.alpha one; fail "Must fail")
+    handle x => assertEqualExceptionName x IsNotANode
 
   (* ---------------------------------------------------------------- *)
 
@@ -1290,6 +1293,7 @@ struct
       , ("testValuation01"       , testValuation01     )
       , ("testValuation02"       , testValuation02     )
       , ("testValuation03"       , testValuation03     )
+      , ("testAlpha00"           , testAlpha00         )
       ]
 
   (* ---------------------------------------------------------------- *)
