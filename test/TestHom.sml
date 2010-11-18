@@ -234,202 +234,236 @@ val values = Values o SV.fromList
   end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction06 () =
-  let
-    val s0 = node( 0, values[0,1,2,3], one )
-    val s1 = node( 1, values[0,1,2,3], s0 )
-    val h0 = mkFunction (ref (f0 1)) 0
-    val s2 = eval h0 s1
-    val o0 = node( 0, values[1,2,3,4], one )
-    val o1 = node( 1, values[0,1,2,3], o0 )
-  in
-    assertTrue( s2 = o1 )
-  end
+fun testFunction06 () =
+let
+  val s0 = node( 0, values[0,1,2,3], one )
+  val s1 = node( 1, values[0,1,2,3], s0 )
+  val h0 = mkFunction (ref (f0 1)) 0
+  val s2 = eval h0 s1
+  val o0 = node( 0, values[1,2,3,4], one )
+  val o1 = node( 1, values[0,1,2,3], o0 )
+in
+  assertTrue( s2 = o1 )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction07 () =
-  let
-    val s0   = node( 0, (values[0,1,2,3]), one )
-    val s1   = node( 1, (values[0,1,2,3]), s0 )
-    val h0   = mkFunction (ref f2) 0
-    val s2   = eval h0 s1
-  in
-    assertTrue( s2 = zero )
-  end
+fun testFunction07 () =
+let
+  val s0   = node( 0, (values[0,1,2,3]), one )
+  val s1   = node( 1, (values[0,1,2,3]), s0 )
+  val h0   = mkFunction (ref f2) 0
+  val s2   = eval h0 s1
+in
+  assertTrue( s2 = zero )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction08 () =
-  let
-    val s0 = node( 0, (values[0,1,2,3]), one )
-    val x0 = node( 0, Nested s0, one )
-    val h0 = mkFunction (ref f4) 0
-  in
-    ( eval h0 x0 ; fail "Must fail" )
-    handle x => assertEqualExceptionName x FunctionHomOnNested
-  end
+fun testFunction08 () =
+let
+  val s0 = node( 0, (values[0,1,2,3]), one )
+  val x0 = node( 0, Nested s0, one )
+  val h0 = mkFunction (ref f4) 0
+in
+  ( eval h0 x0 ; fail "Must fail" )
+  handle x => assertEqualExceptionName x FunctionHomOnNested
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction09 () =
-  let
-    val x0 = node( 0, Nested one, one )
-    val h0 = mkFunction (ref f4) 0
-  in
-    ( eval h0 x0 ; fail "Must fail" )
-    handle x => assertEqualExceptionName x FunctionHomOnNested
-  end
+fun testFunction09 () =
+let
+  val x0 = node( 0, Nested one, one )
+  val h0 = mkFunction (ref f4) 0
+in
+  ( eval h0 x0 ; fail "Must fail" )
+  handle x => assertEqualExceptionName x FunctionHomOnNested
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction10 () =
-  let
-    val s0   = node( 0, (values[0,1,2,3]), one )
-    val s1   = node( 1, (values[0,1,2,3]), s0 )
-    val h0   = mkFunction (ref f2) 1
-    val s2   = eval h0 s1
-  in
-    assertTrue( s2 = zero )
-  end
+fun testFunction10 () =
+let
+  val s0   = node( 0, (values[0,1,2,3]), one )
+  val s1   = node( 1, (values[0,1,2,3]), s0 )
+  val h0   = mkFunction (ref f2) 1
+  val s2   = eval h0 s1
+in
+  assertTrue( s2 = zero )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction11 () =
-  let
-    val x0 = node( 0, Nested one, one )
-    val h0 = mkFunction (ref f6) 0
-  in
-    ( eval h0 x0 ; fail "Must fail" )
-    handle x => assertEqualExceptionName x FunctionHomOnNested
-  end
+fun testFunction11 () =
+let
+  val x0 = node( 0, Nested one, one )
+  val h0 = mkFunction (ref f6) 0
+in
+  ( eval h0 x0 ; fail "Must fail" )
+  handle x => assertEqualExceptionName x FunctionHomOnNested
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction12 () =
-  let
-    fun f (Eval _) = raise Domain
-    |   f Hash = SelectorRes true
-  in
-    ( mkFunction (ref f) 0 ; fail "Must fail" )
-    handle x => assertEqualExceptionName x NotUserHash
-  end
+fun testFunction12 () =
+let
+  fun f (Eval _) = raise Domain
+  |   f Hash = SelectorRes true
+in
+  ( mkFunction (ref f) 0 ; fail "Must fail" )
+  handle x => assertEqualExceptionName x NotUserHash
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testFunction13 () =
-  let
-    fun f (Eval _) = SelectorRes true
-    |   f Hash = HashRes (Hash.hashInt 42)
-    val s0   = node( 0, (values[0,1,2,3]), one )
-    val h = mkFunction (ref f) 0
-  in
-    ( eval h s0 ; fail "Must fail" )
-    handle x => assertEqualExceptionName x NotUserValues
-  end
+fun testFunction13 () =
+let
+  fun f (Eval _) = SelectorRes true
+  |   f Hash = HashRes (Hash.hashInt 42)
+  val s0   = node( 0, (values[0,1,2,3]), one )
+  val h = mkFunction (ref f) 0
+in
+  ( eval h s0 ; fail "Must fail" )
+  handle x => assertEqualExceptionName x NotUserValues
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testNested00 () =
-  let
-    val s0 = node( 0, (values[0]), one)
-    val x0 = node( 0, Nested s0, one )
-    val h0 = mkNested id 0
-    val r0 = eval h0 x0
-  in
-    assertTrue( r0 = x0 )
-  end
+fun testNested00 () =
+let
+  val s0 = node( 0, (values[0]), one)
+  val x0 = node( 0, Nested s0, one )
+  val h0 = mkNested id 0
+  val r0 = eval h0 x0
+in
+  assertTrue( r0 = x0 )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testNested01 () =
-  let
-    val h0 = mkNested id 0
-  in
-    assertTrue( h0 = id )
-  end
+fun testNested01 () =
+let
+  val h0 = mkNested id 0
+in
+  assertTrue( h0 = id )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testNested02 () =
-  let
-    val h0 = mkFunction (ref (f0 1)) 0
-    val h1 = mkNested h0 0
-    val s0 = node( 0, (values [0,1,2]), one )
-    val x0 = node( 0, Nested s0, one )
-    val x1 = eval h1 x0
-    val o0 = node( 0, (values [1,2,3]), one )
-    val y0 = node( 0, Nested o0, one )
+fun testNested02 () =
+let
+  val h0 = mkFunction (ref (f0 1)) 0
+  val h1 = mkNested h0 0
+  val s0 = node( 0, values [0,1,2], one )
+  val x0 = node( 0, Nested s0, one )
+  val x1 = eval h1 x0
+  val o0 = node( 0, (values [1,2,3]), one )
+  val y0 = node( 0, Nested o0, one )
 
-  in
-    assertTrue( y0 = x1 )
-  end
-
-(*--------------------------------------------------------------------------*)
-  fun testNested03 () =
-  let
-    val h0 = mkFunction (ref (f0 1)) 0
-    val h1 = mkNested h0 0
-    val s0 = node( 0, (values [0,1,2]), one )
-    val x0 = node( 0, Nested s0, one )
-    val x1 = node( 1, Nested s0, x0 )
-    val x2 = eval h1 x1
-    val o0 = node( 0, (values [1,2,3]), one )
-    val o1 = node( 0, (values [0,1,2]), one )
-    val y0 = node( 0, Nested o0, one )
-    val y1 = node( 1, Nested o1, y0 )
-  in
-    assertTrue( y1 = x2 )
-  end
+in
+  assertTrue( y0 = x1 )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testNested04 () =
-  let
-    val h0   = mkFunction (ref f2) 0
-    val h1   = mkNested h0 0
-    val s0   = node( 0, (values [0,1,2]), one )
-    val x0   = node( 0, Nested s0, one )
-    val x1   = node( 1, Nested s0, x0 )
-    val x2   = eval h1 x1
-  in
-    assertTrue( x2 = zero )
-  end
+fun testNested03 () =
+let
+  val h0 = mkFunction (ref (f0 1)) 0
+  val h1 = mkNested h0 0
+  val s0 = node( 0, values [0,1,2], one )
+  val x0 = node( 0, Nested s0, one )
+  val x1 = node( 1, Nested s0, x0 )
+  val x2 = eval h1 x1
+  val o0 = node( 0, (values [1,2,3]), one )
+  val o1 = node( 0, values [0,1,2], one )
+  val y0 = node( 0, Nested o0, one )
+  val y1 = node( 1, Nested o1, y0 )
+in
+  assertTrue( y1 = x2 )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testNested05 () =
-  let
-    val h0   = mkFunction (ref f2) 0
-    val h1   = mkNested h0 1
-    val s0   = node( 0, (values [0,1,2]), one )
-    val x0   = node( 0, Nested s0, one )
-    val x1   = node( 1, Nested s0, x0 )
-    val x2   = eval h1 x1
-  in
-    assertTrue( x2 = zero )
-  end
+fun testNested04 () =
+let
+  val h0   = mkFunction (ref f2) 0
+  val h1   = mkNested h0 0
+  val s0   = node( 0, values [0,1,2], one )
+  val x0   = node( 0, Nested s0, one )
+  val x1   = node( 1, Nested s0, x0 )
+  val x2   = eval h1 x1
+in
+  assertTrue( x2 = zero )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testNested06 () =
-  let
-    val h0   = mkFunction (ref f2) 0
-    val h1   = mkNested h0 2
-    val s0   = node( 0, (values [0,1,2]), one )
-    val x0   = node( 0, Nested s0, one )
-    val x1   = node( 1, Nested s0, x0 )
-    val x2   = eval h1 x1
-  in
-    assertTrue( x2 = x1 )
-  end
+fun testNested05 () =
+let
+  val h0   = mkFunction (ref f2) 0
+  val h1   = mkNested h0 1
+  val s0   = node( 0, values [0,1,2], one )
+  val x0   = node( 0, Nested s0, one )
+  val x1   = node( 1, Nested s0, x0 )
+  val x2   = eval h1 x1
+in
+  assertTrue( x2 = zero )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testUnion00 () =
-  let
-    val h0 = mkUnion [id]
-    val s0 = node( 0, (values [0,1,2]), one)
-    val s1 = eval h0 s0
-  in
-    assertTrue( s1 = s0 )
-  end
+fun testNested06 () =
+let
+  val h0   = mkFunction (ref f2) 0
+  val h1   = mkNested h0 2
+  val s0   = node( 0, values [0,1,2], one )
+  val x0   = node( 0, Nested s0, one )
+  val x1   = node( 1, Nested s0, x0 )
+  val x2   = eval h1 x1
+in
+  assertTrue( x2 = x1 )
+end
 
 (*--------------------------------------------------------------------------*)
-  fun testUnion01 () =
-  let
-    val h0 = mkUnion [id,id,id]
-    val s0 = node( 0, (values [0,1,2]), one)
-    val s1 = eval h0 s0
-  in
-    assertTrue( s1 = s0 )
-  end
+fun testNested07 () =
+let
+  val h0 = mkNested (mkFunction (ref f4) 0) 1
+  val s0 = node( 1, values [0,1,2], one )
+in
+  ( eval h0 s0 ; fail "Must fail")
+  handle x => assertEqualExceptionName x NestedHomOnValues
+end
+
+(*--------------------------------------------------------------------------*)
+fun testNested08 () =
+let
+  (* f6: selector *)
+  val h0 = mkNested (mkFunction (ref f6) 0) 1
+  val s0 = node( 1, values [0,1,2], one )
+in
+  ( eval h0 s0 ; fail "Must fail")
+  handle x => assertEqualExceptionName x NestedHomOnValues
+end
+
+(*--------------------------------------------------------------------------*)
+fun testNested09 () =
+let
+  (* f6: selector *)
+  val h1   = mkNested (mkFunction (ref f6) 0) 1
+  val s0   = node( 0, values [0,1,2], one )
+  val x0   = node( 0, Nested s0, one )
+  val x1   = node( 1, Nested s0, x0 )
+  val x2   = eval h1 x1
+in
+  assertTrue( x2 = x1 )
+end
+
+(*--------------------------------------------------------------------------*)
+fun testUnion00 () =
+let
+  val h0 = mkUnion [id]
+  val s0 = node( 0, values [0,1,2], one)
+  val s1 = eval h0 s0
+in
+  assertTrue( s1 = s0 )
+end
+
+(*--------------------------------------------------------------------------*)
+fun testUnion01 () =
+let
+  val h0 = mkUnion [id,id,id]
+  val s0 = node( 0, values [0,1,2], one)
+  val s1 = eval h0 s0
+in
+  assertTrue( s1 = s0 )
+end
 
 (*--------------------------------------------------------------------------*)
   fun testUnion02 () =
@@ -976,6 +1010,9 @@ end
       , ("testNested04"        , testNested04        )
       , ("testNested05"        , testNested05        )
       , ("testNested06"        , testNested06        )
+      , ("testNested07"        , testNested07        )
+      , ("testNested08"        , testNested08        )
+      , ("testNested09"        , testNested09        )
       , ("testUnion00"         , testUnion00         )
       , ("testUnion01"         , testUnion01         )
       , ("testUnion02"         , testUnion02         )
