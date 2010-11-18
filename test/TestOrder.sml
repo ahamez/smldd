@@ -283,6 +283,24 @@ struct
     assertTrue( true )
   end
 
+  fun testAuto01 () =
+  let
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val _    = transform (Auto (NONE, NONE)) ord
+  in
+    assertTrue( true )
+  end
+
+  fun testAuto02 () =
+  let
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val _    = transform (Auto (SOME 2, SOME 3)) ord
+  in
+    assertTrue( true )
+  end
+
   fun suite () =
       Test.labelTests
       [ ("testFlatOrder00"     , testFlatOrder00   )
@@ -311,7 +329,9 @@ struct
       , ("testIdentifier07"    , testIdentifier07  )
       , ("testMaxLevels00"     , testMaxLevels00   )
       , ("testMaxLevels01"     , testMaxLevels01   )
-      , ("testAuto00"          , testAuto00   )
+      , ("testAuto00"          , testAuto00        )
+      , ("testAuto01"          , testAuto01        )
+      , ("testAuto02"          , testAuto02        )
       ]
 
 end
