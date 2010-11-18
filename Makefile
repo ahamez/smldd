@@ -56,10 +56,12 @@ EXCLUDE="Assert Posix StreamIOExtra IEEEReal HashTable Date Primitive Real\
         'Util.shuffle.<case NONE>' CacheFun UnicityTableFunID\
         'DiscreteIntValues.Operations.apply.<case Union \[\]>' BitWord\
 				'squareUnion.mergeSuccs.insert.insertHelper.<case true>'\
-				'squareUnion.mergeVls.insert.<case true>'"
+				'squareUnion.mergeVls.insert.<case true>'\
+				'HomFun.Evaluation.apply.<case Id>'\
+				'HomFun.Evaluation.apply.<case Const _>'"
 FILTER=$(shell for i in "$(EXCLUDE)" ; do echo ^$$i\|\\c ; done ; echo "^ ")
 
-EXCLUDE2="toString ToString stats"
+EXCLUDE2="String stats Dot"
 FILTER2=$(shell for i in "$(EXCLUDE2)" ; do echo $$i\|\\c ; done ; echo "^ ")
 
 prof: ./test/main-prof
