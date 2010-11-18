@@ -52,7 +52,7 @@ check: ./test/main
 
 prof: ./test/main-prof
 	@(mkdir -p ./test/run && cd ./test/run && ../main-prof)
-	mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out
+	@./test/prof.sh
 
 ./test/main-prof: $(TESTSOURCES) $(SOURCES)
 	$(ML) $(TESTFLAGS) $(PROFFLAGS) -output ./test/main-prof ./test/main.mlb

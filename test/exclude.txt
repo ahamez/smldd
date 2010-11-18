@@ -1,0 +1,72 @@
+##############################################################################
+# Basis and Mlton stuff
+^Assert
+^Posix
+^StreamIOExtra
+^IEEEReal
+^Date
+^Primitive
+^Real
+^Net
+^OS
+^Timer
+^Word
+^ImperativeIO
+^Sequence
+^MLton
+^Array
+^String
+^Substring
+^Socket
+
+##############################################################################
+# External libraries
+^HashTable
+^TextUITestRunner
+
+##############################################################################
+# SMLDDD stuff
+
+# Functions in tests may be not entirely used
+^Test
+
+# Happen only when MLton.Random.seed() is NONE
+^Util.shuffle.<case NONE>
+
+# The following cases raise DoNotPanic. Therefore, they should NEVER happen.
+^SDDFun.SDDOperations.checkCompatibility.<case \\[\\]>
+^SDDFun.SDDOperations.checkCompatibility.fn.<case \\(Zero, _\\)>
+^SDDFun.SDDOperations.checkCompatibility.fn.<case \\(_, Zero\\)>
+^SDDFun.SDDOperations.flatAlphaNodeToList.<case _>
+^SDDFun.SDDOperations.alphaNodeToList.<case _>
+^SDDFun.SDDOperations.union.<case Zero>
+^SDDFun.SDDOperations.intersection.<case Zero>
+^SDDFun.SDDOperations.intersection.<case \\[\\]>
+^SDDFun.SDDOperations.difference.<case \\(One, One\\)>
+^SDDFun.SDDOperations.difference.<case \\(Zero, _\\)>
+^SDDFun.SDDOperations.difference.<case \\(_, Zero\\)>
+^HomFun.Evaluation.apply.<case Id>
+^HomFun.Evaluation.apply.<case Const _>
+^HomFun.Evaluation.Rewrite.apply.<case _>
+^HomFun.Evaluation.satUnion.<case true>
+^HomFun.Evaluation.satIntersection.<case true>
+^HomFun.mkVisitor.visitor.<case _>
+^squareUnion.mergeSuccs.insert.insertHelper.<case true>
+^squareUnion.mergeVls.insert.<case true>
+^DiscreteIntValues.Operations.apply.<case Union \\[\\]>
+^DiscreteIntValues.storedUnion.<case \\[\\]>
+^DiscreteIntValues.storedIntersection.<case \\[\\]>
+^unionFlatDiscreteSDD.insertVl.<case _ \\(_, _\\)>
+^unionFlatDiscreteSDD.mergeValues.insert.<case true>
+^unionSDD.<case \\[\\]>
+
+##############################################################################
+# SMLDD outputs
+String
+stats
+Dot
+
+##############################################################################
+# SMLDDD stuff, but need to be tested eventually with larger examples
+^CacheFun
+^UnicityTableFun

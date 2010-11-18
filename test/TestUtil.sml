@@ -97,6 +97,56 @@ in
   assertTrue( s = "2.66E95" )
 end
 
+fun testIntInfToString10 () =
+let
+  val str = String.concat [ "265613988875874769338781322035779626829233"
+                          , "4526533944959745749617390924909013021829943"
+                          , "84699044001"]
+  val x = valOf( IntInf.fromString str )
+  val s = IntInfToString x (SOME 0) NONE
+in
+  assertTrue( s = "2.66E95" )
+end
+
+fun testTake00 () =
+  assertTrue( take([],0) = [] )
+
+fun testTake01 () =
+  assertTrue( take([1,2,3],0) = [] )
+
+fun testTake02 () =
+  assertTrue( take([1,2,3],3) = [1,2,3] )
+
+fun testTake03 () =
+  assertTrue( take([1,2,3],100) = [1,2,3] )
+
+fun testTake04 () =
+  ( take( [1,2,3], ~3 ) ; fail "Must fail" )
+  handle x => assertEqualExceptionName x Subscript
+
+fun testVectorToList00 () =
+  assertTrue( VectorToList (Vector.fromList [1,2]) = [1,2] )
+
+fun testExplodeRightBy00 () =
+  assertTrue( explodeRightBy [1,2,3] 1 = [[1],[2],[3]])
+
+fun testExplodeRightBy01 () =
+  assertTrue( explodeRightBy [1,2,3] 2 = [[1],[2,3]])
+
+fun testExplodeRightBy02 () =
+  ( explodeRightBy [1,2,3] ~2; fail "Must fail" )
+  handle x => assertEqualExceptionName x Subscript
+
+fun testExplodeRightBy03 () =
+  ( explodeRightBy [1,2,3] 5; fail "Must fail" )
+  handle x => assertEqualExceptionName x Subscript
+
+fun testExplodeRightBy04 () =
+  assertTrue( explodeRightBy [1,2,3] 3 = [[1,2,3]])
+
+fun testExplodeRightBy05 () =
+  assertTrue( explodeRightBy [1,2,3] 0 = [[1,2,3]])
+
 fun suite () =
     Test.labelTests
     [ ("testShuffle00"          , testShuffle00        )
@@ -110,6 +160,19 @@ fun suite () =
     , ("testIntInfToString07"   , testIntInfToString07 )
     , ("testIntInfToString08"   , testIntInfToString08 )
     , ("testIntInfToString09"   , testIntInfToString09 )
+    , ("testIntInfToString10"   , testIntInfToString10 )
+    , ("testTake00"             , testTake00           )
+    , ("testTake01"             , testTake01           )
+    , ("testTake02"             , testTake02           )
+    , ("testTake03"             , testTake03           )
+    , ("testTake04"             , testTake04           )
+    , ("testVectorToList00"     , testVectorToList00   )
+    , ("testExplodeRightBy00"   , testExplodeRightBy00 )
+    , ("testExplodeRightBy01"   , testExplodeRightBy01 )
+    , ("testExplodeRightBy02"   , testExplodeRightBy02 )
+    , ("testExplodeRightBy03"   , testExplodeRightBy03 )
+    , ("testExplodeRightBy04"   , testExplodeRightBy04 )
+    , ("testExplodeRightBy05"   , testExplodeRightBy05 )
     ]
 
 end

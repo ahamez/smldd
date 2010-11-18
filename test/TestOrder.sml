@@ -1,12 +1,6 @@
 structure TestOrder =
 struct
 
-structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
-                           ; structure Variable   = IntVariable
-                           ; structure Values     = DiscreteIntValues
-                           )
-
-
   open SMLUnit.Assert
   open SMLDD
   structure Test = SMLUnit.Test
@@ -55,6 +49,24 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
     val _ = transform (MaxLeaves 3) ord
   in
     assertTrue( true )
+  end
+
+  fun testMaxLeaves02 () =
+  let
+    val vars = ["a"]
+    val ord  = flatOrder vars
+  in
+    (transform (MaxLeaves 0) ord ; fail "Must fail")
+    handle x => assertEqualExceptionName x Domain
+  end
+
+  fun testMaxLeaves03 () =
+  let
+    val vars = ["a"]
+    val ord  = flatOrder vars
+  in
+    (transform (MaxLeaves 1) ord ; fail "Must fail")
+    handle x => assertEqualExceptionName x Domain
   end
 
   fun testFlatten00 () =
@@ -133,6 +145,16 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
     val o0   = Hom.mkNested (Hom.mkFunction rf0 1) 0
   in
     assertTrue( h0 = o0 )
+  end
+
+  fun testHom02 () =
+  let
+    val rf0  = ref f3
+    val vars = []
+    val ord  = transform (MaxLeaves 3) (flatOrder vars)
+    val h0   = hom ord "c" (fn v => Hom.mkFunction rf0 v)
+  in
+    assertTrue( h0 = Hom.id )
   end
 
   fun testId00 () =
@@ -261,18 +283,39 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
     assertTrue( true )
   end
 
+  fun testAuto01 () =
+  let
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val _    = transform (Auto (NONE, NONE)) ord
+  in
+    assertTrue( true )
+  end
+
+  fun testAuto02 () =
+  let
+    val vars = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n"]
+    val ord  = flatOrder vars
+    val _    = transform (Auto (SOME 2, SOME 3)) ord
+  in
+    assertTrue( true )
+  end
+
   fun suite () =
       Test.labelTests
       [ ("testFlatOrder00"     , testFlatOrder00   )
       , ("testHierOrder00"     , testHierOrder00   )
       , ("testMaxLeaves00"     , testMaxLeaves00   )
       , ("testMaxLeaves01"     , testMaxLeaves01   )
+      , ("testMaxLeaves02"     , testMaxLeaves02   )
+      , ("testMaxLeaves03"     , testMaxLeaves03   )
       , ("testFlatten00"       , testFlatten00     )
       , ("testSDD00"           , testSDD00         )
       , ("testSDD01"           , testSDD01         )
       , ("testAnonymise00"     , testAnonymise00   )
       , ("testHom00"           , testHom00         )
       , ("testHom01"           , testHom01         )
+      , ("testHom02"           , testHom02         )
       , ("testId00"            , testId00          )
       , ("testShuffle00"       , testShuffle00     )
       , ("testShuffle01"       , testShuffle01     )
@@ -286,7 +329,9 @@ structure SMLDD = SMLDDFun ( structure Identifier = StringIdentifier
       , ("testIdentifier07"    , testIdentifier07  )
       , ("testMaxLevels00"     , testMaxLevels00   )
       , ("testMaxLevels01"     , testMaxLevels01   )
-      , ("testAuto00"          , testAuto00   )
+      , ("testAuto00"          , testAuto00        )
+      , ("testAuto01"          , testAuto01        )
+      , ("testAuto02"          , testAuto02        )
       ]
 
 end

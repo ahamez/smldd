@@ -330,8 +330,8 @@ datatype operation = Union of ( SDD list * (operation -> result)  )
 
 (*--------------------------------------------------------------------------*)
 (* Check compatibility of operands *)
-fun checkCompatibilty []     = raise DoNotPanic
-|   checkCompatibilty(x::xs) =
+fun checkCompatibility []     = raise DoNotPanic
+|   checkCompatibility(x::xs) =
 
   foldl (fn ( iSDD(sx,_), y as (iSDD(sy,_)) ) =>
         case (sx,sy) of
@@ -392,7 +392,10 @@ fun unionCallback lookup xs =
    Operands should be sorted by caller. *)
 fun intersectionCallback _      [] = zero
 |   intersectionCallback _     [x] = x
-|   intersectionCallback lookup xs = lookup(Inter( xs, lookup))
+|   intersectionCallback lookup xs =
+  case List.find empty xs of
+    NONE   => lookup(Inter( xs, lookup))
+  | SOME _ => zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection! *)
@@ -409,7 +412,7 @@ fun differenceCallback lookup ( x, y ) =
 (*--------------------------------------------------------------------------*)
 fun union cacheLookup xs =
 let
-  val _ = checkCompatibilty xs
+  val _ = checkCompatibility xs
 in
   case let val iSDD(x,_) = hd xs in x end of
 
@@ -484,26 +487,17 @@ end (* end fun union *)
 (*--------------------------------------------------------------------------*)
 (* N-ary intersection of SDDs *)
 fun intersection cacheLookup xs =
-let
-  val hasZero = case List.find empty xs of
-                  NONE   => false
-                | SOME _ => true
-in
-  (* Intersection of anything with |0| is always |0| *)
-  if hasZero then
-    zero
-  else
-    case let val iSDD(x,_) = hd xs in x end of
+  case let val iSDD(x,_) = hd xs in x end of
 
   (* All operands are |1| *)
-    One        => checkCompatibilty xs
+    One        => checkCompatibility xs
 
   (* There shouldn't be any |0| *)
   | Zero       => raise DoNotPanic
 
   | Node{variable=var,...}  =>
     let
-      val _ = checkCompatibilty xs
+      val _ = checkCompatibility xs
 
       val ( initial, operands ) = case map flatAlphaNodeToList xs of
                                     []     => raise DoNotPanic
@@ -526,7 +520,7 @@ in
 
   | HNode{variable=var,...}  =>
     let
-      val _ = checkCompatibilty xs
+      val _ = checkCompatibility xs
 
       val ( initial, operands ) = case map alphaNodeToList xs of
                                     []     => raise DoNotPanic
@@ -546,7 +540,8 @@ in
       hierNodeAlpha( var
                    , squareUnion' ( foldl commonApply' initial operands ) )
     end (* Hierachical node case *)
-end (* end fun intersection *)
+
+(* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
@@ -568,9 +563,7 @@ let
         (* Difference is a binary operation, while commonApply
            expects an n-ary operation *)
         fun callback xs =
-          case xs of
-            [x,y] => differenceCallback cacheLookup (x, y)
-          | _     => raise DoNotPanic
+          differenceCallback cacheLookup ( List.nth(xs,0), List.nth(xs,1) )
 
         val commonApply' = commonApply vlInter
                                        vlEmpty
@@ -713,7 +706,10 @@ fun union xs =
    Operands should be sorted by caller. *)
 fun intersection []  = zero
 |   intersection [x] = x
-|   intersection xs  = SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
+|   intersection xs  =
+  case List.find empty xs of
+    NONE   => SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
+  | SOME _ => zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
@@ -777,11 +773,11 @@ fun variable (iSDD(x,_)) =
   | _                       => raise IsNotANode
 
 (*--------------------------------------------------------------------------*)
-fun values x = case x of Nested _ => raise IsNotNested
+fun values x = case x of Nested _ => raise IsNotValues
                        | Values v => v
 
 (*--------------------------------------------------------------------------*)
-fun nested x = case x of Values _ => raise IsNotValues
+fun nested x = case x of Values _ => raise IsNotNested
                        | Nested s => s
 
 (*--------------------------------------------------------------------------*)

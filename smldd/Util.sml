@@ -164,26 +164,6 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun splitAt xs i =
-let
-
-  fun helper [] _      = ( [], [])
-  |   helper xs 0      = ( [], xs )
-  |   helper (x::xs) i =
-  let
-    val ( a, b ) = helper xs (i - 1)
-  in
-    ( x::a, b )
-  end
-
-in
-  if i < 0 orelse i > length xs then
-    raise Subscript
-  else
-    helper xs i
-end
-
-(*--------------------------------------------------------------------------*)
 (* Create packets of size i from list xs. Process from the right of the list*)
 fun explodeRightBy xs i =
 let

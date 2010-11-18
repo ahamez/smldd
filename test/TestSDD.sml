@@ -41,7 +41,7 @@ struct
     val s1 = node( 0, values [0,2,3], one )
   in
     ( union [s0,s1] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatUnion02 () =
@@ -49,7 +49,7 @@ struct
     val s0 = node( 1, values [1,2,3], one )
   in
     ( union [s0,one] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatUnion03 () =
@@ -85,7 +85,7 @@ struct
     val s5 = node( 0, values [~273,17,33], one )
   in
     ( union [s0,s1,s2,s3,s4,s5,one] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatUnion06 () =
@@ -260,7 +260,7 @@ struct
     val s1 = node( 0, values [0,2,3], one )
   in
     ( intersection [s0,s1] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatInter04 () =
@@ -268,7 +268,7 @@ struct
     val s0 = node( 42, values [1,2,4], one )
   in
     ( intersection [one,s0] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatInter05 () =
@@ -449,7 +449,7 @@ struct
     val u1 = union [ s10, s11 ]
   in
     ( intersection [u0,u1] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatDiff00 () =
@@ -536,7 +536,7 @@ struct
     val s1 = node( 1, values [0], one )
   in
     ( difference( s1, s0 ) ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatDiff09 () =
@@ -545,7 +545,7 @@ struct
     val s1 = node( 1, values [0], one )
   in
     ( difference( s0, s1 ) ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatDiff10 () =
@@ -553,7 +553,7 @@ struct
     val s0 = node( 0, values [0], one )
   in
     ( difference( s0, one ) ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatDiff11 () =
@@ -561,7 +561,7 @@ struct
     val s0 = node( 0, values [0], one )
   in
     ( difference( one, s0 ) ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testFlatDiff12 () =
@@ -876,7 +876,7 @@ struct
     val x1 = node( 0, Nested s1, one )
   in
     ( union [x0,x1] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testUnion04 () =
@@ -887,7 +887,7 @@ struct
     val x1 = node( 1, Nested s1, one )
   in
     ( union [x0,x1] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testUnion05 () =
@@ -896,7 +896,7 @@ struct
     val x0 = node( 0, Nested s0, one )
   in
     ( union [x0,one] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testUnion06 () =
@@ -906,7 +906,7 @@ struct
     val x1 = node( 1, Nested one, one )
   in
     ( union [x0,x1] ; fail "Must fail" )
-    handle x as _ => assertEqualExceptionName x IncompatibleSDD
+    handle x => assertEqualExceptionName x IncompatibleSDD
   end
 
   fun testUnion07 () =
@@ -1170,6 +1170,39 @@ struct
     assertTrue ( Tools.nbNodes Tools.Hierarchy x1 = 15 )
   end
 
+  fun testValuation00 () =
+  let
+    val x = Values (IntVector.fromList [1])
+  in
+    assertTrue( Values.eq( SDD.values x, IntVector.fromList [1] ))
+  end
+
+  fun testValuation01 () =
+  let
+    val x = Values (IntVector.fromList [1])
+  in
+    (nested x; fail "Must fail")
+    handle x => assertEqualExceptionName x IsNotNested
+  end
+
+  fun testValuation02 () =
+  let
+    val x = Nested one
+  in
+    assertTrue( nested x = one )
+  end
+
+  fun testValuation03 () =
+  let
+    val x = Nested one
+  in
+    (SDD.values x; fail "Must fail")
+    handle x => assertEqualExceptionName x IsNotValues
+  end
+
+  fun testAlpha00 () =
+    (SDD.alpha one; fail "Must fail")
+    handle x => assertEqualExceptionName x IsNotANode
 
   (* ---------------------------------------------------------------- *)
 
@@ -1257,6 +1290,11 @@ struct
       , ("testNbNodes02"         , testNbNodes02       )
       , ("testNbNodes03"         , testNbNodes03       )
       , ("testNbNodes04"         , testNbNodes04       )
+      , ("testValuation00"       , testValuation00     )
+      , ("testValuation01"       , testValuation01     )
+      , ("testValuation02"       , testValuation02     )
+      , ("testValuation03"       , testValuation03     )
+      , ("testAlpha00"           , testAlpha00         )
       ]
 
   (* ---------------------------------------------------------------- *)
