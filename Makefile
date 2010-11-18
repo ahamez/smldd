@@ -50,24 +50,9 @@ check: ./test/main
 ./test/main: $(TESTSOURCES) $(SOURCES)
 	$(ML) $(TESTFLAGS) ./test/main.mlb
 
-EXCLUDE="Assert Posix StreamIOExtra IEEEReal HashTable Date Primitive Real\
-        Net OS Timer Word ImperativeIO Sequence Assert MLton Array \
-        String Substring Socket TextUITestRunner Test \
-        'Util.shuffle.<case NONE>' CacheFun UnicityTableFunID\
-        'DiscreteIntValues.Operations.apply.<case Union \[\]>' BitWord\
-				'squareUnion.mergeSuccs.insert.insertHelper.<case true>'\
-				'squareUnion.mergeVls.insert.<case true>'\
-				'HomFun.Evaluation.apply.<case Id>'\
-				'HomFun.Evaluation.apply.<case Const _>'"
-FILTER=$(shell for i in "$(EXCLUDE)" ; do echo ^$$i\|\\c ; done ; echo "^ ")
-
-EXCLUDE2="String stats Dot"
-FILTER2=$(shell for i in "$(EXCLUDE2)" ; do echo $$i\|\\c ; done ; echo "^ ")
-
 prof: ./test/main-prof
 	@(mkdir -p ./test/run && cd ./test/run && ../main-prof)
-	mlprof -raw true -show-line true ./test/main-prof ./test/run/mlmon.out \
-	| grep '(0)' | grep -v -E -e '$(FILTER)' | grep -v -E -e '$(FILTER2)'
+	@./test/prof.sh
 
 ./test/main-prof: $(TESTSOURCES) $(SOURCES)
 	$(ML) $(TESTFLAGS) $(PROFFLAGS) -output ./test/main-prof ./test/main.mlb

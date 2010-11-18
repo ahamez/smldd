@@ -1,0 +1,52 @@
+##############################################################################
+# Basis and Mlton stuff
+^Assert
+^Posix
+^StreamIOExtra
+^IEEEReal
+^Date
+^Primitive
+^Real
+^Net
+^OS
+^Timer
+^Word
+^ImperativeIO
+^Sequence
+^MLton
+^Array
+^String
+^Substring
+^Socket
+
+##############################################################################
+# External libraries
+^HashTable
+^TextUITestRunner
+
+##############################################################################
+# SMLDDD stuff
+
+# Functions in tests may be not entirely used
+^Test
+
+# Happen only when MLton.Random.seed() is NONE
+^Util.shuffle.<case NONE>
+
+# The following cases raise DoNotPanic. Therefore, they should NEVER happen.
+^HomFun.Evaluation.apply.<case Id>
+^HomFun.Evaluation.apply.<case Const _>
+^squareUnion.mergeSuccs.insert.insertHelper.<case true>
+^squareUnion.mergeVls.insert.<case true>
+^DiscreteIntValues.Operations.apply.<case Union \\[\\]>
+
+##############################################################################
+# SMLDD outputs
+String
+stats
+Dot
+
+##############################################################################
+# SMLDDD stuff, but need to be tested eventually
+^CacheFun
+^UnicityTableFun
