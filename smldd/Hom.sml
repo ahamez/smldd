@@ -10,6 +10,8 @@ signature HOM = sig
   val uid             : hom -> int
 
   val id              : hom
+  val zero            : hom
+  val one             : hom
   val mkCons          : variable -> valuation -> hom -> hom
   val mkConst         : SDD -> hom
   val mkUnion         : hom list -> hom
@@ -581,6 +583,10 @@ fun mkCons var vl next =
 (*--------------------------------------------------------------------------*)
 fun mkConst sdd =
   UT.unify( mkHom (Const(sdd)) )
+
+(*--------------------------------------------------------------------------*)
+val zero = mkConst SDD.zero
+val one  = mkConst SDD.one
 
 (*--------------------------------------------------------------------------*)
 fun mkNested h vr =
