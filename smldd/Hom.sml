@@ -18,7 +18,7 @@ signature HOM = sig
   val mkFixpoint      : hom -> hom
   val mkNested        : hom -> variable -> hom
 
-  datatype UserIn     = Eval of values
+  datatype UserIn     = FuncValues of values
                       | InductiveSkip of variable
                       | InductiveValues of (variable * values)
                       | InductiveOne
@@ -26,7 +26,7 @@ signature HOM = sig
                       | Hash
                       | Print
 
-  datatype UserOut    = EvalRes of values
+  datatype UserOut    = FuncValuesRes of values
                       | InductiveSkipRes of bool
                       | InductiveValuesRes of hom
                       | InductiveOneRes of SDD
@@ -64,8 +64,8 @@ signature HOM = sig
   exception NestedHomOnValues
   exception FunctionHomOnNested
   exception EmptyOperands
-  exception NotUserValues
   exception NotUserHash
+  exception NotFuncValues
   exception NotInductiveSkip
   exception NotInductiveValues
   exception NotInductiveOne
@@ -84,8 +84,8 @@ functor HomFun ( structure SDD : SDD
 exception NestedHomOnValues
 exception FunctionHomOnNested
 exception EmptyOperands
-exception NotUserValues
 exception NotUserHash
+exception NotFuncValues
 exception NotInductiveSkip
 exception NotInductiveValues
 exception NotInductiveOne
@@ -130,7 +130,7 @@ structure Definition (* : DATA *) = struct
                               * t ref list        (* G *)
                               )
 
-  and UserIn = Eval of values
+  and UserIn = FuncValues of values
              | InductiveSkip of variable
              | InductiveValues of (variable * values)
              | InductiveOne
@@ -138,7 +138,7 @@ structure Definition (* : DATA *) = struct
              | Hash
              | Print
 
-  and UserOut = EvalRes of values
+  and UserOut = FuncValuesRes of values
               | InductiveSkipRes of bool
               | InductiveValuesRes of t ref
               | InductiveOneRes of SDD
@@ -370,9 +370,9 @@ type user = (UserIn -> UserOut) ref
 
 (*--------------------------------------------------------------------------*)
 fun funcValues (ref f) v =
-  case f (Eval v ) of
-    EvalRes v => v
-  | _         => raise NotUserValues
+  case f (FuncValues v ) of
+    FuncValuesRes v => v
+  | _               => raise NotFuncValues
 
 (*--------------------------------------------------------------------------*)
 fun inductiveValues (ref i) arc =

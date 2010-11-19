@@ -8,8 +8,8 @@ struct
   open SMLDD.Order
 
   (* ---------------------------------------------------------------- *)
-  fun f3 (Hom.Eval _) =
-    Hom.EvalRes (SV.fromList [1,2,3])
+  fun f3 (Hom.FuncValues _) =
+    Hom.FuncValuesRes (SV.fromList [1,2,3])
   |   f3 Hom.Print =
     Hom.PrintRes "f3"
   |   f3 Hom.Hash =
