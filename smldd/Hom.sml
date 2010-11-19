@@ -19,18 +19,25 @@ signature HOM = sig
   val mkNested        : hom -> variable -> hom
 
   datatype UserIn     = Eval of values
+                      | InductiveSkip of variable
+                      | InductiveValues of (variable * values)
+                      | InductiveOne
                       | Selector
                       | Hash
                       | Print
 
-  datatype UserOut    = EvalRes  of values
+  datatype UserOut    = EvalRes of values
+                      | InductiveSkipRes of bool
+                      | InductiveValuesRes of hom
+                      | InductiveOneRes of SDD
                       | SelectorRes of bool
-                      | HashRes  of Hash.t
+                      | HashRes of Hash.t
                       | PrintRes of string
 
-  type userFunction   = (UserIn -> UserOut) ref
+  type user           = (UserIn -> UserOut) ref
 
-  val mkFunction      : userFunction -> variable -> hom
+  val mkFunction      : user -> variable -> hom
+  val mkInductive     : user -> hom
 
   val eval            : hom -> SDD -> SDD
 
@@ -48,7 +55,8 @@ signature HOM = sig
 (*Commutative composition*) -> (hom list -> 'a)
                (*Fixpoint*) -> (hom -> 'a)
                  (*Nested*) -> (hom -> variable -> 'a)
-               (*Function*) -> (userFunction -> variable -> 'a)
+               (*Function*) -> (user -> variable -> 'a)
+              (*Inductive*) -> (user -> 'a)
                             -> hom
                             -> 'a
   val mkVisitor       : unit -> 'a visitor
@@ -58,6 +66,9 @@ signature HOM = sig
   exception EmptyOperands
   exception NotUserValues
   exception NotUserHash
+  exception NotInductiveSkip
+  exception NotInductiveValues
+  exception NotInductiveOne
 
 end
 
@@ -75,6 +86,9 @@ exception FunctionHomOnNested
 exception EmptyOperands
 exception NotUserValues
 exception NotUserHash
+exception NotInductiveSkip
+exception NotInductiveValues
+exception NotInductiveOne
 
 (*--------------------------------------------------------------------------*)
 type SDD       = SDD.SDD
@@ -83,53 +97,9 @@ type values    = Values.values
 type valuation = SDD.valuation
 
 (*--------------------------------------------------------------------------*)
-datatype UserIn     = Eval of values
-                    | Selector
-                    | Hash
-                    | Print
-
-(*--------------------------------------------------------------------------*)
-datatype UserOut    = EvalRes     of values
-                    | SelectorRes of bool
-                    | HashRes     of Hash.t
-                    | PrintRes    of string
-
-(*--------------------------------------------------------------------------*)
-type userFunction   = (UserIn -> UserOut) ref
-
-(*--------------------------------------------------------------------------*)
-structure H  = Hash
-
-(*--------------------------------------------------------------------------*)
-fun funcValues (ref f) v =
-  case f (Eval v ) of
-    EvalRes v => v
-  | _         => raise NotUserValues
-
-(*--------------------------------------------------------------------------*)
-fun funcSelector (ref f) =
-  (case f Selector of
-    SelectorRes b => b
-  | _             => false
-  )
-  handle Match => false
-
-(*--------------------------------------------------------------------------*)
-fun funcString (ref f) =
-  (case f Print of
-    PrintRes s => s
-  | _          => "???"
-  )
-  handle Match => "???"
-
-(*--------------------------------------------------------------------------*)
-fun funcHash (ref f) =
-  case f Hash of
-    HashRes h => h
-  | _         => raise NotUserHash
-
-(*--------------------------------------------------------------------------*)
 structure Definition (* : DATA *) = struct
+
+  structure H = Hash
 
   datatype t = Hom of ( hom * int )
   and hom    = Id
@@ -142,6 +112,7 @@ structure Definition (* : DATA *) = struct
              | Fixpoint    of ( t ref )
              | Nested      of ( t ref * variable )
              | Func        of ( (UserIn -> UserOut) ref * variable )
+             | Inductive   of (UserIn -> UserOut) ref
              | SatUnion    of ( variable
                               * (t ref) option
                               * t ref list
@@ -159,7 +130,35 @@ structure Definition (* : DATA *) = struct
                               * t ref list        (* G *)
                               )
 
-  fun eq (Hom(x,_),Hom(y,_)) =
+  and UserIn = Eval of values
+             | InductiveSkip of variable
+             | InductiveValues of (variable * values)
+             | InductiveOne
+             | Selector
+             | Hash
+             | Print
+
+  and UserOut = EvalRes of values
+              | InductiveSkipRes of bool
+              | InductiveValuesRes of t ref
+              | InductiveOneRes of SDD
+              | SelectorRes of bool
+              | HashRes of Hash.t
+              | PrintRes of string
+
+  fun funcString (ref f) =
+    (case f Print of
+      PrintRes s => s
+    | _          => "???"
+    )
+    handle Match => "???"
+
+  fun funcHash (ref f) =
+    case f Hash of
+      HashRes h => h
+    | _         => raise NotUserHash
+
+ fun eq (Hom(x,_),Hom(y,_)) =
     case (x,y) of
       ( Id, Id )                   => true
     | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
@@ -173,6 +172,7 @@ structure Definition (* : DATA *) = struct
     | ( Fixpoint h, Fixpoint i )   => h = i
     | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
     | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
+    | ( Inductive i, Inductive j)  => i = j
     | ( SatUnion(v, F, G, L)
       , SatUnion(v',F',G',L'))     => F = F' andalso G = G' andalso L = L'
                                       andalso Variable.eq(v,v')
@@ -234,6 +234,9 @@ structure Definition (* : DATA *) = struct
     | Func(f,v)   => H.hashCombine( H.hashInt 7837892
                                   , H.hashCombine( Variable.hash v
                                                  , funcHash f )
+                                  )
+    | Inductive i => H.hashCombine( H.hashInt 42429527
+                                  , funcHash i
                                   )
     | SatUnion( v, F, G, L) =>
     let
@@ -318,7 +321,7 @@ structure Definition (* : DATA *) = struct
                                ^ (Variable.toString v) ^ ")"
     | Func(f,v)   => "Func(" ^ (funcString f) ^ ","
                       ^ (Variable.toString v) ^ ")"
-
+    | Inductive i => "Inductive(" ^ (funcString i) ^ ")"
     | SatUnion(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
                                 ^ (String.concatWith " + "
@@ -361,6 +364,41 @@ type hom     = Definition.t ref
 
 structure UT = UnicityTableFunID( structure Data = Definition )
 structure HT = HashTable
+
+(*--------------------------------------------------------------------------*)
+type user = (UserIn -> UserOut) ref
+
+(*--------------------------------------------------------------------------*)
+fun funcValues (ref f) v =
+  case f (Eval v ) of
+    EvalRes v => v
+  | _         => raise NotUserValues
+
+(*--------------------------------------------------------------------------*)
+fun inductiveValues (ref i) arc =
+  case i (InductiveValues arc) of
+    InductiveValuesRes h => h
+  | _                    => raise NotInductiveValues
+
+(*--------------------------------------------------------------------------*)
+fun inductiveOne (ref i) =
+  case i InductiveOne of
+    InductiveOneRes s => s
+  | _                 => raise NotInductiveOne
+
+(*--------------------------------------------------------------------------*)
+fun inductiveSkip (ref i) var =
+  case i (InductiveSkip var ) of
+    InductiveSkipRes b => b
+  | _                  => raise NotInductiveSkip
+
+(*--------------------------------------------------------------------------*)
+fun funcSelector (ref f) =
+  (case f Selector of
+    SelectorRes b => b
+  | _             => false
+  )
+  handle Match => false
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an homomorphism with an id *)
@@ -684,6 +722,10 @@ fun mkFunction f var =
   UT.unify( mkHom (Func(f,var)) )
 
 (*--------------------------------------------------------------------------*)
+fun mkInductive i =
+  UT.unify( mkHom (Inductive i) )
+
+(*--------------------------------------------------------------------------*)
 fun mkSatUnion var F G L =
   UT.unify( mkHom (SatUnion(var, F, G, L)) )
 
@@ -735,6 +777,7 @@ fun skipVariable var (ref (Hom(h,_))) =
   | ComComp hs           => List.all (skipVariable var) hs
   | Fixpoint f           => skipVariable var f
   | Func(_,v)            => not (Variable.eq (var,v))
+  | Inductive i          => inductiveSkip i var
   | SatUnion(v,_,_,_)    => not (Variable.eq (var,v))
   | SatInter(v,_,_,_)    => not (Variable.eq (var,v))
   | SatFixpoint(v,_,_,_) => not (Variable.eq (var,v))
@@ -1060,6 +1103,29 @@ fun function f var sdd =
               )
 
 (*--------------------------------------------------------------------------*)
+fun inductive lookup i sdd =
+  if sdd = SDD.one then
+    inductiveOne i
+  else
+  let
+    val var = SDD.variable sdd
+  in
+    SDD.union (foldl (fn ( ( v, succ ), acc ) =>
+                       case v of
+                         SDD.Nested _  => raise Domain
+                       | SDD.Values vl =>
+                       let
+                         val h = inductiveValues i (var,vl)
+                       in
+                         SDD.insert acc (evalCallback lookup h succ)
+                       end
+                     )
+                     []
+                     (SDD.alpha sdd)
+              )
+  end
+
+(*--------------------------------------------------------------------------*)
 val evals   = ref 0
 val skipped = ref 0
 
@@ -1112,6 +1178,7 @@ in
     | Fixpoint g            => fixpoint lookup g sdd
     | Nested( g, var )      => nested lookup g var sdd
     | Func( f, var )        => function f var sdd
+    | Inductive i           => inductive lookup i sdd
     | SatUnion( _, F, G, L) => satUnion lookup F G L sdd
     | SatInter( _, F, G, L) => satIntersection lookup F G L sdd
     | SatFixpoint(_,F,G,L)  => satFixpoint lookup F G L sdd
@@ -1155,7 +1222,8 @@ type 'a visitor =
 (*Commutative composition*) -> (hom list -> 'a)
                (*Fixpoint*) -> (hom -> 'a)
                  (*Nested*) -> (hom -> variable -> 'a)
-               (*Function*) -> (userFunction -> variable -> 'a)
+               (*Function*) -> (user -> variable -> 'a)
+              (*Inductive*) -> (user -> 'a)
                             -> hom
                             -> 'a
 
@@ -1163,7 +1231,9 @@ type 'a visitor =
 fun mkVisitor (():unit) : 'a visitor =
 let
 
-  fun visitor id cons const union inter comp comcomp fixpoint nested func h =
+  fun visitor id cons const union inter comp comcomp fixpoint nested func
+              inductive h
+  =
   let
     val ref(Hom(x,_)) = h
   in
@@ -1178,6 +1248,7 @@ let
     | Fixpoint h      => fixpoint h
     | Nested(h,v)     => nested h v
     | Func(f,v)       => func f v
+    | Inductive i     => inductive i
     | _               => raise DoNotPanic
   end
 
