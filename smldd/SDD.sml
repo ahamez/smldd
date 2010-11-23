@@ -71,21 +71,21 @@ structure H  = Hash
 (* Define an SDD *)
 structure Definition (* : DATA *) = struct
 
-  datatype t    = iSDD of ( sdd * int )
-  and sdd       = Zero
-                | One
-                | Node of  { variable : variable
-                           , alpha : (storedValues * t) Vector.vector
-                           }
-                | HNode of { variable : variable
-                           , alpha : (t * t) Vector.vector
-                           }
+  datatype sdd = Zero
+               | One
+               | Node of { variable : variable
+                         , alpha : (storedValues * t) Vector.vector
+                         }
+               | HNode of { variable : variable
+                          , alpha : (t * t) Vector.vector
+                          }
+  withtype t = (sdd * int)
 
   (* Compare two SDDs.
      At this point, we can't use the identifier to know if two SDDs are
      equals because this equality is called by the unicity table which is
      responsible for the generation of this id.= *)
-  fun eq ( iSDD(lsdd,_), iSDD(rsdd,_) ) =
+  fun eq ( (lsdd,_), (rsdd,_) ) =
     case ( lsdd, rsdd ) of
 
         ( Zero, Zero ) => true
@@ -100,8 +100,8 @@ structure Definition (* : DATA *) = struct
                 true
               else
               let
-                val ( lvl, iSDD(_,luid) ) = Vector.sub( lalpha, i)
-                val ( rvl, iSDD(_,ruid) ) = Vector.sub( ralpha, i)
+                val ( lvl, (_,luid) ) = Vector.sub( lalpha, i)
+                val ( rvl, (_,ruid) ) = Vector.sub( ralpha, i)
               in
                 if Values.storedEq(lvl,rvl) andalso luid = ruid then
                   loop (i+1)
@@ -122,9 +122,9 @@ structure Definition (* : DATA *) = struct
               fun loop 0 = true
               |   loop i =
               let
-                val ( iSDD(_,lvluid), iSDD(_,luid) ) =
+                val ( (_,lvluid), (_,luid) ) =
                   Vector.sub( lalpha, i - 1)
-                val ( iSDD(_,rvluid), iSDD(_,ruid) ) =
+                val ( (_,rvluid), (_,ruid) ) =
                   Vector.sub( ralpha, i - 1)
               in
                 if lvluid = rvluid andalso luid = ruid then
@@ -141,14 +141,14 @@ structure Definition (* : DATA *) = struct
 
       | ( _ , _ ) => false
 
-  fun hash (iSDD(sdd,_)) =
+  fun hash (sdd,_) =
     case sdd of
       Zero => H.hashInt 0
     | One  => H.hashInt 1
     | Node{ variable=var, alpha=alpha } =>
     let
       val hsh =
-        Vector.foldl (fn ( ( vl, iSDD(_,uid)), acc ) =>
+        Vector.foldl (fn ( ( vl, (_,uid)), acc ) =>
                        H.hashCombine( acc
                                     , H.hashCombine( Values.storedHash vl
                                                    , H.hashInt uid
@@ -163,7 +163,7 @@ structure Definition (* : DATA *) = struct
     | HNode{ variable=var, alpha=alpha } =>
     let
       val hsh =
-        Vector.foldl (fn ( ( iSDD(_,vluid), iSDD(_,succuid) ) , acc ) =>
+        Vector.foldl (fn ( ( (_,vluid), (_,succuid) ) , acc ) =>
                        H.hashCombine( acc
                                     , H.hashCombine( H.hashInt vluid
                                                    , H.hashInt succuid
@@ -201,7 +201,7 @@ exception IsNotNested
 
 (*--------------------------------------------------------------------------*)
 (* Export an SDD to a string *)
-fun toString (iSDD(sdd,_)) =
+fun toString (sdd,_) =
 let
   fun nodeHelper vlToString vr alpha =
    "(" ^ (Variable.toString vr) ^ ")" ^ " [ " ^
@@ -223,7 +223,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Extract the identifier of an SDD *)
-fun uid (iSDD(_,x)) = x
+fun uid (_,x) = x
 fun eq (x,y) = uid x = uid y
 
 (*--------------------------------------------------------------------------*)
@@ -242,7 +242,7 @@ fun insert [] x = [x]
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an SDD with an id *)
-fun mkNode node uid = iSDD( node, uid )
+fun mkNode node uid = ( node, uid )
 
 (*--------------------------------------------------------------------------*)
 (* Return the |0| ("zero") terminal *)
@@ -257,7 +257,7 @@ fun empty x = eq( x, zero )
 
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
-fun flatNode ( var, values, rnext as (iSDD(next,_)) ) =
+fun flatNode ( var, values, rnext as (next,_) ) =
   case ( Values.storedEmpty values , next ) of
     (_,Zero) => zero
   | (true,_) => zero
@@ -278,7 +278,7 @@ fun flatNodeAlpha ( var, alpha ) =
 
 (*--------------------------------------------------------------------------*)
 (* Return an hierarchical node. Not exported *)
-fun hierNode ( var, rnested as (iSDD(nested,_)) , rnext as (iSDD(next,_)) ) =
+fun hierNode ( var, rnested as (nested,_) , rnext as (next,_) ) =
   case ( next, nested ) of
       ( Zero , _ ) => zero
     | ( _ , Zero ) => zero
@@ -333,7 +333,7 @@ datatype operation = Union of ( SDD list * (operation -> result)  )
 fun checkCompatibility []     = raise DoNotPanic
 |   checkCompatibility(x::xs) =
 
-  foldl (fn ( iSDD(sx,_), y as (iSDD(sy,_)) ) =>
+  foldl (fn ( (sx,_), y as (sy,_) ) =>
         case (sx,sy) of
             (Zero,_)  => raise DoNotPanic
           | (_,Zero)  => raise DoNotPanic
@@ -368,7 +368,7 @@ fun alphaToList alpha =
    Warning! Duplicate logic with alphaNodeToList! *)
 fun flatAlphaNodeToList n =
   case n of
-    iSDD(Node{alpha=alpha,...},_) => alphaToList alpha
+    (Node{alpha=alpha,...},_) => alphaToList alpha
   | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
@@ -376,7 +376,7 @@ fun flatAlphaNodeToList n =
    Warning! Duplicate logic with flatAlphaNodeToList! *)
 fun alphaNodeToList n =
   case n of
-    iSDD(HNode{alpha=alpha,...},_) => alphaToList alpha
+    (HNode{alpha=alpha,...},_) => alphaToList alpha
   | _ => raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
@@ -414,7 +414,7 @@ fun union cacheLookup xs =
 let
   val _ = checkCompatibility xs
 in
-  case let val iSDD(x,_) = hd xs in x end of
+  case let val (x,_) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => one
@@ -488,7 +488,7 @@ end (* end fun union *)
 (*--------------------------------------------------------------------------*)
 (* N-ary intersection of SDDs *)
 fun intersection cacheLookup xs =
-  case let val iSDD(x,_) = hd xs in x end of
+  case let val (x,_) = hd xs in x end of
 
   (* All operands are |1| *)
     One        => checkCompatibility xs
@@ -546,7 +546,7 @@ fun intersection cacheLookup xs =
 
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
-fun difference cacheLookup ( iSDD(l,_), iSDD(r,_) ) =
+fun difference cacheLookup ( (l,_), (r,_) ) =
 let
   fun nodeDifference lvr rvr la ra vlEq
                      vlUnion vlInter vlDiff vlEmpty vlLt hierNodeAlpha
@@ -645,12 +645,12 @@ fun apply (Union( xs, cacheLookup))  = union        cacheLookup xs
 fun hash x =
 let
   fun hashOperands( h0, xs ) =
-    foldl (fn ( iSDD(_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
+    foldl (fn ( (_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
 in
   case x of
     Union(xs,_)  => hashOperands( H.hashInt 15411567, xs)
   | Inter(xs,_ ) => hashOperands( H.hashInt 78995947, xs)
-  | Diff( iSDD(_,luid), iSDD(_,ruid) ,_ ) =>
+  | Diff( (_,luid), (_,ruid) ,_ ) =>
       H.hashCombine( H.hashInt 94169137
                    , H.hashCombine( H.hashInt luid
                                   , H.hashInt ruid ) )
@@ -769,7 +769,7 @@ fun nodeAlpha ( _ , []    ) = zero
 
 (*--------------------------------------------------------------------------*)
 (* Return the variable of an SDD. Needed by HomFun*)
-fun variable (iSDD(x,_)) =
+fun variable (x,_) =
   case x of
     Node{variable=var,...}  => var
   | HNode{variable=var,...} => var
@@ -784,7 +784,7 @@ fun nested x = case x of Values _ => raise IsNotNested
                        | Nested s => s
 
 (*--------------------------------------------------------------------------*)
-fun alpha (iSDD(sdd,_)) =
+fun alpha (sdd,_) =
 let
   fun alphaHelper a f =
       Vector.foldr
@@ -800,7 +800,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Return the hash value of a valuation. Needed by HomFun *)
-fun hashValuation (Nested(iSDD(_,uid))) = H.hashInt uid
+fun hashValuation (Nested(_,uid)) = H.hashInt uid
 |   hashValuation (Values v)            = Values.hash v
 
 (*--------------------------------------------------------------------------*)
@@ -831,7 +831,7 @@ let
 
   fun visitorBase zero one node s =
   let
-    val iSDD(x,uid) = s
+    val (x,uid) = s
   in
     case x of
       Zero                      => zero ()
