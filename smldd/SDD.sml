@@ -189,7 +189,7 @@ type SDD = Definition.t
 datatype valuation = Nested of SDD | Values of values
 
 (*--------------------------------------------------------------------------*)
-structure SDDUT = UnicityTableFunID2( structure Data = Definition )
+structure SDDUT = UnicityTableFunID( structure Data = Definition )
 structure H  = Hash
 structure HT = HashTable
 

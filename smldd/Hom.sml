@@ -380,7 +380,7 @@ open Definition
 (*--------------------------------------------------------------------------*)
 type hom     = Definition.t
 
-structure UT = UnicityTableFunID2( structure Data = Definition )
+structure UT = UnicityTableFunID( structure Data = Definition )
 structure HT = HashTable
 
 (*--------------------------------------------------------------------------*)

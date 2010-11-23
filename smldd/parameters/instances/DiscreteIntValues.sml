@@ -29,7 +29,7 @@ type values = SV.t
 type value  = int
 
 (*--------------------------------------------------------------------------*)
-structure UT = UnicityTableFunID2 ( structure Data = Definition )
+structure UT = UnicityTableFunID ( structure Data = Definition )
 
 (*--------------------------------------------------------------------------*)
 fun uid (_,x) = x
