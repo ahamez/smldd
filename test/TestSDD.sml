@@ -56,9 +56,8 @@ struct
   let
     val s0 : SDD.SDD = node( 0, values [1,2,3], one )
     val u0 : SDD.SDD = union [s0,zero]
-    val _ = u0 = s0
   in
-    assertTrue( u0 = s0 )
+    assertTrue( SDD.eq(u0,s0) )
   end
 
   fun testFlatUnion04 () =
@@ -72,7 +71,7 @@ struct
     val u0 = union [s0,s1,s2,s3,s4,s5]
     val o0 = node( 0, values [~273,0,1,2,3,17,33,42,43,44,666], one)
   in
-    assertTrue( u0 = o0 )
+    assertTrue( SDD.eq(u0,o0) )
   end
 
   fun testFlatUnion05 () =
@@ -99,7 +98,7 @@ struct
                      , node( 0, values [0,1,2,3], one )
                      )
   in
-    assertTrue( u0 = o0 )
+    assertTrue( SDD.eq(u0,o0) )
   end
 
   fun testFlatUnion07 () =
@@ -107,7 +106,7 @@ struct
     val s0 = node( 0, values [1,2,3], one )
     val u0 = union [s0,s0]
   in
-    assertTrue( u0 = s0 )
+    assertTrue( SDD.eq(u0,s0) )
   end
 
   fun testFlatUnion08 () =
@@ -136,7 +135,7 @@ struct
 
     val u3 = union [u1,u2]
   in
-    assertTrue( u0 = u3 )
+    assertTrue( SDD.eq(u0,u3) )
   end
 
   fun testFlatUnion09 () =
@@ -151,7 +150,7 @@ struct
                node( 0, values [1], one))
     val u2 = union [u0,s2]
   in
-    assertTrue( u0 = u2 )
+    assertTrue( SDD.eq(u0,u2) )
   end
 
   fun testFlatUnion10 () =
@@ -159,7 +158,7 @@ struct
     val s0 = node( 0, values [1,2,3], one )
     val u0 = union [s0,s0,s0,s0,s0,s0,s0]
   in
-    assertTrue( u0 = s0 )
+    assertTrue( SDD.eq(u0,s0) )
   end
 
   fun testFlatUnion11 () =
@@ -173,7 +172,7 @@ struct
     val u2 = union [s11,s13,s15]
     val u3 = union [s13,s15,s11]
   in
-    assertTrue( u2 = u3 )
+    assertTrue( SDD.eq(u2,u3) )
   end
 
   fun testFlatUnion12 () =
@@ -185,7 +184,7 @@ struct
     val u0 = union [s2,s3]
     val u1 = union [s3,s2]
   in
-    assertTrue( u0 = u1 )
+    assertTrue( SDD.eq(u0,u1) )
   end
 
   fun testFlatUnion13 () =
@@ -199,7 +198,7 @@ struct
     val u1 = union [s5,s7,s9]
     val u2 = union [s7,s5,s9]
   in
-    assertTrue( u1 = u2 )
+    assertTrue( SDD.eq(u1,u2) )
   end
 
   fun testFlatUnion14 () =
@@ -225,7 +224,7 @@ struct
     val s9 = union [s3,s1,s5]
 
   in
-    assertTrue( s8 = s9 )
+    assertTrue( SDD.eq(s8,s9) )
   end
 
   fun testFlatInter00 () =
@@ -235,7 +234,7 @@ struct
     val i1 = intersection [s0,s1]
     val o0 = node( 0, values [2,3], one )
   in
-    assertTrue( i1 = o0 )
+    assertTrue( SDD.eq(i1,o0) )
   end
 
   fun testFlatInter01 () =
@@ -243,7 +242,7 @@ struct
     val s0 = node( 0, values [1,2,3], one )
     val i1 = intersection [s0,zero]
   in
-    assertTrue( i1 = zero )
+    assertTrue( SDD.empty i1 )
   end
 
   fun testFlatInter02 () =
@@ -251,7 +250,7 @@ struct
     val s0 = node( 0, values [1,2,3], one )
     val i1 = intersection [s0,s0]
   in
-    assertTrue( i1 = s0 )
+    assertTrue( SDD.eq(i1,s0) )
   end
 
   fun testFlatInter03 () =
@@ -277,7 +276,7 @@ struct
     val s1 = node( 42, values [4,5,6,7], one )
     val i0 = intersection [s0, s1]
   in
-    assertTrue( i0 = zero )
+    assertTrue( SDD.empty i0 )
   end
 
   fun testFlatInter06 () =
@@ -288,7 +287,7 @@ struct
     val s3 = node( 0, values [0], s1 )
     val i0 = intersection [s2, s3]
   in
-    assertTrue( i0 = zero )
+    assertTrue( SDD.empty i0 )
   end
 
   fun testFlatInter07 () =
@@ -307,7 +306,7 @@ struct
 
     val i0 = intersection [u0,u1]
   in
-    assertTrue( i0 = zero )
+    assertTrue( SDD.empty i0 )
   end
 
   fun testFlatInter08 () =
@@ -326,7 +325,7 @@ struct
                      , node( 0, values [0], one ) )
 
   in
-    assertTrue( i0 = o0 )
+    assertTrue( SDD.eq(i0,o0))
   end
 
   fun testFlatInter09 () =
@@ -344,7 +343,7 @@ struct
     val o0 = node( 1, values [1]
                      , node( 0, values [0], one ) )
   in
-    assertTrue( i0 = o0 )
+    assertTrue( SDD.eq(i0,o0) )
   end
 
   fun testFlatInter10 () =
@@ -365,14 +364,14 @@ struct
     val o0 = node( 1, values [1]
                      , node( 0, values [0], one ) )
   in
-    assertTrue( i0 = o0 )
+    assertTrue( SDD.eq(i0,o0) )
   end
 
   fun testFlatInter11 () =
-    assertTrue( intersection [one,one] = one )
+    assertTrue( SDD.eq(intersection [one,one],  one ) )
 
   fun testFlatInter12 () =
-    assertTrue( intersection [one,zero] = zero )
+    assertTrue( SDD.empty(intersection [one,zero]) )
 
   fun testFlatInter13 () =
   let
@@ -400,7 +399,7 @@ struct
                        , node( 0, values [8], one ) )
              ]
   in
-    assertTrue( i0 = o0 )
+    assertTrue( SDD.eq(i0,o0) )
   end
 
   fun testFlatInter14 () =
@@ -427,7 +426,7 @@ struct
                  ,  node( 0, values [0], one )))
 
   in
-    assertTrue( i0 = o0 )
+    assertTrue( SDD.eq(i0,o0) )
   end
 
   fun testFlatInter15 () =
@@ -456,7 +455,7 @@ struct
   let
     val d0 = difference( one, one )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff01 () =
@@ -465,7 +464,7 @@ struct
     val s1 = node( 0, values [4,5,6,7], one )
     val d0 = difference( s1, s0 )
   in
-    assertTrue( d0 = s1 )
+    assertTrue( SDD.eq(d0,s1) )
   end
 
   fun testFlatDiff02 () =
@@ -474,7 +473,7 @@ struct
     val s1 = node( 0, values [4,5,6,7], one )
     val d0 = difference( s0, s1 )
   in
-    assertTrue( d0 = s0 )
+    assertTrue( SDD.eq(d0,s0) )
   end
 
   fun testFlatDiff03 () =
@@ -484,7 +483,7 @@ struct
     val d0 = difference( s0, s1 )
     val o0 = node( 0, values [1,2], one )
   in
-    assertTrue( d0 = o0 )
+    assertTrue( SDD.eq(d0,o0) )
   end
 
   fun testFlatDiff04 () =
@@ -493,7 +492,7 @@ struct
     val s1 = node( 0, values [0,3], one )
     val d0 = difference( s1, s0 )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff05 () =
@@ -503,7 +502,7 @@ struct
     val d0 = difference( s1, s0 )
     val o0 = node( 0, values [4], one )
   in
-    assertTrue( d0 = o0 )
+    assertTrue( SDD.eq(d0,o0) )
   end
 
   fun testFlatDiff06 () =
@@ -515,7 +514,7 @@ struct
     val u0 = union [s2,s3]
     val d0 = difference( u0, s2 )
   in
-    assertTrue( d0 = s3 )
+    assertTrue( SDD.eq(d0,s3) )
   end
 
   fun testFlatDiff07 () =
@@ -527,7 +526,7 @@ struct
     val u0 = union [s2,s3]
     val d0 = difference( u0, s3 )
   in
-    assertTrue( d0 = s2 )
+    assertTrue( SDD.eq(d0,s2) )
   end
 
   fun testFlatDiff08 () =
@@ -569,7 +568,7 @@ struct
     val s0 = node( 0, values [0], one )
     val d0 = difference( s0, zero )
   in
-    assertTrue( d0 = s0 )
+    assertTrue( SDD.eq(d0,s0) )
   end
 
   fun testFlatDiff13 () =
@@ -577,21 +576,21 @@ struct
     val s0 = node( 0, values [0], one )
     val d0 = difference( zero, s0 )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff14 () =
   let
     val d0 = difference( zero, one )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff15 () =
   let
     val d0 = difference( one, zero )
   in
-    assertTrue( d0 = one )
+    assertTrue( SDD.eq(d0,one) )
   end
 
   fun testFlatDiff16 () =
@@ -635,7 +634,7 @@ struct
                    node( 0, values [2,3], one)))
              ]
   in
-    assertTrue( d0 = o0 )
+    assertTrue( SDD.eq(d0,o0) )
   end
 
   fun testFlatDiff17 () =
@@ -669,7 +668,7 @@ struct
                    node( 0, values [0,3], one)))
              ]
   in
-    assertTrue( d0 = o0 )
+    assertTrue( SDD.eq(d0,o0) )
   end
 
   fun testFlatDiff18 () =
@@ -695,7 +694,7 @@ struct
                    node( 0, values [0,1], one)))
              ]
   in
-    assertTrue( d0 = o0 )
+    assertTrue( SDD.eq(d0,o0) )
   end
 
   fun testFlatDiff19 () =
@@ -710,7 +709,7 @@ struct
 
     val d0 = difference ( s5, s2 )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff20 () =
@@ -729,7 +728,7 @@ struct
 
     val d0 = difference ( s11, u0 )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff21 () =
@@ -752,7 +751,7 @@ struct
 
     val d0 = difference ( u1, u0 )
   in
-    assertTrue( d0 = zero )
+    assertTrue( SDD.empty d0 )
   end
 
   fun testFlatDiff23 () =
@@ -772,7 +771,7 @@ struct
     val d1 = difference ( u0, s12 )
     val u1 = union [d0,d1]
   in
-    assertTrue( u0 = u1 )
+    assertTrue( SDD.eq(u0,u1) )
   end
 
   fun testFlatDiff24 () =
@@ -802,7 +801,7 @@ struct
                  node( 0, values [2,3], one))
              ]
   in
-    assertTrue( d0 = o0 )
+    assertTrue( SDD.eq(d0,o0) )
   end
 
   fun testFlatDiff25 () =
@@ -812,30 +811,32 @@ struct
     val d0 = difference( s0, s1 )
     val u0 = union[d0,s1]
   in
-    assertTrue( s0 = u0 )
+    assertTrue( SDD.eq(s0,u0) )
   end
 
   fun testMkNode00 () =
-    assertTrue( node( 0, Nested zero , one  ) = zero )
+    assertTrue( SDD.empty(node( 0, Nested zero , one  )) )
 
   fun testMkNode01 () =
-    assertTrue( node( 0, Nested one, zero ) = zero )
+    assertTrue( SDD.empty(node( 0, Nested one, zero )) )
 
   fun testMkNode02 () =
-    assertTrue( node( 0, Nested (node( 1, Nested zero, one )), one ) = zero )
+    assertTrue( SDD.empty(
+                    node( 0, Nested (node( 1, Nested zero, one )), one )
+                         )
+              )
 
   fun testMkNode03 () =
-    assertTrue( node( 0, Nested (node( 1, Nested zero, one )), zero ) = zero )
+    assertTrue( SDD.empty(
+                    node( 0, Nested (node( 1, Nested zero, one )), zero )
+                         )
+              )
 
   fun testMkNode04 () =
-    assertTrue( node( 0, Nested(node(1,values [1],zero)), one)
-                = zero
-              )
+    assertTrue( SDD.empty(node( 0, Nested(node(1,values [1],zero)), one)))
 
   fun testMkNode05 () =
-    assertTrue( node( 0, Nested(node(1,values [],one)), one)
-                = zero
-              )
+    assertTrue( SDD.empty(node( 0, Nested(node(1,values [],one)), one)) )
 
   fun testUnion00 () =
   let
@@ -847,7 +848,7 @@ struct
     val o0 = node( 0, values [0,1,2,3], one)
     val y0 = node( 0, Nested o0, one )
   in
-    assertTrue( u0 = y0 )
+    assertTrue( SDD.eq(u0,y0) )
   end
 
   fun testUnion01 () =
@@ -856,7 +857,7 @@ struct
     val x0 = node( 0, Nested s0, one )
     val u0 = union [x0,zero]
   in
-    assertTrue( u0 = x0 )
+    assertTrue( SDD.eq(u0,x0) )
   end
 
   fun testUnion02 () =
@@ -865,7 +866,7 @@ struct
     val x0 = node( 0, Nested s0, one )
     val u0 = union [x0,x0,x0,x0,x0]
   in
-    assertTrue( u0 = x0 )
+    assertTrue( SDD.eq(u0,x0) )
   end
 
   fun testUnion03 () =
@@ -915,7 +916,7 @@ struct
     val x0 = node( 0, Nested s0, one )
     val u0 = union [zero,x0,zero,x0,zero,x0,zero,x0,zero,x0,zero]
   in
-    assertTrue( u0 = x0 )
+    assertTrue( SDD.eq(u0,x0) )
   end
 
   fun testPaths00 () =
@@ -1189,7 +1190,7 @@ struct
   let
     val x = Nested one
   in
-    assertTrue( nested x = one )
+    assertTrue( SDD.eq(nested x,one) )
   end
 
   fun testValuation03 () =

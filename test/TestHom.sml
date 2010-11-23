@@ -104,14 +104,14 @@ val values = Values o SV.fromList
 
 (*--------------------------------------------------------------------------*)
   fun testId00 () =
-    assertTrue( eval id one = one )
+    assertTrue( SDD.eq(eval id one,one) )
 
 (*--------------------------------------------------------------------------*)
   fun testId01 () =
   let
     val s0 = node( 0, values [0,1], one )
   in
-    assertTrue( eval id s0 = s0 )
+    assertTrue( SDD.eq(eval id s0, s0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -123,7 +123,7 @@ val values = Values o SV.fromList
     val c0 = eval h0 x1
     val y0 = node( 1, Nested s0, x1 )
   in
-    assertTrue( c0 = y0 )
+    assertTrue( SDD.eq(c0 ,y0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -135,7 +135,7 @@ val values = Values o SV.fromList
     val c0 = eval h0 x1
     val c1 = eval h0 x1
   in
-    assertTrue( c0 = c1 )
+    assertTrue( SDD.eq(c0,c1) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -145,7 +145,7 @@ val values = Values o SV.fromList
     val h0 = mkCons 0 (values [0]) id
     val c0 = eval h0 one
   in
-    assertTrue( c0 = s0 )
+    assertTrue( SDD.eq(c0,s0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -156,7 +156,7 @@ val values = Values o SV.fromList
     val h0 = mkConst one
     val c0 = eval h0 x1
   in
-    assertTrue( c0 = one )
+    assertTrue( SDD.eq(c0,one) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -165,7 +165,7 @@ val values = Values o SV.fromList
     val h0 = mkConst one
     val c0 = eval h0 zero
   in
-    assertTrue( c0 = one )
+    assertTrue( SDD.eq(c0,one) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -176,7 +176,7 @@ val values = Values o SV.fromList
     val s1 = eval h0 s0
     val o0 = node( 0, values[1,2,3,4], one )
   in
-    assertTrue( s1 = o0 )
+    assertTrue( SDD.eq( s1,o0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -185,7 +185,7 @@ val values = Values o SV.fromList
     val h0 = mkFunction (ref (f0 0)) 0
     val s0 = eval h0 SDD.zero
   in
-    assertTrue( s0 = SDD.zero )
+    assertTrue( SDD.empty s0 )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -195,7 +195,7 @@ val values = Values o SV.fromList
     val h0 = mkFunction (ref (f0 1)) 1
     val s1 = eval h0 s0
   in
-    assertTrue( s1 = s0 )
+    assertTrue( SDD.eq(s1,s0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -206,7 +206,7 @@ val values = Values o SV.fromList
     val s1 = eval h0 s0
     val o0 = node( 0, values[3,4], one )
   in
-    assertTrue( s1 = o0 )
+    assertTrue( SDD.eq(s1,o0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -216,7 +216,7 @@ val values = Values o SV.fromList
     val h0   = mkFunction (ref f2) 0
     val s1   = eval h0 s0
   in
-    assertTrue( s1 = SDD.zero )
+    assertTrue( SDD.empty s1 )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -232,7 +232,7 @@ val values = Values o SV.fromList
     val o0   = node( 0, values[1,2,3], one )
     val o1   = node( 1, values[0,1]  , o0  )
   in
-    assertTrue( s5 = o1 )
+    assertTrue( SDD.eq(s5,o1) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -245,7 +245,7 @@ let
   val o0 = node( 0, values[1,2,3,4], one )
   val o1 = node( 1, values[0,1,2,3], o0 )
 in
-  assertTrue( s2 = o1 )
+  assertTrue( SDD.eq(s2,o1) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -256,7 +256,7 @@ let
   val h0   = mkFunction (ref f2) 0
   val s2   = eval h0 s1
 in
-  assertTrue( s2 = zero )
+  assertTrue( SDD.empty s2  )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -288,7 +288,7 @@ let
   val h0   = mkFunction (ref f2) 1
   val s2   = eval h0 s1
 in
-  assertTrue( s2 = zero )
+  assertTrue( SDD.empty s2 )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -331,7 +331,7 @@ let
   val h0 = mkNested id 0
   val r0 = eval h0 x0
 in
-  assertTrue( r0 = x0 )
+  assertTrue( SDD.eq(r0,x0) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -354,7 +354,7 @@ let
   val y0 = node( 0, Nested o0, one )
 
 in
-  assertTrue( y0 = x1 )
+  assertTrue( SDD.eq(y0,x1) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -371,7 +371,7 @@ let
   val y0 = node( 0, Nested o0, one )
   val y1 = node( 1, Nested o1, y0 )
 in
-  assertTrue( y1 = x2 )
+  assertTrue( SDD.eq(y1,x2) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -384,7 +384,7 @@ let
   val x1   = node( 1, Nested s0, x0 )
   val x2   = eval h1 x1
 in
-  assertTrue( x2 = zero )
+  assertTrue( SDD.empty x2 )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -397,7 +397,7 @@ let
   val x1   = node( 1, Nested s0, x0 )
   val x2   = eval h1 x1
 in
-  assertTrue( x2 = zero )
+  assertTrue( SDD.empty x2 )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -410,7 +410,7 @@ let
   val x1   = node( 1, Nested s0, x0 )
   val x2   = eval h1 x1
 in
-  assertTrue( x2 = x1 )
+  assertTrue( SDD.eq(x2,x1) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -444,7 +444,7 @@ let
   val x1   = node( 1, Nested s0, x0 )
   val x2   = eval h1 x1
 in
-  assertTrue( x2 = x1 )
+  assertTrue( SDD.eq(x2,x1) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -454,7 +454,7 @@ let
   val s0 = node( 0, values [0,1,2], one)
   val s1 = eval h0 s0
 in
-  assertTrue( s1 = s0 )
+  assertTrue( SDD.eq(s1,s0) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -464,7 +464,7 @@ let
   val s0 = node( 0, values [0,1,2], one)
   val s1 = eval h0 s0
 in
-  assertTrue( s1 = s0 )
+  assertTrue( SDD.eq(s1,s0) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -475,7 +475,7 @@ end
     val s1 = eval h0 s0
     val o0 = node( 0, (values [1,2,3]), one )
   in
-    assertTrue( s1 = o0 )
+    assertTrue( SDD.eq(s1,o0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -488,7 +488,7 @@ end
     val s1 = eval h0 s0
     val o0 = node( 0, (values [0,1,2,3]), one )
   in
-    assertTrue( s1 = o0 )
+    assertTrue( SDD.eq(s1,o0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -499,7 +499,7 @@ end
     val s1 = eval h0 s0
     val o0 = node( 0, (values [1,2]), one )
   in
-    assertTrue( s1 = o0 )
+    assertTrue( SDD.eq(s1,o0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -511,7 +511,7 @@ end
     val s1 = eval h0 s0
     val o0 = node( 0, (values [1,2]), one )
   in
-    assertTrue( s1 = o0 )
+    assertTrue( SDD.eq(s1,o0) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -566,7 +566,7 @@ end
     val s2 = eval h2 S0
 
   in
-    assertTrue ( s0 = s1 andalso s0 = s2 )
+    assertTrue ( SDD.eq(s0,s1) andalso SDD.eq(s0,s2) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -576,7 +576,7 @@ end
     val s0 = node( 0, (values [0,1]), one)
     val s1 = eval h0 s0
   in
-    assertTrue( s0 = s1 )
+    assertTrue( SDD.eq(s0,s1) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -589,7 +589,7 @@ end
     val s1 = eval h2 s0
     val o0 = node( 0, (values [0,1,2,3,4]), one )
   in
-    assertTrue( o0 = s1 )
+    assertTrue( SDD.eq(o0,s1) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -601,7 +601,7 @@ end
     val s1 = eval h2 s0
     val o0 = node( 0, (values [4]), one )
   in
-    assertTrue( o0 = s1 )
+    assertTrue( SDD.eq(o0,s1) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -613,7 +613,7 @@ end
     val s1 = eval h2 s0
     val o0 = node( 0, values [4], one )
   in
-    assertTrue( o0 = s1 )
+    assertTrue( SDD.eq(o0,s1) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -643,7 +643,7 @@ end
               node( 1, values [1], one))
     val o2 = union [o0,o1]
   in
-    assertTrue (o2 = s)
+    assertTrue (SDD.eq(o2,s))
   end
 
 (*--------------------------------------------------------------------------*)
@@ -736,7 +736,7 @@ end
 
     val o8 = union [o0,o1,o2,o3,o4,o5,o6,o7]
   in
-    assertTrue (o8 = s)
+    assertTrue (SDD.eq(o8,s))
   end
 
 (*--------------------------------------------------------------------------*)
@@ -833,7 +833,7 @@ let
   val o0 = union [p1,p2,p3,p4,p5,p6,p7,p8,p9]
 
 in
-  assertTrue( s = o0 )
+  assertTrue( SDD.eq(s,o0) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -900,7 +900,7 @@ let
   val odead = union [o1,o2]
 
 in
-  assertTrue( dead = odead )
+  assertTrue( SDD.eq(dead,odead) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -938,7 +938,7 @@ let
                               , Substring.extract(homDot,0, NONE))
 
 in
-  assertTrue( s = o0 )
+  assertTrue( SDD.eq(s,o0) )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -977,7 +977,7 @@ let
                               , Substring.extract(homDot,0, NONE))
 
 in
-  assertTrue( s = o0 )
+  assertTrue( SDD.eq(s,o0) )
 end
 
 

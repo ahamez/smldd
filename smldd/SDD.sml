@@ -103,7 +103,7 @@ structure Definition (* : DATA *) = struct
                 val ( lvl, iSDD(_,luid) ) = Vector.sub( lalpha, i)
                 val ( rvl, iSDD(_,ruid) ) = Vector.sub( ralpha, i)
               in
-                if lvl = rvl andalso luid = ruid then
+                if Values.storedEq(lvl,rvl) andalso luid = ruid then
                   loop (i+1)
                 else
                   false
@@ -431,6 +431,7 @@ in
       flatNodeAlpha
       ( var
       , unionFlatDiscreteSDD Values.storedToList Values.storedFromList
+                             Values.storedEq
                              Values.storedLt
                              Values.valueLt
                              eq
@@ -445,13 +446,13 @@ in
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      Values.storedUnion
-                                     (op =)
+                                     Values.storedEq
                                      Values.storedLt
     in
       flatNodeAlpha
       ( var
       , squareUnion' (unionSDD uid
-                               (op =)
+                               Values.storedEq
                                Values.storedIntersection
                                Values.storedDifference
                                Values.storedEmpty
@@ -511,7 +512,7 @@ fun intersection cacheLookup xs =
       val squareUnion' = squareUnion uid
                                      (unionCallback cacheLookup)
                                      Values.storedUnion
-                                     (op =)
+                                     Values.storedEq
                                      Values.storedLt
     in
       flatNodeAlpha( var
@@ -612,7 +613,7 @@ in
 
   | ( Node{variable=lvr,alpha=la}, Node{variable=rvr,alpha=ra} ) =>
     nodeDifference lvr rvr la ra
-                   (op =)
+                   Values.storedEq
                    Values.storedUnion Values.storedIntersection
                    Values.storedDifference
                    Values.storedEmpty Values.storedLt
@@ -732,8 +733,10 @@ fun nodeAlpha ( _ , []    ) = zero
   case hd alpha of
     (Values _, _) =>
     let
-      val squareUnion' = squareUnion uid union
-                                     Values.storedUnion (op =) Values.storedLt
+      val squareUnion' =
+        squareUnion
+          uid union Values.storedUnion Values.storedEq Values.storedLt
+
       val alpha' =
         List.mapPartial (fn ( Values v, succ ) =>
                           if Values.empty v orelse empty succ then

@@ -24,15 +24,15 @@ end (* structure Definition *)
 val discrete = true
 
 (*--------------------------------------------------------------------------*)
-type stored = Definition.t ref
+type stored = Definition.t
 type values = SV.t
 type value  = int
 
 (*--------------------------------------------------------------------------*)
-structure UT = UnicityTableFunID ( structure Data = Definition )
+structure UT = UnicityTableFunID2 ( structure Data = Definition )
 
 (*--------------------------------------------------------------------------*)
-fun uid (ref(_,x)) = x
+fun uid (_,x) = x
 
 (*--------------------------------------------------------------------------*)
 (* Needed by the unicity table as a factory to create new values *)
@@ -42,10 +42,10 @@ fun mkValues v uid = ( v, uid )
 fun mkStorable v = UT.unify (mkValues v)
 
 (*--------------------------------------------------------------------------*)
-fun mkUsable (ref(v,_)) = v
+fun mkUsable (v,_) = v
 
 (*--------------------------------------------------------------------------*)
-fun storedToList (ref(v,_)) = Util.IntVectorToList v
+fun storedToList (v,_) = Util.IntVectorToList v
 
 (*--------------------------------------------------------------------------*)
 fun storedFromList xs =
@@ -59,16 +59,19 @@ end
 val valueLt  = (op <)
 
 (*--------------------------------------------------------------------------*)
+fun storedEq (x,y) = uid x = uid y
+
+(*--------------------------------------------------------------------------*)
 fun storedLt (x,y) = uid x < uid y
 
 (*--------------------------------------------------------------------------*)
-fun storedHash (ref(_,uid)) = H.hashInt uid
+fun storedHash (_,uid) = H.hashInt uid
 
 (*--------------------------------------------------------------------------*)
-fun storedEmpty (ref(x,_)) = SV.empty x
+fun storedEmpty (x,_) = SV.empty x
 
 (*--------------------------------------------------------------------------*)
-fun storedToString (ref(x,_)) = SV.toString x
+fun storedToString (x,_) = SV.toString x
 
 (*--------------------------------------------------------------------------*)
 val toString = SV.toString
@@ -104,22 +107,33 @@ datatype operation = Union of stored list
 
 (*--------------------------------------------------------------------------*)
 fun eq (l,r) =
+let
+  fun eqList ( [], [] ) = true
+  |   eqList ( _ , [] ) = false
+  |   eqList ( [], _  ) = false
+  |   eqList ( x::xs, y::ys ) =
+    if storedEq( x, y ) then
+      eqList( xs, ys )
+    else
+      false
+in
   case (l,r) of
-    ( Union(xs), Union(ys) )     => xs = ys
-  | ( Inter(xs), Inter(ys) )     => xs = ys
-  | ( Diff(lx,ly), Diff(rx,ry) ) => lx = rx andalso ly = ry
+    ( Union(xs), Union(ys) )     => eqList( xs,ys )
+  | ( Inter(xs), Inter(ys) )     => eqList( xs,ys )
+  | ( Diff(lx,ly), Diff(rx,ry) ) => storedEq(lx,rx) andalso storedEq(ly,ry)
   | ( _, _ )                     => false
+end
 
 (*--------------------------------------------------------------------------*)
 fun hash x =
   let
     fun hashOperands( h0, xs ) =
-      foldl (fn ( ref(_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
+      foldl (fn ( (_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
   in
     case x of
       Union(xs) => hashOperands( H.hashInt 15411567, xs)
     | Inter(xs) => hashOperands( H.hashInt 78995947, xs)
-    | Diff(ref(_,luid),ref(_,ruid)) =>
+    | Diff( (_,luid), (_,ruid) ) =>
         H.hashCombine( H.hashInt 94165961
                      , H.hashCombine( H.hashInt luid, H.hashInt ruid )
                      )
@@ -131,23 +145,23 @@ fun apply operation =
   case operation of
 
     Union []     => raise DoNotPanic
-  | Union(ref(x,_)::xs) =>
+  | Union( (x,_)::xs) =>
       let
-        val v   = foldl (fn (ref(v,_),res) => SV.union(v,res)) x xs
+        val v   = foldl (fn ( (v,_), res ) => SV.union(v,res)) x xs
       in
         UT.unify (mkValues v)
       end
 
   | Inter []     => raise DoNotPanic
-  | Inter(ref(x,_)::xs) =>
+  | Inter( (x,_)::xs) =>
       let
-        val v = foldl (fn (ref(v,_),res) => SV.intersection(v,res))
+        val v = foldl (fn ( (v,_), res ) => SV.intersection(v,res))
                       x xs
       in
         UT.unify (mkValues v)
       end
 
-  | Diff( ref(l,_), ref(r,_) ) => UT.unify (mkValues (SV.difference( l, r )))
+  | Diff( (l,_), (r,_) ) => UT.unify (mkValues (SV.difference( l, r )))
 
 (*--------------------------------------------------------------------------*)
 end (* end structure Operations *)
@@ -174,7 +188,7 @@ fun storedIntersection xs =
 
 (*--------------------------------------------------------------------------*)
 fun storedDifference(x,y) =
-  if x = y then
+  if storedEq( x, y ) then
     e
   else
     cache.lookup( Operations.Diff(x,y) )

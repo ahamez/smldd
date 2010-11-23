@@ -22,6 +22,7 @@ structure BitWordValues : VALUES = struct
   val mkStorable          = Util.id
   val mkUsable            = Util.id
 
+  val storedEq            = BitWord.eq
   val storedLt            = BitWord.lt
   fun valueLt _           = raise NotDiscrete
 

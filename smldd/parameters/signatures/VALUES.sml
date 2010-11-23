@@ -11,7 +11,7 @@ sig
   val toString        : values -> string
 
   (* Library view *)
-  eqtype stored
+  type stored
   eqtype value
 
   val discrete              : bool
@@ -22,6 +22,7 @@ sig
   val mkStorable            : values -> stored
   val mkUsable              : stored -> values
 
+  val storedEq              : stored * stored -> bool
   val storedLt              : stored * stored -> bool
   val valueLt               : value * value -> bool
 

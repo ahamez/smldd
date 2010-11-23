@@ -1,4 +1,6 @@
-fun unionFlatDiscreteSDD vlToList vlFromList vlLt valueLt eq uid unionSDD xs =
+fun unionFlatDiscreteSDD vlToList vlFromList vlEq vlLt valueLt eq uid unionSDD
+                         xs
+=
 let
   
   fun insertValue [] ( y , ysucc ) = [ (y, [ysucc]) ]
@@ -68,7 +70,7 @@ let
 
     fun insert [] x = [x]
     |   insert (XS as ((X as (xvl,xsucc))::xs)) (Y as (vl,succ)) =
-      if vl = xvl then
+      if vlEq( vl, xvl) then
         raise DoNotPanic
       else if vlLt( vl, xvl ) then
         Y::XS

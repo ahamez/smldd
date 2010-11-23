@@ -88,7 +88,7 @@ struct
     val s0  = SDD ord f
     val o0  = SDD.fromList [(3,vst),(2,vst),(1,vst),(0,vst)]
   in
-    assertTrue( s0 = o0 )
+    assertTrue( SDD.eq(s0,o0) )
   end
 
   fun testSDD01 () =
@@ -105,7 +105,7 @@ struct
                       )
     val o1  = SDD.node( 1, SDD.Nested (SDD.node(3,vst,SDD.one)), o0 )
   in
-    assertTrue( s0 = o1 )
+    assertTrue( SDD.eq(s0,o1) )
   end
 
   fun testAnonymise00 () =
@@ -122,7 +122,7 @@ struct
                        )
     val o1   = SDD.node( 1, SDD.Nested (SDD.node(0,vst,SDD.one)), o0 )
   in
-    assertTrue( o1 = s0 )
+    assertTrue( SDD.eq(o1,s0) )
   end
 
   fun testHom00 () =
