@@ -133,7 +133,7 @@ struct
     val h0   = hom ord "i" (fn v => Hom.mkFunction rf0 v)
     val o0   = Hom.mkFunction rf0 5
   in
-    assertTrue( h0 = o0 )
+    assertTrue( Hom.eq(h0,o0) )
   end
 
   fun testHom01 () =
@@ -144,7 +144,7 @@ struct
     val h0   = hom ord "c" (fn v => Hom.mkFunction rf0 v)
     val o0   = Hom.mkNested (Hom.mkFunction rf0 1) 0
   in
-    assertTrue( h0 = o0 )
+    assertTrue( Hom.eq(h0,o0) )
   end
 
   fun testHom02 () =
@@ -154,7 +154,7 @@ struct
     val ord  = transform (MaxLeaves 3) (flatOrder vars)
     val h0   = hom ord "c" (fn v => Hom.mkFunction rf0 v)
   in
-    assertTrue( h0 = Hom.id )
+    assertTrue( Hom.eq(h0,Hom.id) )
   end
 
   fun testId00 () =

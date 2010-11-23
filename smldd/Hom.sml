@@ -1,12 +1,13 @@
 (*--------------------------------------------------------------------------*)
 signature HOM = sig
 
-  eqtype hom
+  type hom
   type SDD
   type variable
   type values
   type valuation
 
+  val eq              : hom * hom -> bool
   val uid             : hom -> int
 
   val id              : hom
@@ -105,31 +106,31 @@ structure Definition (* : DATA *) = struct
 
   datatype t = Hom of ( hom * int )
   and hom    = Id
-             | Cons        of ( variable * valuation * t ref )
+             | Cons        of ( variable * valuation * t )
              | Const       of SDD
-             | Union       of t ref list
-             | Inter       of t ref list
-             | Comp        of ( t ref * t ref )
-             | ComComp     of t ref list
-             | Fixpoint    of ( t ref )
-             | Nested      of ( t ref * variable )
+             | Union       of t list
+             | Inter       of t list
+             | Comp        of ( t * t )
+             | ComComp     of t list
+             | Fixpoint    of t
+             | Nested      of t * variable
              | Func        of ( (UserIn -> UserOut) ref * variable )
              | Inductive   of (UserIn -> UserOut) ref
              | SatUnion    of ( variable
-                              * (t ref) option
-                              * t ref list
-                              * (t ref) option )
+                              * t option
+                              * t list
+                              * t option )
              | SatInter    of ( variable
-                              * (t ref) option    (* F *)
-                              * t ref list        (* G *)
-                              * (t ref) option )  (* L *)
+                              * t option    (* F *)
+                              * t list      (* G *)
+                              * t option )  (* L *)
              | SatFixpoint of ( variable
-                              * (t ref) option    (* F *)
-                              * t ref list        (* G *)
-                              * (t ref) option )  (* L *)
+                              * t option    (* F *)
+                              * t list      (* G *)
+                              * t option )  (* L *)
              | SatComComp  of ( variable
-                              * t ref             (* F *)
-                              * t ref list        (* G *)
+                              * t             (* F *)
+                              * t list        (* G *)
                               )
 
   and UserIn = FuncValues of values
@@ -142,7 +143,7 @@ structure Definition (* : DATA *) = struct
 
   and UserOut = FuncValuesRes of values
               | InductiveSkipRes of bool
-              | InductiveValuesRes of t ref
+              | InductiveValuesRes of t
               | InductiveOneRes of SDD
               | SelectorRes of bool
               | HashRes of Hash.t
@@ -161,76 +162,96 @@ structure Definition (* : DATA *) = struct
     | _         => raise NotUserHash
 
  fun eq (Hom(x,_),Hom(y,_)) =
+ let
+   fun eqList ( [], [] ) = true
+   |   eqList ( [], _  )  = false
+   |   eqList (  _, [] ) = false
+   |   eqList ( x::xs, y::ys) =
+    if eq( x, y ) then
+      eqList( xs, ys )
+    else
+      false
+
+   fun eqOption ( NONE, NONE ) = true
+   |   eqOption ( NONE, _    ) = false
+   |   eqOption ( _   , NONE ) = false
+   |   eqOption ( SOME x, SOME y ) =
+    eq( x, y )
+
+ in
     case (x,y) of
       ( Id, Id )                   => true
     | ( Cons(v,s,h), Cons(w,t,i))  => Variable.eq(v,w)
-                                      andalso h=i
+                                      andalso eq(h,i)
                                       andalso SDD.eqValuation(s,t)
     | ( Const s, Const t )         => SDD.eq( s, t )
-    | ( Union xs, Union ys )       => xs = ys
-    | ( Inter xs, Inter ys )       => xs = ys
-    | ( Comp(a,b), Comp(c,d) )     => a = c andalso b = d
-    | ( ComComp xs, ComComp ys )   => xs = ys
-    | ( Fixpoint h, Fixpoint i )   => h = i
-    | ( Nested(h,v), Nested(i,w) ) => h = i andalso Variable.eq(v,w)
+    | ( Union xs, Union ys )       => eqList( xs, ys )
+    | ( Inter xs, Inter ys )       => eqList( xs, ys )
+    | ( Comp(a,b), Comp(c,d) )     => eq( a, c ) andalso eq( b, d )
+    | ( ComComp xs, ComComp ys )   => eqList( xs, ys )
+    | ( Fixpoint h, Fixpoint i )   => eq( h, i )
+    | ( Nested(h,v), Nested(i,w) ) => eq( h, i ) andalso Variable.eq(v,w)
     | ( Func(f,v), Func(g,w) )     => f = g andalso Variable.eq(v,w)
     | ( Inductive i, Inductive j)  => i = j
     | ( SatUnion(v, F, G, L)
-      , SatUnion(v',F',G',L'))     => F = F' andalso G = G' andalso L = L'
+      , SatUnion(v',F',G',L'))     => eqOption( F, F' ) andalso eqList( G, G')
+                                      andalso eqOption( L, L' )
                                       andalso Variable.eq(v,v')
     | ( SatInter(v, F, G, L)
-      , SatInter(v',F',G',L'))     => F = F' andalso G = G' andalso L = L'
+      , SatInter(v',F',G',L'))     => eqOption( F, F' ) andalso eqList( G, G')
+                                      andalso eqOption( L, L' )
                                       andalso Variable.eq(v,v')
     | ( SatFixpoint(v, F, G, L)
-      , SatFixpoint(v',F',G',L'))  => F = F' andalso G = G' andalso L = L'
+      , SatFixpoint(v',F',G',L'))  => eqOption( F, F' ) andalso eqList( G, G')
+                                      andalso eqOption( L, L' )
                                       andalso Variable.eq(v,v')
     | ( SatComComp(v, F, G)
-      , SatComComp(v',F',G'))      => Variable.eq(v,v') andalso F = F'
-                                      andalso G = G'
+      , SatComComp(v',F',G'))      => Variable.eq(v,v') andalso eq( F, F' )
+                                      andalso eqList( G, G' )
     | ( _ , _ )                    => false
-
+  end
 
   fun hash (Hom(h,_)) =
   let
-    fun hashOption NONE                      = H.hashInt 183931413
-    |   hashOption (SOME (ref (Hom(_,uid)))) = H.hashInt uid
+    fun hashOption NONE                = H.hashInt 183931413
+    |   hashOption (SOME (Hom(_,uid))) = H.hashInt uid
   in
     case h of
       Id          => H.hashInt 1
 
-    | Cons(v,s,ref(Hom(_,uid))) =>
+    | Cons( v, s, Hom(_,uid) ) =>
       H.hashCombine( Variable.hash v
                    , H.hashCombine( SDD.hashValuation s, H.hashInt uid ) )
 
     | Const s     => H.hashCombine( SDD.hash s, H.hashInt 149199441 )
 
-    | Union hs    => foldl (fn (ref(Hom(_,uid)),acc) =>
+    | Union hs    => foldl (fn (Hom(_,uid),acc) =>
                              H.hashCombine(H.hashInt uid, acc)
                            )
                            (H.hashInt 16564717)
                            hs
 
-    | Inter hs    => foldl (fn (ref(Hom(_,uid)),acc) =>
+    | Inter hs    => foldl (fn ( Hom(_,uid), acc ) =>
                              H.hashCombine(H.hashInt uid, acc)
                            )
                            (H.hashInt 129292632)
                            hs
 
-    | Comp( ref(Hom(_,fuid)), ref(Hom(_,guid)) ) =>
+    | Comp( Hom(_,fuid), Hom(_,guid) ) =>
       H.hashCombine( H.hashInt 3413417
                    , H.hashCombine( H.hashInt fuid, H.hashInt guid )
                    )
 
-    | ComComp hs  => foldl (fn (ref(Hom(_,uid)),acc) =>
+    | ComComp hs  => foldl (fn (Hom(_,uid), acc ) =>
                              H.hashCombine(H.hashInt uid, acc)
                            )
                            (H.hashInt 795921317)
                            hs
 
-    | Fixpoint (ref(Hom(_,uid)))  =>
+    | Fixpoint ( Hom(_,uid) )  =>
         H.hashCombine( H.hashInt uid, H.hashInt 5959527)
 
-    | Nested(ref(Hom(_,uid)),v) =>
+    | Nested( Hom(_,uid), v ) =>
         H.hashCombine(H.hashInt uid, Variable.hash v )
 
     | Func(f,v)   => H.hashCombine( H.hashInt 7837892
@@ -242,7 +263,7 @@ structure Definition (* : DATA *) = struct
                                   )
     | SatUnion( v, F, G, L) =>
     let
-      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+      val hshG = foldl (fn (Hom(_,uid), acc ) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
                        (H.hashInt 59489417)
@@ -256,7 +277,7 @@ structure Definition (* : DATA *) = struct
 
     | SatInter( v, F, G, L) =>
     let
-      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+      val hshG = foldl (fn (Hom(_,uid), acc ) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
                        (H.hashInt 565165613)
@@ -270,7 +291,7 @@ structure Definition (* : DATA *) = struct
 
     | SatFixpoint( v, F, G, L) =>
     let
-      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+      val hshG = foldl (fn ( Hom(_,uid), acc ) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
                        (H.hashInt 19592927)
@@ -284,14 +305,14 @@ structure Definition (* : DATA *) = struct
 
     | SatComComp( v, F, G) =>
     let
-      val hshG = foldl (fn (ref(Hom(_,uid)),acc) =>
+      val hshG = foldl (fn ( Hom(_,uid), acc ) =>
                              H.hashCombine(H.hashInt uid, acc)
                        )
                        (H.hashInt 87284791)
                        G
     in
       H.hashCombine( H.hashInt 30918931
-                , H.hashCombine( hash (!F)
+                , H.hashCombine( hash F
                   , H.hashCombine( hshG, Variable.hash v )))
     end
 
@@ -300,7 +321,7 @@ structure Definition (* : DATA *) = struct
   fun toString (Hom(h,_)) =
   let
     fun optPartToString NONE      = ""
-    |   optPartToString (SOME x) = toString (!x)
+    |   optPartToString (SOME x) = toString x
   in
   case h of
       Id          => "Id"
@@ -308,48 +329,43 @@ structure Definition (* : DATA *) = struct
                              ^ ", "
                              ^ (SDD.valuationToString s)
                              ^ ", "
-                             ^ (toString (!h))
+                             ^ (toString h)
                              ^ ")"
     | Const s     => "Const(" ^ (SDD.toString s) ^ ")"
-    | Union hs    => String.concatWith " + "
-                                       (map (fn h => toString (!h)) hs)
+    | Union hs    => String.concatWith " + " (map toString hs)
     | Inter hs    => String.concatWith " ^ "
-                                       (map (fn h => toString (!h)) hs)
-    | Comp(a,b)   => (toString (!a)) ^ " o " ^ (toString (!b))
+                                       (map toString hs)
+    | Comp(a,b)   => (toString a) ^ " o " ^ (toString b)
     | ComComp hs  => String.concatWith " @ "
-                                       (map (fn h => toString (!h)) hs)
-    | Fixpoint h  => "(" ^ (toString (!h)) ^ ")*"
-    | Nested(h,v) => "Nested(" ^ (toString (!h)) ^", "
+                                       (map toString hs)
+    | Fixpoint h  => "(" ^ (toString h) ^ ")*"
+    | Nested(h,v) => "Nested(" ^ (toString h) ^", "
                                ^ (Variable.toString v) ^ ")"
     | Func(f,v)   => "Func(" ^ (funcString f) ^ ","
                       ^ (Variable.toString v) ^ ")"
     | Inductive i => "Inductive(" ^ (funcString i) ^ ")"
     | SatUnion(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
-                                ^ (String.concatWith " + "
-                                        (map (fn h => toString (!h)) G))
+                                ^ (String.concatWith " + " (map toString G))
                                 ^ ") + "
                                 ^	"L(" ^ (optPartToString L) ^ ")"
 
     | SatInter(_, F, G, L) =>    "F(" ^ (optPartToString F) ^ ") ^ "
                                 ^ "G("
-                                ^ (String.concatWith " ^ "
-                                        (map (fn h => toString (!h)) G))
+                                ^ (String.concatWith " ^ " (map toString G))
                                 ^ ") ^ "
                                 ^	"L(" ^ (optPartToString L) ^ ")"
 
     | SatFixpoint(_, F, G, L) =>  "("
                                 ^ "F(" ^ (optPartToString F) ^ ") + "
                                 ^ "G("
-                                ^ (String.concatWith " + "
-                                        (map (fn h => toString (!h)) G))
+                                ^ (String.concatWith " + " (map toString G))
                                 ^ ") + "
                                 ^	"L(" ^ (optPartToString L) ^ ") )*"
 
-    | SatComComp(_, F, G) =>      "F(" ^ (toString (!F)) ^ ") @ "
+    | SatComComp(_, F, G) =>      "F(" ^ (toString F) ^ ") @ "
                                 ^ "G("
-                                ^ (String.concatWith " @ "
-                                        (map (fn h => toString (!h)) G))
+                                ^ (String.concatWith " @ " (map toString G))
                                 ^ ")"
   end
 
@@ -362,9 +378,9 @@ end (* structure Definition *)
 open Definition
 
 (*--------------------------------------------------------------------------*)
-type hom     = Definition.t ref
+type hom     = Definition.t
 
-structure UT = UnicityTableFunID( structure Data = Definition )
+structure UT = UnicityTableFunID2( structure Data = Definition )
 structure HT = HashTable
 
 (*--------------------------------------------------------------------------*)
@@ -407,10 +423,10 @@ fun funcSelector (ref f) =
 fun mkHom hom uid = Hom( hom, uid )
 
 (*--------------------------------------------------------------------------*)
-fun uid (ref(Hom(_,x))) = x
+fun uid (Hom(_,x)) = x
 
 (*--------------------------------------------------------------------------*)
-val toString = Definition.toString o !
+fun eq (h1,h2) = uid h1 = uid h2
 
 (*--------------------------------------------------------------------------*)
 val id = UT.unify( mkHom Id )
@@ -474,7 +490,7 @@ fun domainUnion []         = Empty
   end
 
 (*--------------------------------------------------------------------------*)
-fun domain ( ref(Hom(h,_)) ) =
+fun domain ( Hom(h,_) ) =
   case h of
     Nested( _, v )  => Variables [v]
   | Func( _, v )    => Variables [v]
@@ -533,7 +549,7 @@ fun domain ( ref(Hom(h,_)) ) =
   | _               => All
 
 (*--------------------------------------------------------------------------*)
-fun isSelector (ref(Hom((h,_)))) =
+fun isSelector (Hom((h,_))) =
 let
   fun selectorOption NONE     = true
   |   selectorOption (SOME h) = isSelector h
@@ -567,8 +583,8 @@ fun commutatives x y =
     true
   else
   let
-    val ref(Hom(h1,_)) = x
-    val ref(Hom(h2,_)) = y
+    val Hom(h1,_) = x
+    val Hom(h2,_) = y
   in
     case ( h1, h2 ) of
       ( Nested( g1, v1 ), Nested( g2, v2) ) =>
@@ -590,7 +606,7 @@ val one  = mkConst SDD.one
 
 (*--------------------------------------------------------------------------*)
 fun mkNested h vr =
-  if h = id then
+  if eq( h, id ) then
     id
   else
     UT.unify( mkHom (Nested(h,vr)) )
@@ -601,7 +617,7 @@ fun mkCommutativeComposition [] = raise EmptyOperands
 let
 
   fun helper ( h, operands ) =
-    case let val ref(Hom(x,_)) = h in x end of
+    case let val Hom(x,_) = h in x end of
       Id              => operands
     | ComComp ys      => (foldr helper [] ys) @ operands
     | _               => h::operands
@@ -631,7 +647,7 @@ let
       = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))
 
   fun unionHelper ( h, operands ) =
-  case let val ref(Hom(x,_)) = h in x end of
+  case let val Hom(x,_) = h in x end of
 
     Union ys      => foldr unionHelper operands ys
 
@@ -673,14 +689,14 @@ fun mkIntersection []  = raise EmptyOperands
 
 (*--------------------------------------------------------------------------*)
 fun mkComposition x y =
-  if y = id then
+  if eq( y, id ) then
     x
-  else if x = id then
+  else if eq( x, id ) then
     y
   else
   let
 
-    fun addParameter xs (ry as (ref (Hom(y,_)))) =
+    fun addParameter xs (ry as (Hom(y,_))) =
     case y of
 
       ComComp ys  => foldl (fn (x,acc) => addParameter acc x) xs ys
@@ -688,7 +704,7 @@ fun mkComposition x y =
     | Nested(f,v) =>
     let
       fun loop [] = [ry]
-      |   loop ((rx as (ref(Hom(x,_))))::xs) =
+      |   loop ((rx as ( Hom(x,_)))::xs) =
        case x of
          Nested(g,w) => if Variable.eq( v, w ) then
                           (mkNested (mkComposition g f) v)::xs
@@ -717,7 +733,7 @@ fun mkComposition x y =
   end
 
 (*--------------------------------------------------------------------------*)
-fun mkFixpoint (rh as (ref (Hom(h,_)))) =
+fun mkFixpoint (rh as (Hom(h,_))) =
   case h of
     Id          => rh
   | Fixpoint _  => rh
@@ -763,15 +779,16 @@ type result        = SDD
 datatype operation = Op of hom * SDD * (operation -> result)
 
 (*--------------------------------------------------------------------------*)
+val eq' = eq
 fun eq ( Op(xh,xsdd,_), Op(yh,ysdd,_) ) =
-  xh = yh andalso SDD.eq( xsdd, ysdd )
+  eq'( xh, yh ) andalso SDD.eq( xsdd, ysdd )
 
 (*--------------------------------------------------------------------------*)
-fun hash (Op(ref(Hom(_,uid)),s,_)) =
+fun hash (Op(Hom(_,uid),s,_)) =
   H.hashCombine( H.hashInt uid, SDD.hash s )
 
 (*--------------------------------------------------------------------------*)
-fun skipVariable var (ref (Hom(h,_))) =
+fun skipVariable var (Hom(h,_)) =
   case h of
     Id                   => true
   | Const _              => false
@@ -795,10 +812,10 @@ fun evalCallback lookup h sdd =
   if SDD.empty sdd then
     SDD.zero
   else
-    case let val ref(Hom(x,_)) = h in x end of
+    case let val Hom(x,_) = h in x end of
       Id                => sdd
     | Const c           => c
-    | Cons(var,vl,next) => if next = id then
+    | Cons(var,vl,next) => if eq'( next, id ) then
                                       SDD.node( var, vl, sdd )
                                     else
                                       lookup( Op( h, sdd, lookup ) )
@@ -823,10 +840,10 @@ type operation = ( hom * variable )
 type result    = hom
 
 (*--------------------------------------------------------------------------*)
-fun eq ((hx,vx),(hy,vy)) = hx = hy andalso Variable.eq(vx,vy)
+fun eq ((hx,vx),(hy,vy)) = eq'(hx,hy) andalso Variable.eq(vx,vy)
 
 (*--------------------------------------------------------------------------*)
-fun hash (ref(Hom(_,uid)),v) =
+fun hash ( Hom(_,uid), v ) =
   H.hashCombine( H.hashInt uid, Variable.hash v )
 
 (*--------------------------------------------------------------------------*)
@@ -837,7 +854,7 @@ let
     if skipVariable v h then
       ( h::F, G, L )
     else
-      case let val ref(Hom(x,_)) = h in x end of
+      case let val Hom(x,_) = h in x end of
         Nested(n,_) => ( F, G, n::L )
       | _           => ( F, h::G, L )
 
@@ -876,10 +893,10 @@ end
 (*--------------------------------------------------------------------------*)
 fun rewriteFixpoint orig v f =
 
-  case let val ref(Hom(h,_)) = f in h end of
+  case let val Hom(h,_) = f in h end of
 
     Union xs =>
-      if List.exists (fn x => x = id) xs then
+      if List.exists (fn x => eq'(x,id)) xs then
       let
         val (F,G,L) = partition v xs
         val (GSel,GNotSel) = List.partition isSelector G
@@ -921,7 +938,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun apply ( h, v ) =
-  case let val ref(Hom(x,_)) = h in x end of
+  case let val Hom(x,_) = h in x end of
     Union hs    => rewriteUI mkUnion' mkSatUnion h v hs
   | Inter hs    => rewriteUI mkIntersection mkSatIntersection h v hs
   | Fixpoint f  => rewriteFixpoint h v f
@@ -938,7 +955,7 @@ fun rewrite h v =
 let
   val _ = processed := !processed + 1
 in
-  case let val ref(Hom(x,_)) = h in x end of
+  case let val Hom(x,_) = h in x end of
     Union _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Inter _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Fixpoint _ => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
@@ -1174,7 +1191,7 @@ in
     val h' = rewrite h (SDD.variable sdd)
              handle SDD.IsNotANode => h
   in
-    case let val ref(Hom(x,_)) = h' in x end of
+    case let val Hom(x,_) = h' in x end of
       Id                    => raise DoNotPanic
     | Const _               => raise DoNotPanic
     | Cons(var,nested,next) => cons eval (var, nested, next) sdd
@@ -1208,11 +1225,11 @@ fun eval h sdd =
   if SDD.eq( sdd, SDD.zero ) then
     SDD.zero
   else
-    case let val ref(Hom(x,_)) = h in x end of
+    case let val Hom(x,_) = h in x end of
       Id                => sdd
     | Const c           => c
     | Cons(var,vl,next) =>
-      if next = id then
+      if eq( next, id ) then
         SDD.node( var, vl, sdd )
       else
         cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
@@ -1242,7 +1259,7 @@ let
               inductive h
   =
   let
-    val ref(Hom(x,_)) = h
+    val Hom(x,_) = h
   in
     case x of
       Id              => id ()

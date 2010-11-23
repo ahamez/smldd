@@ -339,7 +339,7 @@ fun testNested01 () =
 let
   val h0 = mkNested id 0
 in
-  assertTrue( h0 = id )
+  assertTrue( Hom.eq(h0,id) )
 end
 
 (*--------------------------------------------------------------------------*)
