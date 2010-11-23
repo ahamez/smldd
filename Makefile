@@ -40,6 +40,7 @@ TESTSOURCES=./test/main.mlb               \
             ./test/TestSDD.sml            \
             ./test/TestUtil.sml           \
             ./test/TestTools.sml          \
+            ./test/TestBitWord.sml        \
             ./test/main.sml
 
 all:

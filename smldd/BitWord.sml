@@ -5,15 +5,12 @@ structure BitWord = struct
 type t  = Word32.word
 
 (*--------------------------------------------------------------------------*)
-exception Overflow
-
-(*--------------------------------------------------------------------------*)
 fun insert values x =
 let
   val w = Word32.fromInt x
 in
   if w > Word32.fromInt 31 then
-    raise (Fail ((Int.toString x) ^ " > 31"))
+    raise Domain
   else
     Word32.orb( values, Word32.<<( Word32.fromInt 1, w) )
 end

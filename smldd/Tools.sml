@@ -516,9 +516,11 @@ let
     ^ (Variable.toString v) ^ ")\"];\n"
     end
 
+    fun inductive _ = ""
+
     val visitor = Hom.mkVisitor ()
     val visit = visitor id cons const union inter comp comcomp fixpoint
-                        nested func
+                        nested func inductive
   in
     visit h
   end

@@ -15,6 +15,7 @@ in
     ./TestUtil.sml
     ./TestOrder.sml
     ./TestTools.sml
+    ./TestBitWord.sml
     ./main.sml
   end
 end

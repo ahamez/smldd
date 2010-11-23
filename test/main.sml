@@ -18,6 +18,11 @@ print "\nTest Tools\n";
 SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
                                  ( TestTools.suite() );
 
+print "\nTest BitWord\n";
+SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
+                                 ( TestBitWord.suite() );
+
+
 testDot();
 
 print "\n";
