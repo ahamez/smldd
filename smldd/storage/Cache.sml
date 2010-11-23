@@ -101,13 +101,13 @@ functor CacheFun ( structure Operation : OPERATION )
 
     case (HT.find cache x) of
       SOME (r,h)  =>  (case W.get r of
-                           SOME r' => (h := !h + 1;hits := !hits + 1;r')
-                         | NONE    => ( miss := !miss + 1;
-                                        HT.remove cache x;
-                                        store x
-                                      )
-                         )
-    | NONE    =>  (miss := !miss + 1 ;store x)
+                        SOME r' => ( h := !h + 1; hits := !hits + 1; r' )
+                      | NONE    => ( miss := !miss + 1
+                                   ; HT.remove cache x
+                                   ; store x
+                                   )
+                      )
+    | NONE    =>  ( miss := !miss + 1; store x )
 
   end
 
