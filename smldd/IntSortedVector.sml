@@ -109,60 +109,80 @@ fun mkEmpty () = IntVector.fromList []
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun unionHelper acc ( [], R ) = acc @ R
-|   unionHelper acc ( L, [] ) = acc @ L
-|   unionHelper acc ( L as (l::ls), R as (r::rs) ) =
-  if l > r then
-    unionHelper (acc @ [r]) ( L, rs )
-  else if l < r then
-    unionHelper (acc @ [l]) ( ls, R )
-  else
-    unionHelper (acc @ [l]) ( ls, rs )
-
-fun union (s1,s2) =
-  IntVector.fromList (unionHelper []
-                                  ( Util.IntVectorToList s1
-                                  , Util.IntVectorToList s2
-                                  )
-                     )
-
-(*--------------------------------------------------------------------------*)
-(* s1 and s2 MUST already be sorted *)
-fun interHelper acc ( [], _ ) = acc
-|   interHelper acc ( _, [] ) = acc
-|   interHelper acc ( L as (l::ls), R as (r::rs) ) =
-  if l = r then
-    interHelper (acc @ [r]) ( ls, rs )
-  else if l < r then
-    interHelper acc ( ls, R )
-  else
-    interHelper acc ( L, rs )
-
-fun intersection (s1,s2) =
-  IntVector.fromList (interHelper []
-                                  ( Util.IntVectorToList s1
-                                  , Util.IntVectorToList s2
-                                  )
-                     )
+fun union ( s1, s2 ) =
+let
+  fun helper acc ~1 ~1 = acc
+  |   helper acc ~1 y  = (Util.IntVectorRangeToList s2 0 y ) @ acc
+  |   helper acc x ~1  = (Util.IntVectorRangeToList s1 0 x ) @ acc
+  |   helper acc x y =
+  let
+    val l = IntVector.sub( s1, x )
+    val r = IntVector.sub( s2, y )
+  in
+    if l > r then
+      helper (l::acc) (x-1) y
+    else if l < r then
+      helper (r::acc) x (y-1)
+    else
+      helper (l::acc) (x-1) (y-1)
+  end
+in
+  IntVector.fromList( helper []
+                             ((IntVector.length s1) - 1)
+                             ((IntVector.length s2) - 1)
+                    )
+end
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun diffHelper acc ( [], _ ) = acc
-|   diffHelper acc ( L, [] ) = acc @ L
-|   diffHelper acc ( L as (l::ls), R as (r::rs) ) =
-  if l = r then
-    diffHelper acc ( ls, rs )
-  else if l < r then
-    diffHelper (acc @ [l]) ( ls, R )
-  else
-    diffHelper acc ( L, rs )
+fun intersection ( s1, s2 ) =
+let
+  fun helper acc ~1 _ = acc
+  |   helper acc _ ~1 = acc
+  |   helper acc x y =
+  let
+    val l = IntVector.sub( s1, x )
+    val r = IntVector.sub( s2, y )
+  in
+    if l = r then
+      helper (l::acc) (x-1) (y-1)
+    else if l > r then
+      helper acc (x-1) y
+    else
+      helper acc x (y-1)
+  end
+in
+  IntVector.fromList( helper []
+                             ((IntVector.length s1) - 1)
+                             ((IntVector.length s2) - 1)
+                    )
+end
 
+(*--------------------------------------------------------------------------*)
+(* s1 and s2 MUST already be sorted *)
 fun difference (s1,s2) =
-  IntVector.fromList (diffHelper []
-                                 ( Util.IntVectorToList s1
-                                 , Util.IntVectorToList s2
-                                 )
-                     )
+let
+  fun helper acc ~1 ~1 = acc
+  |   helper acc ~1 _  = acc
+  |   helper acc x ~1  = (Util.IntVectorRangeToList s1 0 x) @ acc
+  |   helper acc x y =
+  let
+    val l = IntVector.sub( s1, x )
+    val r = IntVector.sub( s2, y )
+  in
+    if l = r then
+      helper acc (x-1) (y-1)
+    else if l > r then
+      helper (l::acc) (x-1) y
+    else
+      helper acc x (y-1)
+  end
+in
+  IntVector.fromList( helper []
+                             ((IntVector.length s1) - 1)
+                             ((IntVector.length s2) - 1)
+                    )
+end
 
 (*--------------------------------------------------------------------------*)
 end (* structure IntSortedVector *)
