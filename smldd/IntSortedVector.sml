@@ -134,7 +134,7 @@ fun interHelper ( [], _ ) = []
   else if l < r then
     interHelper( ls, R )
   else
-  interHelper( L, rs )
+    interHelper( L, rs )
 
 fun intersection (s1,s2) =
   IntVector.fromList (interHelper ( Util.IntVectorToList s1
