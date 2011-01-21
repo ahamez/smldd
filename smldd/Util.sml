@@ -10,6 +10,18 @@ fun IntVectorToList ( vec : IntVector.vector ) =
   IntVector.foldr (fn (elm,acc) => elm::acc ) [] vec
 
 (*--------------------------------------------------------------------------*)
+fun IntVectorRangeToList ( vec : IntVector.vector ) i j =
+let
+  fun loop acc k =
+    if k < i then
+      acc
+    else
+      loop (IntVector.sub( vec, k ) :: acc) (k - 1)
+in
+  loop [] j
+end
+
+(*--------------------------------------------------------------------------*)
 fun sortUnique extract lt gt xs =
 let
 
