@@ -109,53 +109,59 @@ fun mkEmpty () = IntVector.fromList []
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun unionHelper ( [], R ) = R
-|   unionHelper ( L, [] ) = L
-|   unionHelper ( L as (l::ls), R as (r::rs) ) =
+fun unionHelper acc ( [], R ) = acc @ R
+|   unionHelper acc ( L, [] ) = acc @ L
+|   unionHelper acc ( L as (l::ls), R as (r::rs) ) =
   if l > r then
-    r::unionHelper( L, rs )
+    unionHelper (acc @ [r]) ( L, rs )
   else if l < r then
-    l::unionHelper( ls, R )
+    unionHelper (acc @ [l]) ( ls, R )
   else
-    l::unionHelper( ls, rs )
+    unionHelper (acc @ [l]) ( ls, rs )
 
 fun union (s1,s2) =
-  IntVector.fromList (unionHelper ( Util.IntVectorToList s1
-                                  , Util.IntVectorToList s2)
+  IntVector.fromList (unionHelper []
+                                  ( Util.IntVectorToList s1
+                                  , Util.IntVectorToList s2
+                                  )
                      )
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun interHelper ( [], _ ) = []
-|   interHelper ( _, [] ) = []
-|   interHelper ( L as (l::ls), R as (r::rs) ) =
+fun interHelper acc ( [], _ ) = acc
+|   interHelper acc ( _, [] ) = acc
+|   interHelper acc ( L as (l::ls), R as (r::rs) ) =
   if l = r then
-    r::interHelper( ls, rs )
+    interHelper (acc @ [r]) ( ls, rs )
   else if l < r then
-    interHelper( ls, R )
+    interHelper acc ( ls, R )
   else
-    interHelper( L, rs )
+    interHelper acc ( L, rs )
 
 fun intersection (s1,s2) =
-  IntVector.fromList (interHelper ( Util.IntVectorToList s1
-                                  , Util.IntVectorToList s2)
+  IntVector.fromList (interHelper []
+                                  ( Util.IntVectorToList s1
+                                  , Util.IntVectorToList s2
+                                  )
                      )
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun diffHelper ( [], _ ) = []
-|   diffHelper ( L, [] ) = L
-|   diffHelper ( L as (l::ls), R as (r::rs) ) =
+fun diffHelper acc ( [], _ ) = acc
+|   diffHelper acc ( L, [] ) = acc @ L
+|   diffHelper acc ( L as (l::ls), R as (r::rs) ) =
   if l = r then
-    diffHelper( ls, rs )
+    diffHelper acc ( ls, rs )
   else if l < r then
-    l::diffHelper( ls, R )
+    diffHelper (acc @ [l]) ( ls, R )
   else
-    diffHelper( L, rs )
+    diffHelper acc ( L, rs )
 
 fun difference (s1,s2) =
-  IntVector.fromList (diffHelper ( Util.IntVectorToList s1
-                                 , Util.IntVectorToList s2)
+  IntVector.fromList (diffHelper []
+                                 ( Util.IntVectorToList s1
+                                 , Util.IntVectorToList s2
+                                 )
                      )
 
 (*--------------------------------------------------------------------------*)
