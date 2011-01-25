@@ -114,7 +114,7 @@ let
   fun helper acc ~1 ~1 = acc
   |   helper acc ~1 y  = (Util.IntVectorRangeToList s2 0 y ) @ acc
   |   helper acc x ~1  = (Util.IntVectorRangeToList s1 0 x ) @ acc
-  |   helper acc x y =
+  |   helper acc x y   =
   let
     val l = IntVector.sub( s1, x )
     val r = IntVector.sub( s2, y )
@@ -139,7 +139,7 @@ fun intersection ( s1, s2 ) =
 let
   fun helper acc ~1 _ = acc
   |   helper acc _ ~1 = acc
-  |   helper acc x y =
+  |   helper acc x y  =
   let
     val l = IntVector.sub( s1, x )
     val r = IntVector.sub( s2, y )
@@ -165,7 +165,7 @@ let
   fun helper acc ~1 ~1 = acc
   |   helper acc ~1 _  = acc
   |   helper acc x ~1  = (Util.IntVectorRangeToList s1 0 x) @ acc
-  |   helper acc x y =
+  |   helper acc x y   =
   let
     val l = IntVector.sub( s1, x )
     val r = IntVector.sub( s2, y )
