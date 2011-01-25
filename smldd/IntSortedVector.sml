@@ -67,7 +67,7 @@ end (* local fromList, map, mapPartial *)
 
 (*--------------------------------------------------------------------------*)
 fun eq (l,r) =
-  if (IntVector.length l) <> (IntVector.length r) then
+  if IntVector.length l <> IntVector.length r then
     false
   else
     let
@@ -128,8 +128,8 @@ let
   end
 in
   IntVector.fromList( helper []
-                             ((IntVector.length s1) - 1)
-                             ((IntVector.length s2) - 1)
+                             (IntVector.length s1 - 1)
+                             (IntVector.length s2 - 1)
                     )
 end
 
@@ -153,8 +153,8 @@ let
   end
 in
   IntVector.fromList( helper []
-                             ((IntVector.length s1) - 1)
-                             ((IntVector.length s2) - 1)
+                             (IntVector.length s1 - 1)
+                             (IntVector.length s2 - 1)
                     )
 end
 
@@ -179,8 +179,8 @@ let
   end
 in
   IntVector.fromList( helper []
-                             ((IntVector.length s1) - 1)
-                             ((IntVector.length s2) - 1)
+                             (IntVector.length s1 - 1)
+                             (IntVector.length s2 - 1)
                     )
 end
 
