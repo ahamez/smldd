@@ -155,10 +155,14 @@ fun apply operation =
   | Inter []     => raise DoNotPanic
   | Inter( (x,_)::xs) =>
       let
-        val v = foldl (fn ( (v,_), res ) => SV.intersection(v,res))
-                      x xs
+        fun loop acc []          = acc
+        |   loop acc ((x,_)::xs) =
+          if SV.empty acc then
+            acc
+          else
+            loop (SV.intersection( x, acc )) xs
       in
-        UT.unify (mkValues v)
+        UT.unify( mkValues (loop x xs))
       end
 
   | Diff( (l,_), (r,_) ) => UT.unify (mkValues (SV.difference( l, r )))
