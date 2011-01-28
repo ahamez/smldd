@@ -167,8 +167,19 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun addValues cxt vr vl =
-  raise DoNotPanic
+fun addValues cxt vr vls =
+let
+  fun loop [] = [(vr,vls)]
+  |   loop (XS as ((x as (xvr,xvls))::xs)) =
+  if Variable.eq( vr, xvr ) then
+    ( vr, Values.union [xvls,vls] )::xs
+  else if Variable.lt( vr, xvr ) then
+    ( vr, vls )::XS
+  else
+    x::loop xs
+in
+  loop cxt
+end
 
 (*--------------------------------------------------------------------------*)
 fun removeVariable cxt vr =
