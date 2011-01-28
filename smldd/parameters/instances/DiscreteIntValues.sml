@@ -89,6 +89,24 @@ val length = SV.length
 val empty = SV.empty
 
 (*--------------------------------------------------------------------------*)
+fun union [] = SV.mkEmpty()
+|   union (x::xs) = foldl (fn (x,acc) => SV.union(x,acc)) x xs
+
+(*--------------------------------------------------------------------------*)
+fun intersection [] = SV.mkEmpty()
+|   intersection (x::xs) =
+let
+  fun loop acc [] = acc
+  |   loop acc (x::xs) =
+    if SV.empty acc then
+      acc
+    else
+      loop (SV.intersection( x, acc )) xs
+in
+  loop x xs
+end
+
+(*--------------------------------------------------------------------------*)
 val e = mkStorable( SV.mkEmpty() )
 
 (*--------------------------------------------------------------------------*)

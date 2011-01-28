@@ -9,6 +9,13 @@ structure BitWordValues : VALUES = struct
   val empty               = BitWord.empty
   val toString            = BitWord.toString
 
+  fun union []      = BitWord.mkEmpty ()
+  |   union (x::xs) = foldl (fn (x,acc) => BitWord.union( x, acc ) ) x xs
+
+  fun intersection [] = BitWord.mkEmpty ()
+  |   intersection (x::xs) =
+    foldl (fn (x,acc) => BitWord.intersection( x, acc )) x xs
+
   (* Library view *)
   type stored             = BitWord.t
   type value              = unit
@@ -30,13 +37,9 @@ structure BitWordValues : VALUES = struct
 
   val storedEmpty         = BitWord.empty
 
-  fun storedUnion []      = BitWord.mkEmpty ()
-  |   storedUnion (x::xs) =
-    foldl (fn (x,acc) => BitWord.union( x, acc ) ) x xs
+  val storedUnion         = union
 
-  fun storedIntersection [] = BitWord.mkEmpty ()
-  |   storedIntersection (x::xs) =
-    foldl (fn (x,acc) => BitWord.intersection( x, acc )) x xs
+  val storedIntersection  = intersection
 
   val storedDifference   = BitWord.difference
 

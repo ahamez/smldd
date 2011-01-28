@@ -9,6 +9,8 @@ sig
   val length          : values -> int
   val empty           : values -> bool
   val toString        : values -> string
+  val union           : values list -> values
+  val intersection    : values list -> values
 
   (* Library view *)
   type stored
