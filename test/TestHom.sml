@@ -15,19 +15,21 @@ val values = Values o SV.fromList
 (*--------------------------------------------------------------------------*)
 (* Some functions used by mkFunction *)
 (*--------------------------------------------------------------------------*)
-  fun pre c (FuncValues values) =
-    FuncValuesRes (SV.mapPartial (fn x => if x < c then NONE else SOME (x-c))
-                           values
-            )
+  fun pre c (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt
+                  , SV.mapPartial (fn x => if x < c then NONE else SOME (x-c))
+                                  values
+                  )
   |   pre _ Selector = SelectorRes true
   |   pre c Print    = PrintRes ("Pre" ^ (Int.toString c))
   |   pre c Hash =
     HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
 
 (*--------------------------------------------------------------------------*)
-  fun preTest c (FuncValues values) =
-    FuncValuesRes (SV.mapPartial (fn x => if x < c then SOME x else NONE)
-                                values
+  fun preTest c (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt
+                  , SV.mapPartial (fn x => if x < c then SOME x else NONE)
+                                  values
                  )
   |   preTest c Print = PrintRes ("Pre" ^ (Int.toString c))
   |   preTest _ Selector = SelectorRes true
@@ -35,65 +37,66 @@ val values = Values o SV.fromList
     HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
 
 (*--------------------------------------------------------------------------*)
-  fun post c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
+  fun post c (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => x + c) values )
   |   post c Print = PrintRes ("Post" ^ (Int.toString c))
   |   post c Hash =
     HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 1481673) )
 
 (*--------------------------------------------------------------------------*)
-  fun f0 c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
+  fun f0 c (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => x + c) values )
   |   f0 _ Print =
     PrintRes "f0"
   |   f0 _ Hash =
     HashRes (Hash.hashInt 123)
 
 (*--------------------------------------------------------------------------*)
-  fun f1 (FuncValues values) =
-    FuncValuesRes (SV.mapPartial (fn x => if x > 2 then SOME x else NONE )
-                           values
-            )
+  fun f1 (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt
+                  , SV.mapPartial (fn x => if x > 2 then SOME x else NONE )
+                                  values
+                  )
   |   f1 Print =
     PrintRes "f1"
   |   f1 Hash =
     HashRes (Hash.hashInt 456)
 
 (*--------------------------------------------------------------------------*)
-  fun f2 (FuncValues _) =
-    FuncValuesRes (SV.fromList [])
+  fun f2 (FuncValues (cxt,_)) =
+    FuncValuesRes ( cxt, SV.fromList [] )
   |   f2 Print =
     PrintRes "f2"
   |   f2 Hash =
     HashRes (Hash.hashInt 789)
 
 (*--------------------------------------------------------------------------*)
-  fun f3 (FuncValues _) =
-    FuncValuesRes (SV.fromList [1,2,3])
+  fun f3 (FuncValues (cxt,_)) =
+    FuncValuesRes ( cxt, SV.fromList [1,2,3] )
   |   f3 Print =
     PrintRes "f3"
   |   f3 Hash =
     HashRes (Hash.hashInt 987)
 
 (*--------------------------------------------------------------------------*)
-  fun f4 (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x) values)
+  fun f4 (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => x) values )
   |   f4 Print =
     PrintRes "f4"
   |   f4 Hash =
     HashRes (Hash.hashInt 654)
 
 (*--------------------------------------------------------------------------*)
-  fun f5 (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => if x < 4 then x + 1 else x) values)
+  fun f5 (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => if x < 4 then x + 1 else x) values )
   |   f5 Print =
     PrintRes "f5"
   |   f5 Hash =
     HashRes (Hash.hashInt 321)
 
 (*--------------------------------------------------------------------------*)
-  fun f6 (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x) values)
+  fun f6 (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => x) values )
   |   f6 Hash =
     HashRes (Hash.hashInt 654)
   |   f6 Selector =
@@ -906,8 +909,8 @@ end
 (*--------------------------------------------------------------------------*)
 fun testFactorization00 () =
 let
-  fun f c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
+  fun f c (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => x + c) values )
   |   f c Print =
     PrintRes ("f" ^ (Int.toString c))
   |   f c Hash =
@@ -944,8 +947,8 @@ end
 (*--------------------------------------------------------------------------*)
 fun testFactorization01 () =
 let
-  fun f c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
+  fun f c (FuncValues (cxt,values)) =
+    FuncValuesRes ( cxt, SV.map (fn x => x + c) values )
   |   f c Print =
     PrintRes ("f" ^ (Int.toString c))
   |   f c Hash =

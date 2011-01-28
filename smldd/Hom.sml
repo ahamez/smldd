@@ -21,17 +21,21 @@ signature HOM = sig
   val mkFixpoint      : hom -> hom
   val mkNested        : hom -> variable -> hom
 
-  datatype UserIn     = FuncValues of values
+  type context
+  val addValues       : context -> variable -> values -> context
+  val removeVariable  : context -> variable -> context
+
+  datatype UserIn     = FuncValues of (context * values)
                       | InductiveSkip of variable
-                      | InductiveValues of (variable * values)
+                      | InductiveValues of (context * variable * values)
                       | InductiveOne
                       | Selector
                       | Hash
                       | Print
 
-  datatype UserOut    = FuncValuesRes of values
+  datatype UserOut    = FuncValuesRes of (context * values)
                       | InductiveSkipRes of bool
-                      | InductiveValuesRes of hom
+                      | InductiveValuesRes of (context * hom)
                       | InductiveOneRes of SDD
                       | SelectorRes of bool
                       | HashRes of Hash.t
@@ -43,6 +47,7 @@ signature HOM = sig
   val mkInductive     : user -> hom
 
   val eval            : hom -> SDD -> SDD
+  val evalContext     : hom -> (context * SDD) -> (context * SDD)
 
   val toString        : hom -> string
 
@@ -100,6 +105,50 @@ type values    = Values.values
 type valuation = SDD.valuation
 
 (*--------------------------------------------------------------------------*)
+type context = (variable * values) list
+val emptyContext = []
+
+fun mergeContexts [] = emptyContext
+|   mergeContexts (x::xs) =
+let
+  fun helper [] x = [x]
+  |   helper (L as ((l as (lvr,lvl))::ls)) (x as (xvr,xvl)) =
+  if Variable.lt( xvr, lvr ) then
+    x::L
+  else if Variable.eq( xvr, lvr ) then
+    ( xvr, Values.union [lvl,xvl] )::ls
+  else
+    l::helper ls x
+in
+  foldl (fn (y,cxt) => foldl (fn (z,cxt') => helper cxt' z) cxt y) x xs
+end
+
+fun intersectContexts [] = emptyContext
+|   intersectContexts (c::cs) = raise DoNotPanic
+(*let
+
+  fun innerloop res [] = res
+  |   innerloop res (()::xs) =
+  if Variable.eq( ) then
+
+  else if Variable.lt( ) then
+
+  else
+
+  fun outerloop res [] = res
+  |   outerloop res
+
+in
+
+end*)
+
+fun addValues cxt vr vl =
+  raise DoNotPanic
+
+fun removeVariable cxt vr =
+  raise DoNotPanic
+
+(*--------------------------------------------------------------------------*)
 structure Definition (* : DATA *) = struct
 
   structure H = Hash
@@ -128,21 +177,21 @@ structure Definition (* : DATA *) = struct
                                 * t list      (* G *)
                                 * t option )  (* L *)
                | SatComComp  of ( variable
-                                * t             (* F *)
-                                * t list        (* G *)
+                                * t           (* F *)
+                                * t list      (* G *)
                                 )
 
-  and UserIn = FuncValues of values
+  and UserIn = FuncValues of (context * values)
              | InductiveSkip of variable
-             | InductiveValues of (variable * values)
+             | InductiveValues of (context * variable * values)
              | InductiveOne
              | Selector
              | Hash
              | Print
 
-  and UserOut = FuncValuesRes of values
+  and UserOut = FuncValuesRes of (context * values)
               | InductiveSkipRes of bool
-              | InductiveValuesRes of t
+              | InductiveValuesRes of (context * t)
               | InductiveOneRes of SDD
               | SelectorRes of bool
               | HashRes of Hash.t
@@ -389,16 +438,16 @@ structure HT = HashTable
 type user = (UserIn -> UserOut) ref
 
 (*--------------------------------------------------------------------------*)
-fun funcValues (ref f) v =
-  case f (FuncValues v ) of
-    FuncValuesRes v => v
-  | _               => raise NotFuncValues
+fun funcValues (ref f) param =
+  case f (FuncValues param) of
+    FuncValuesRes res => res
+  | _                 => raise NotFuncValues
 
 (*--------------------------------------------------------------------------*)
-fun inductiveValues (ref i) arc =
-  case i (InductiveValues arc) of
-    InductiveValuesRes h => h
-  | _                    => raise NotInductiveValues
+fun inductiveValues (ref i) param =
+  case i (InductiveValues param) of
+    InductiveValuesRes res => res
+  | _                      => raise NotInductiveValues
 
 (*--------------------------------------------------------------------------*)
 fun inductiveOne (ref i) =
@@ -777,17 +826,17 @@ fun configure CacheConfiguration.Name =
   CacheConfiguration.NameRes "Hom"
 
 (*--------------------------------------------------------------------------*)
-type result        = SDD
-datatype operation = Op of hom * SDD * (operation -> result)
+type result        = ( context * SDD )
+datatype operation = Op of hom * context * SDD * (operation -> result)
 
 (*--------------------------------------------------------------------------*)
 val eq' = eq
-fun eq ( Op(xh,xsdd,_), Op(yh,ysdd,_) ) =
+fun eq ( Op(xh,_,xsdd,_), Op(yh,_,ysdd,_) ) =
   eq'( xh, yh ) andalso SDD.eq( xsdd, ysdd )
 
 (*--------------------------------------------------------------------------*)
-fun hash (Op( (_,uid), s, _ ) ) =
-  H.hashCombine( H.hashInt uid, SDD.hash s )
+fun hash ( Op( (_,uid), _, sdd, _ ) ) =
+  H.hashCombine( H.hashInt uid, SDD.hash sdd )
 
 (*--------------------------------------------------------------------------*)
 fun skipVariable var (h,_) =
@@ -810,18 +859,18 @@ fun skipVariable var (h,_) =
 
 (*--------------------------------------------------------------------------*)
 (* Evaluate an homomorphism on an SDD. Warning! Duplicate with Hom.eval! *)
-fun evalCallback lookup h sdd =
+fun evalCallback lookup h (cxt,sdd) =
   if SDD.empty sdd then
-    SDD.zero
+    ( emptyContext, SDD.zero )
   else
     case let val (x,_) = h in x end of
-      Id                => sdd
-    | Const c           => c
+      Id                => ( cxt, sdd )
+    | Const c           => ( cxt, c )
     | Cons(var,vl,next) => if eq'( next, id ) then
-                                      SDD.node( var, vl, sdd )
+                                      ( cxt, SDD.node( var, vl, sdd ) )
                                     else
-                                      lookup( Op( h, sdd, lookup ) )
-    | _                 => lookup( Op( h, sdd, lookup ) )
+                                      lookup( Op( h, cxt, sdd, lookup ) )
+    | _                 => lookup( Op( h, cxt, sdd, lookup ) )
 
 (*--------------------------------------------------------------------------*)
 val rewritten = ref 0
@@ -967,187 +1016,300 @@ end
 
 (*--------------------------------------------------------------------------*)
 (* Evaluate a list of homomorphisms and insert the result sorted into a list
-   of results*)
-fun evalInsert eval hs xs sdd =
-  foldl (fn (h,acc) => SDD.insert acc (eval h sdd) ) xs hs
-
-(*--------------------------------------------------------------------------*)
-fun cons eval (var, vl, next) sdd =
-  SDD.node( var, vl, eval next sdd )
-
-(*--------------------------------------------------------------------------*)
-fun union eval hs sdd =
-  SDD.union( evalInsert eval hs [] sdd )
-
-(*--------------------------------------------------------------------------*)
-fun intersection eval hs sdd =
-  SDD.intersection ( evalInsert eval hs [] sdd )
-
-(*--------------------------------------------------------------------------*)
-fun satUnion eval F G L sdd =
-  if SDD.eq( sdd, SDD.one ) then
-    raise DoNotPanic
-  else
-  let
-    val fRes = case F of NONE => [] | SOME f => [eval f sdd]
-    val gRes = evalInsert eval G fRes sdd
-    val lRes = case L of NONE   => gRes
-                       | SOME l => evalInsert eval [l] gRes sdd
-  in
-    SDD.union lRes
-  end
-
-(*--------------------------------------------------------------------------*)
-fun satIntersection eval F G L sdd =
-  if SDD.eq( sdd, SDD.one ) then
-    raise DoNotPanic
-  else
-  let
-    val fRes = case F of NONE => [] | SOME f => [eval f sdd]
-    val gRes = evalInsert eval G fRes sdd
-    val lRes = case L of NONE   => gRes
-                       | SOME l => evalInsert eval [l] gRes sdd
-  in
-    SDD.intersection lRes
-  end
-
-(*--------------------------------------------------------------------------*)
-fun composition eval a b sdd =
-  eval a (eval b sdd)
-
-(*--------------------------------------------------------------------------*)
-fun commutativeComposition eval hs sdd =
-  foldl (fn (h,acc) => eval h acc) sdd hs
-
-(*--------------------------------------------------------------------------*)
-fun satCommutativeComposition eval F G sdd =
-  if SDD.eq( sdd, SDD.one ) then
-    (* Standard composition *)
-    foldl (fn (h,acc) => eval h acc) SDD.one (F::G)
-  else
-  let
-    val fRes = eval F sdd
-    val gRes = foldl (fn (g,acc) => eval g acc) fRes G
-  in
-    gRes
-  end
-
-(*--------------------------------------------------------------------------*)
-local (* Fixpoint stuff *)
-
-fun fixpointHelper f sdd =
+   of results *)
+fun evalInsertMerge eval hs xs (cxt,sdd) =
 let
-  val res = f sdd
+  (* sort results using the right hand member (sdd) *)
+  fun helper [] x = [x]
+  |   helper (L as ((l as (lcxt,lsdd))::ls)) (x as (xcxt,xsdd)) =
+    if SDD.eq( xsdd, lsdd ) then
+      ( mergeContexts [lcxt,xcxt], lsdd)::ls
+    else if SDD.lt( xsdd, lsdd ) then
+      x::L
+    else
+      l::helper ls x
 in
-  if SDD.eq( res, sdd ) then
+  foldl (fn (h,acc) => helper acc (eval h (cxt,sdd)) ) xs hs
+end
+
+(*--------------------------------------------------------------------------*)
+fun cons eval (var, vl, hsucc) x =
+let
+  val ( cxt', succ' ) = eval hsucc x
+in
+  ( cxt', SDD.node( var, vl, succ') )
+end
+
+(*--------------------------------------------------------------------------*)
+fun union eval hs x =
+let
+  val (cxts,sdds) = ListPair.unzip( evalInsertMerge eval hs [] x )
+in
+  ( mergeContexts cxts, SDD.union sdds )
+end
+
+(*--------------------------------------------------------------------------*)
+fun intersection eval hs x =
+let
+  fun loop res [] = res
+  |   loop res (h::hs) =
+  let
+    val tmp as (cxt,sdd) = eval h x
+  in
+    if SDD.eq( sdd, SDD.zero ) then
+      [(emptyContext,SDD.zero)]
+    else
+    let
+      (* Insert sort using right hand member (sdd) *)
+      fun helper [] x = [x]
+      |   helper (L as ((l as (lcxt,lsdd))::ls)) (x as (xcxt,xsdd)) =
+        if SDD.eq( xsdd, lsdd ) then
+          ( mergeContexts [lcxt,xcxt], lsdd)::ls
+        else if SDD.lt( xsdd, lsdd ) then
+          x::L
+        else
+          l::helper ls x
+    in
+      loop (helper res tmp) hs
+    end
+  end
+
+  val (cxts,sdds) = ListPair.unzip( loop [] hs )
+in
+  ( intersectContexts cxts, SDD.intersection sdds )
+end
+
+(*--------------------------------------------------------------------------*)
+fun satUnion eval F G L (x as (cxt,sdd)) =
+  if SDD.eq( sdd, SDD.one ) then
+    raise DoNotPanic
+  else
+  let
+    val fres = case F of NONE => [] | SOME f => [eval f x]
+    val gres = evalInsertMerge eval G fres x
+    val lres = case L of NONE   => gres
+                       | SOME l => evalInsertMerge eval [l] gres x
+    val (cxts,sdds) = ListPair.unzip lres
+  in
+    ( mergeContexts cxts, SDD.union sdds )
+  end
+
+(*--------------------------------------------------------------------------*)
+fun satIntersection eval F G L (x as (cxt,sdd)) =
+  if SDD.eq( sdd, SDD.one ) then
+    raise DoNotPanic
+  else
+  let
+    fun run f = eval f x
+    fun runG () = intersection eval G x
+  in
+
+    case ( F, L ) of
+      ( NONE, NONE )     => runG ()
+
+    | ( SOME f, NONE)    =>
+    let
+      val fRes as ( fcxt, fsdd ) = run f
+    in
+      if SDD.eq( fsdd, SDD.zero ) then
+        ( emptyContext, SDD.zero )
+      else
+      let
+        val ( gcxt, gsdd ) = runG ()
+      in
+        if SDD.eq( gsdd, SDD.zero ) then
+          ( emptyContext, SDD.zero )
+        else
+          ( intersectContexts [fcxt,gcxt], SDD.intersection [fsdd,gsdd])
+      end
+    end
+
+    | ( NONE, SOME l )   =>
+    let
+      val lRes as ( lcxt, lsdd ) = run l
+    in
+      if SDD.eq( lsdd, SDD.zero ) then
+        ( emptyContext, SDD.zero )
+      else
+      let
+        val ( gcxt, gsdd ) = runG ()
+      in
+        if SDD.eq( gsdd, SDD.zero ) then
+          ( emptyContext, SDD.zero )
+        else
+          ( intersectContexts [lcxt,gcxt], SDD.intersection [lsdd,gsdd])
+      end
+    end
+
+    | ( SOME f, SOME l ) =>
+    let
+      val fRes as ( fcxt, fsdd ) = run f
+    in
+      if SDD.eq( fsdd, SDD.zero ) then
+        ( emptyContext, SDD.zero )
+      else
+      let
+        val lRes as ( lcxt, lsdd ) = run l
+      in
+        if SDD.eq( lsdd, SDD.zero ) then
+          ( emptyContext, SDD.zero )
+        else
+        let
+          val ( gcxt, gsdd ) = runG ()
+        in
+          if SDD.eq( gsdd, SDD.zero ) then
+            ( emptyContext, SDD.zero )
+          else
+            ( intersectContexts [ fcxt, lcxt, gcxt ]
+            , SDD.intersection  [ fsdd, lsdd, gsdd]
+            )
+        end
+      end
+    end
+
+  end
+
+(*--------------------------------------------------------------------------*)
+fun composition eval a b x =
+  eval a (eval b x)
+
+(*--------------------------------------------------------------------------*)
+fun commutativeComposition eval hs x =
+  foldl (fn (h,y) => eval h y) x hs
+
+(*--------------------------------------------------------------------------*)
+fun satCommutativeComposition eval F G (x as (cxt,sdd)) =
+  if SDD.eq( sdd, SDD.one ) then
+    (* On |1| terminal, F is thus empty *)
+    foldl (fn (h,y) => eval h y) x G
+  else
+    foldl (fn (h,y) => eval h y) (eval F x) G
+
+(*--------------------------------------------------------------------------*)
+fun fixpoint eval h (x as (cxt,sdd)) =
+let
+  val res as (cxt',sdd') = eval h x
+in
+  if SDD.eq( sdd', sdd ) then
     res
   else
-    fixpointHelper f res
+    fixpoint eval h (cxt',sdd')
 end
 
-in (* local fixpoint stuff *)
-
-fun fixpoint eval h sdd =
-  fixpointHelper (eval h) sdd
-
-fun satFixpoint eval F G L sdd =
+(*--------------------------------------------------------------------------*)
+fun satFixpoint eval F G L (x as (cxt,sdd)) =
 let
-  fun loop sdd =
-  let
-    val r  = case F of NONE => sdd | SOME f => eval f sdd
-    val r' = case L of NONE => r   | SOME l => eval l r
-  in
-    foldl (fn (g,sdd) => SDD.union[ sdd, eval g sdd ]) r' G
-  end
+  val fres as ( fcxt, fsdd ) = case F of NONE => x
+                                       | SOME f => eval f x
+  val lres                   = case L of NONE => fres
+                                       | SOME l => eval l (fcxt,fsdd)
+  val gres as ( gcxt, gsdd ) = foldl (fn ( g, (cxt,sdd) ) =>
+                                     let
+                                       val (cxt',sdd') = eval g (cxt,sdd)
+                                     in
+                                       ( cxt', SDD.union[ sdd, sdd'] )
+                                     end
+                                     )
+                                     lres
+                                     G
 in
-  fixpointHelper loop sdd
+  if SDD.eq( gsdd, sdd ) then
+    gres
+  else
+    satFixpoint eval F G L (gcxt,gsdd)
 end
 
-end (* local fixpoint stuff *)
-
 (*--------------------------------------------------------------------------*)
-fun nested eval h var sdd =
+fun nested eval h var (cxt,sdd) =
   if SDD.eq( sdd, SDD.one ) then
-    SDD.one
-
-  (* skipVariable made nested propagated to the correct variable *)
-  else if isSelector h then
-     SDD.nodeAlpha( var
-                  , map (fn ( vl, succ) =>
-                          case vl of
-                            SDD.Values _ => raise NestedHomOnValues
-                          | SDD.Nested nvl =>
-                              ( SDD.Nested (eval h nvl), succ )
-                        )
-                        (SDD.alpha sdd)
-                  )
+    ( cxt, SDD.one )
   else
-    SDD.union (foldl
-                (fn ( (vl,succ), acc ) =>
-                  case vl of
-                    SDD.Values _   => raise NestedHomOnValues
-                  | SDD.Nested nvl =>
+  let
+    val tmp = map (fn ( vl, succ) =>
+                    case vl of
+                      SDD.Values _   => raise NestedHomOnValues
+                    | SDD.Nested nvl =>
                     let
-                      val nvl' = eval h nvl
+                      val (cxt',nvl') = eval h (cxt,nvl)
                     in
-                      SDD.insert acc (SDD.node( var, SDD.Nested nvl', succ))
+                      ( cxt', ( SDD.Nested nvl', succ ) )
                     end
-                )
-                []
-                (SDD.alpha sdd)
-              )
+                  )
+                  (SDD.alpha sdd)
+    val (cxts,arcs) = ListPair.unzip tmp
+    val cxt' = mergeContexts cxts
+  in
+    if isSelector h then
+      ( cxt'
+      , SDD.nodeAlpha( var, arcs )
+      )
+    else
+      ( cxt'
+      , SDD.union (foldl (fn ((vl,succ),acc) =>
+                    SDD.insert acc( SDD.node( var, vl, succ ) )
+                  )
+                  []
+                  arcs
+                  )
+      )
+  end
 
 (*--------------------------------------------------------------------------*)
-fun function f var sdd =
+fun function f var (cxt,sdd) =
   if SDD.eq( sdd, SDD.one ) then
-    SDD.one
-  else if funcSelector f then
-    SDD.nodeAlpha( var
-                 , map (fn ( vl, succ) =>
-                         case vl of
-                           SDD.Nested _ => raise FunctionHomOnNested
-                         | SDD.Values values =>
-                             ( SDD.Values (funcValues f values), succ )
-                       )
-                       (SDD.alpha sdd)
-                 )
+    ( cxt, SDD.one )
   else
-    SDD.union (foldl
-                (fn ( (vl,succ), acc ) =>
-                case vl of
-                  SDD.Nested _      => raise FunctionHomOnNested
-                | SDD.Values values =>
-                let
-                  val values' = funcValues f values
-                in
-                  SDD.insert acc (SDD.node( var, SDD.Values values', succ))
-                end
-                )
-                []
-                (SDD.alpha sdd)
-              )
+  let
+    val tmp = map (fn ( vl, succ) =>
+                    case vl of
+                      SDD.Nested _      => raise FunctionHomOnNested
+                    | SDD.Values values =>
+                    let
+                      val (cxt',values') = funcValues f (cxt,values)
+                    in
+                      ( cxt', ( SDD.Values values', succ ) )
+                    end
+                  )
+                  (SDD.alpha sdd)
+    val (cxts,arcs) = ListPair.unzip tmp
+    val cxt' = mergeContexts cxts
+  in
+    if funcSelector f then
+      ( cxt'
+      , SDD.nodeAlpha( var, arcs )
+      )
+    else
+      ( cxt'
+      , SDD.union (foldl (fn ((vl,succ),acc) =>
+                    SDD.insert acc( SDD.node( var, vl, succ ) )
+                  )
+                  []
+                  arcs
+                  )
+      )
+  end
 
 (*--------------------------------------------------------------------------*)
-fun inductive eval i sdd =
+fun inductive eval i (cxt,sdd) =
   if SDD.eq( sdd, SDD.one ) then
-    inductiveOne i
+    ( cxt, inductiveOne i )
   else
   let
     val var = SDD.variable sdd
+    val tmp = map (fn ( vl, succ) =>
+                    case vl of
+                      SDD.Nested _      => raise Domain
+                    | SDD.Values values =>
+                    let
+                      val (cxt',h) = inductiveValues i (cxt,var,values)
+                    in
+                      eval h (cxt',succ)
+                    end
+                  )
+                  (SDD.alpha sdd)
+    val (cxts,sdds) = ListPair.unzip tmp
   in
-    SDD.union (foldl (fn ( ( v, succ ), acc ) =>
-                       case v of
-                         SDD.Nested _  => raise Domain
-                       | SDD.Values vl =>
-                       let
-                         val h = inductiveValues i (var,vl)
-                       in
-                         SDD.insert acc (eval h succ)
-                       end
-                     )
-                     []
-                     (SDD.alpha sdd)
-              )
+    ( mergeContexts cxts, SDD.union (SDD.sort sdds) )
   end
 
 (*--------------------------------------------------------------------------*)
@@ -1157,7 +1319,7 @@ val skipped = ref 0
 (* Dispatch the evaluation of an homomorphism to the corresponding
    function. Used by CacheFun.
 *)
-fun apply ( Op( h, sdd, lookup) ) =
+fun apply ( Op( h, cxt, sdd, lookup ) ) =
 let
   val _ = evals := !evals + 1
   val skip = let val v = SDD.variable sdd in skipVariable v h end
@@ -1168,25 +1330,28 @@ in
     let
       val _ = skipped := !skipped + 1
       val var = SDD.variable sdd
+      val tmp = map (fn ( vl, succ) =>
+                    let
+                      val (cxt',succ') = eval h (cxt,succ)
+                    in
+                      ( cxt', (vl,succ') )
+                    end
+                    )
+                    (SDD.alpha sdd)
+      val (cxts,arcs) = ListPair.unzip tmp
+      val cxt' = mergeContexts cxts
     in
       if isSelector h then
-        SDD.nodeAlpha( var
-                     , map (fn ( vl, succ) =>
-                             ( vl, eval h succ )
-                           )
-                           (SDD.alpha sdd)
-                     )
+        ( cxt'
+        , SDD.nodeAlpha( var, arcs )
+        )
       else
-        SDD.union (foldl (fn ( (vl, succ), acc ) =>
-                         let
-                           val succ' = eval h succ
-                         in
-                           SDD.insert acc (SDD.node( var, vl, succ'))
-                         end
-                         )
-                         []
-                         (SDD.alpha sdd)
-                  )
+        ( cxt'
+        , SDD.union( SDD.sort( map (fn (vl,succ) => SDD.node( var, vl, succ))
+                                   arcs
+                             )
+                   )
+        )
     end
   else
   let
@@ -1196,19 +1361,19 @@ in
     case let val (x,_) = h' in x end of
       Id                    => raise DoNotPanic
     | Const _               => raise DoNotPanic
-    | Cons(var,nested,next) => cons eval (var, nested, next) sdd
-    | Union hs              => union eval hs sdd
-    | Inter hs              => intersection eval hs sdd
-    | Comp( a, b )          => composition eval a b sdd
-    | ComComp hs            => commutativeComposition eval hs sdd
-    | Fixpoint g            => fixpoint eval g sdd
-    | Nested( g, var )      => nested eval g var sdd
-    | Func( f, var )        => function f var sdd
-    | Inductive i           => inductive eval i sdd
-    | SatUnion( _, F, G, L) => satUnion eval F G L sdd
-    | SatInter( _, F, G, L) => satIntersection eval F G L sdd
-    | SatFixpoint(_,F,G,L)  => satFixpoint eval F G L sdd
-    | SatComComp(_,F,G)     => satCommutativeComposition eval F G sdd
+    | Cons(var,nested,next) => cons eval (var, nested, next) (cxt,sdd)
+    | Union hs              => union eval hs (cxt,sdd)
+    | Inter hs              => intersection eval hs (cxt,sdd)
+    | Comp( a, b )          => composition eval a b (cxt,sdd)
+    | ComComp hs            => commutativeComposition eval hs (cxt,sdd)
+    | Fixpoint g            => fixpoint eval g (cxt,sdd)
+    | Nested( g, var )      => nested eval g var (cxt,sdd)
+    | Func( f, var )        => function f var (cxt,sdd)
+    | Inductive i           => inductive eval i (cxt,sdd)
+    | SatUnion( _, F, G, L) => satUnion eval F G L (cxt,sdd)
+    | SatInter( _, F, G, L) => satIntersection eval F G L (cxt,sdd)
+    | SatFixpoint(_,F,G,L)  => satFixpoint eval F G L (cxt,sdd)
+    | SatComComp(_,F,G)     => satCommutativeComposition eval F G (cxt,sdd)
   end
 
 end (* fun apply *)
@@ -1223,19 +1388,23 @@ val cacheLookup = cache.lookup
 (* Evaluate an homomorphism on an SDD.
    Warning! Duplicate logic with Evaluation.evalCallback!
 *)
-fun eval h sdd =
+fun evalContext h (x as (cxt,sdd)) =
   if SDD.eq( sdd, SDD.zero ) then
-    SDD.zero
+    ( emptyContext, SDD.zero )
   else
-    case let val (x,_) = h in x end of
-      Id                => sdd
-    | Const c           => c
+    case #1 h of
+      Id                => x
+    | Const c           => ( cxt, c )
     | Cons(var,vl,next) =>
       if eq( next, id ) then
-        SDD.node( var, vl, sdd )
+        ( cxt, SDD.node( var, vl, sdd ) )
       else
-        cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
-    | _ => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
+        cache.lookup( Evaluation.Op( h, cxt, sdd, cacheLookup ) )
+    | _ => cache.lookup( Evaluation.Op( h, cxt, sdd, cacheLookup ) )
+
+(*--------------------------------------------------------------------------*)
+(* Evaluate an homomorphism on an SDD, ignoring the evaluation context *)
+fun eval h sdd = #2( evalContext h (emptyContext,sdd) )
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor =
