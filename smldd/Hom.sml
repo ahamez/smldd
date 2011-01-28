@@ -108,6 +108,11 @@ type valuation = SDD.valuation
 type context = (variable * values) list
 val emptyContext = []
 
+(*--------------------------------------------------------------------------*)
+fun isEmptyContext [] = true
+|   isEmptyContext _  = false
+
+(*--------------------------------------------------------------------------*)
 fun mergeContexts [] = emptyContext
 |   mergeContexts (x::xs) =
 let
@@ -123,28 +128,49 @@ in
   foldl (fn (y,cxt) => foldl (fn (z,cxt') => helper cxt' z) cxt y) x xs
 end
 
+(*--------------------------------------------------------------------------*)
 fun intersectContexts [] = emptyContext
-|   intersectContexts (c::cs) = raise DoNotPanic
-(*let
+|   intersectContexts (c::cs) =
+let
 
-  fun innerloop res [] = res
-  |   innerloop res (()::xs) =
-  if Variable.eq( ) then
-
-  else if Variable.lt( ) then
-
+  fun loop2 res _  [] = res
+  |   loop2 res [] _  = res
+  |   loop2 res (XS as ((xvr,xvls)::xs)) (YS as ((yvr,yvls)::ys)) =
+  if Variable.eq( xvr, yvr ) then
+  let
+    val vls = Values.intersection [ xvls, yvls ]
+  in
+    if Values.empty vls then
+      loop2 res xs ys
+    else
+      loop2 ((xvr,vls)::res) xs ys
+  end
+  else if Variable.lt( xvr, yvr ) then
+    loop2 res xs YS
   else
+    loop2 res XS ys
 
-  fun outerloop res [] = res
-  |   outerloop res
+  (* faire le rev ici *)
+  fun loop1 acc [] = acc
+  |   loop1 acc (c::cs) =
+  let
+    val tmp = loop2 [] acc c
+  in
+    if isEmptyContext tmp then
+      emptyContext
+    else
+      loop1 tmp cs
+  end
 
 in
+  loop1 c cs
+end
 
-end*)
-
+(*--------------------------------------------------------------------------*)
 fun addValues cxt vr vl =
   raise DoNotPanic
 
+(*--------------------------------------------------------------------------*)
 fun removeVariable cxt vr =
   raise DoNotPanic
 
