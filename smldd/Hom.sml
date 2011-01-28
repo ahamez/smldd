@@ -183,7 +183,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun removeVariable cxt vr =
-  raise DoNotPanic
+  List.filter (fn (xvr,_) => not ( Variable.eq( xvr, vr ) )) cxt
 
 (*--------------------------------------------------------------------------*)
 structure Definition (* : DATA *) = struct
