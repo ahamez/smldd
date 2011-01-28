@@ -27,6 +27,7 @@ signature SDD = sig
   val hash                : SDD -> Hash.t
 
   val insert              : SDD list -> SDD -> SDD list
+  val sort                : SDD list -> SDD list
 
   val values              : valuation -> values
   val nested              : valuation -> SDD
@@ -239,6 +240,10 @@ fun insert [] x = [x]
     x::L
   else
     l::insert ls x
+
+(*--------------------------------------------------------------------------*)
+fun sort [] = []
+|   sort xs = foldr (fn (x,acc) => insert acc x) [] xs
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an SDD with an id *)
