@@ -980,11 +980,15 @@ fun rewriteFixpoint orig v f =
 fun rewriteComComp orig v hs =
 let
   val (F,G) = List.partition (skipVariable v) hs
-  val (GSel,GNotSel) = List.partition isSelector G
 in
-  case Util.sort uid (op<) F of
+  case F of
     [] => orig
-  | fs => mkSatComComp v (mkCommutativeComposition fs) (GSel@GNotSel)
+  | fs =>
+  let
+    val (GSel,GNotSel) = List.partition isSelector G
+  in
+    mkSatComComp v (mkCommutativeComposition fs) (GSel@GNotSel)
+  end
 end
 
 (*--------------------------------------------------------------------------*)
@@ -1049,6 +1053,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
+
 fun intersection eval hs x =
 let
   fun loop res [] = res
@@ -1168,7 +1173,6 @@ fun satIntersection eval F G L (x as (cxt,sdd)) =
     end
 
   end
-
 (*--------------------------------------------------------------------------*)
 fun composition eval a b x =
   eval a (eval b x)
