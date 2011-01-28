@@ -633,15 +633,10 @@ fun commutatives x y =
   else if emptyDomainIntersection (domain x) (domain y) then
     true
   else
-  let
-    val (h1,_) = x
-    val (h2,_) = y
-  in
-    case ( h1, h2 ) of
+    case ( #1 x, #1 y ) of
       ( Nested( g1, v1 ), Nested( g2, v2) ) =>
         Variable.eq(v1,v2) andalso commutatives g1 g2
     | ( _, _ ) => false
-  end
 
 (*--------------------------------------------------------------------------*)
 fun mkCons var vl next =
@@ -668,7 +663,7 @@ fun mkCommutativeComposition [] = raise EmptyOperands
 let
 
   fun helper ( h, operands ) =
-    case let val (x,_) = h in x end of
+    case #1 h of
       Id              => operands
     | ComComp ys      => (foldr helper [] ys) @ operands
     | _               => h::operands
@@ -698,7 +693,7 @@ let
       = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))
 
   fun unionHelper ( h, operands ) =
-  case let val (x,_) = h in x end of
+  case #1 h of
 
     Union ys      => foldr unionHelper operands ys
 
@@ -747,14 +742,14 @@ fun mkComposition x y =
   else
   let
 
-    fun addParameter xs (ry as (y,_)) =
-    case y of
+    fun addParameter xs y =
+    case #1 y of
 
       ComComp ys  => foldl (fn (x,acc) => addParameter acc x) xs ys
 
     | Nested(f,v) =>
     let
-      fun loop [] = [ry]
+      fun loop [] = [y]
       |   loop ((rx as (x,_))::xs) =
        case x of
          Nested(g,w) => if Variable.eq( v, w ) then
@@ -768,13 +763,13 @@ fun mkComposition x y =
 
     | _ =>
     let
-      val (c,notC) = List.partition (fn x => commutatives x ry) xs
+      val (c,notC) = List.partition (fn x => commutatives x y) xs
       fun mkComp x y = UT.unify( mkHom (Comp( x, y )) )
     in
       case notC of
-        []  => ry::c
-      | [x] => (mkComp x ry)::c
-      | _   => (mkComp (mkCommutativeComposition notC) ry)::c
+        []  => y::c
+      | [x] => (mkComp x y)::c
+      | _   => (mkComp (mkCommutativeComposition notC) y)::c
     end
 
   in
@@ -784,11 +779,11 @@ fun mkComposition x y =
   end
 
 (*--------------------------------------------------------------------------*)
-fun mkFixpoint (rh as (h,_)) =
-  case h of
-    Id          => rh
-  | Fixpoint _  => rh
-  | _           => UT.unify( mkHom (Fixpoint rh) )
+fun mkFixpoint h =
+  case #1 h of
+    Id          => h
+  | Fixpoint _  => h
+  | _           => UT.unify( mkHom (Fixpoint h) )
 
 (*--------------------------------------------------------------------------*)
 fun mkFunction f var =
@@ -839,8 +834,8 @@ fun hash ( Op( (_,uid), _, sdd, _ ) ) =
   H.hashCombine( H.hashInt uid, SDD.hash sdd )
 
 (*--------------------------------------------------------------------------*)
-fun skipVariable var (h,_) =
-  case h of
+fun skipVariable var h =
+  case #1 h of
     Id                   => true
   | Const _              => false
   | Cons(_,_,_)          => false
@@ -863,7 +858,7 @@ fun evalCallback lookup h (cxt,sdd) =
   if SDD.empty sdd then
     ( emptyContext, SDD.zero )
   else
-    case let val (x,_) = h in x end of
+    case #1 h of
       Id                => ( cxt, sdd )
     | Const c           => ( cxt, c )
     | Cons(var,vl,next) => if eq'( next, id ) then
@@ -993,7 +988,7 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun apply ( h, v ) =
-  case let val (x,_) = h in x end of
+  case #1 h of
     Union hs    => rewriteUI mkUnion' mkSatUnion h v hs
   | Inter hs    => rewriteUI mkIntersection mkSatIntersection h v hs
   | Fixpoint f  => rewriteFixpoint h v f
@@ -1010,7 +1005,7 @@ fun rewrite h v =
 let
   val _ = processed := !processed + 1
 in
-  case let val (x,_) = h in x end of
+  case #1 h of
     Union _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Inter _    => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
   | Fixpoint _ => (eligible := !eligible + 1; rewriteCache.lookup (h,v))
@@ -1362,7 +1357,7 @@ in
     val h' = rewrite h (SDD.variable sdd)
              handle SDD.IsNotANode => h
   in
-    case let val (x,_) = h' in x end of
+    case #1 h' of
       Id                    => raise DoNotPanic
     | Const _               => raise DoNotPanic
     | Cons(var,nested,next) => cons eval (var, nested, next) (cxt,sdd)
@@ -1433,10 +1428,7 @@ let
   fun visitor id cons const union inter comp comcomp fixpoint nested func
               inductive h
   =
-  let
-    val (x,_) = h
-  in
-    case x of
+    case #1 h of
       Id              => id ()
     | Cons(v,vl,nxt)  => cons v vl nxt
     | Const s         => const s
@@ -1449,7 +1441,6 @@ let
     | Func(f,v)       => func f v
     | Inductive i     => inductive i
     | _               => raise DoNotPanic
-  end
 
 in
   visitor
