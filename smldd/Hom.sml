@@ -997,81 +997,75 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun satUnion eval F G L sdd =
-  if SDD.eq( sdd, SDD.one ) then
-    raise DoNotPanic
-  else
-  let
-    val fRes = case F of NONE => [] | SOME f => [eval f sdd]
-    val gRes = evalInsert eval G fRes sdd
-    val lRes = case L of NONE   => gRes
-                       | SOME l => evalInsert eval [l] gRes sdd
-  in
-    SDD.union lRes
-  end
+let
+  val fRes = case F of NONE => [] | SOME f => [eval f sdd]
+  val gRes = evalInsert eval G fRes sdd
+  val lRes = case L of NONE   => gRes
+                     | SOME l => evalInsert eval [l] gRes sdd
+in
+  SDD.union lRes
+end
 
 (*--------------------------------------------------------------------------*)
 fun satIntersection eval F G L sdd =
-  if SDD.eq( sdd, SDD.one ) then
-    raise DoNotPanic
-  else
+let
+  fun rung res =
   let
-    fun rung res =
+    fun loop res [] = res
+    |   loop res (g::gs) =
     let
-      fun loop res [] = res
-      |   loop res (g::gs) =
-      let
-        val tmp = eval g sdd
-      in
-        if SDD.eq( tmp, SDD.zero ) then
-          []
-        else
-          loop (SDD.insert res tmp) gs
-      end
+      val tmp = eval g sdd
     in
-      loop res G
+      if SDD.eq( tmp, SDD.zero ) then
+        []
+      else
+        loop (SDD.insert res tmp) gs
     end
   in
-    case ( F , L ) of
-      ( NONE, NONE ) => SDD.intersection(rung [])
+    loop res G
+  end
+in
+  case ( F , L ) of
+    ( NONE, NONE ) => SDD.intersection(rung [])
 
-    | ( SOME f, NONE ) =>
-    let
-      val fres = eval f sdd
-    in
-      if SDD.eq( fres, SDD.zero ) then
-        SDD.zero
-      else
-        SDD.intersection( rung [fres] )
-    end
+  | ( SOME f, NONE ) =>
+  let
+    val fres = eval f sdd
+  in
+    if SDD.eq( fres, SDD.zero ) then
+      SDD.zero
+    else
+      SDD.intersection( rung [fres] )
+  end
 
-    | ( NONE, SOME l ) =>
+  | ( NONE, SOME l ) =>
+  let
+    val lres = eval l sdd
+  in
+    if SDD.eq( lres, SDD.zero ) then
+      SDD.zero
+    else
+      SDD.intersection( rung [lres] )
+  end
+
+  | ( SOME f, SOME l ) =>
+  let
+    val fres = eval f sdd
+  in
+    if SDD.eq( fres, SDD.zero ) then
+      SDD.zero
+    else
     let
       val lres = eval l sdd
     in
       if SDD.eq( lres, SDD.zero ) then
         SDD.zero
       else
-        SDD.intersection( rung [lres] )
+        SDD.intersection( rung (SDD.insert [fres] lres) )
     end
-
-    | ( SOME f, SOME l ) =>
-    let
-      val fres = eval f sdd
-    in
-      if SDD.eq( fres, SDD.zero ) then
-        SDD.zero
-      else
-      let
-        val lres = eval l sdd
-      in
-        if SDD.eq( lres, SDD.zero ) then
-          SDD.zero
-        else
-          SDD.intersection( rung (SDD.insert [fres] lres) )
-      end
-    end
-
   end
+end
+
 (*--------------------------------------------------------------------------*)
 fun composition eval a b sdd =
   eval a (eval b sdd)
