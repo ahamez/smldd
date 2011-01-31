@@ -1076,10 +1076,6 @@ fun commutativeComposition eval hs sdd =
 
 (*--------------------------------------------------------------------------*)
 fun satCommutativeComposition eval F G sdd =
-  (* A saturation commutative composition can only be created by the rewriting
-     process. Thus it cannot be applied on |1| and F is always a commutatative
-     composition.
-  *)
   foldl (fn (g,acc) => eval g acc) (eval F sdd) G
 
 (*--------------------------------------------------------------------------*)
@@ -1240,6 +1236,10 @@ in
     end
   else
   let
+    (* All saturation enabled operations can only be created by the rewritting
+       process. Thus, when sdd is a terminal, h' can never be a saturation
+       operation.
+    *)
     val h' = rewrite h (SDD.variable sdd)
              handle SDD.IsNotANode => h
   in
