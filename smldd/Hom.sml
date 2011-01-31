@@ -1118,50 +1118,67 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun satUnion eval F G L (x as (cxt,sdd)) =
-  if SDD.eq( sdd, SDD.one ) then
-    raise DoNotPanic
-  else
-  let
-    val fres = case F of NONE => [] | SOME f => [eval f x]
-    val gres = evalInsertMerge eval G fres x
-    val lres = case L of NONE   => gres
-                       | SOME l => evalInsertMerge eval [l] gres x
-    val (cxts,sdds) = ListPair.unzip lres
-  in
-    ( mergeContexts cxts, SDD.union sdds )
-  end
+let
+  val fres = case F of NONE => [] | SOME f => [eval f x]
+  val gres = evalInsertMerge eval G fres x
+  val lres = case L of NONE   => gres
+                     | SOME l => evalInsertMerge eval [l] gres x
+  val (cxts,sdds) = ListPair.unzip lres
+in
+  ( mergeContexts cxts, SDD.union sdds )
+end
 
 (*--------------------------------------------------------------------------*)
 fun satIntersection eval F G L (x as (cxt,sdd)) =
-  if SDD.eq( sdd, SDD.one ) then
-    raise DoNotPanic
-  else
+let
+  fun run f = eval f x
+  fun runG () = intersection eval G x
+in
+
+  case ( F, L ) of
+    ( NONE, NONE )     => runG ()
+
+  | ( SOME f, NONE)    =>
   let
-    fun run f = eval f x
-    fun runG () = intersection eval G x
+    val fRes as ( fcxt, fsdd ) = run f
   in
-
-    case ( F, L ) of
-      ( NONE, NONE )     => runG ()
-
-    | ( SOME f, NONE)    =>
+    if SDD.eq( fsdd, SDD.zero ) then
+      ( emptyContext, SDD.zero )
+    else
     let
-      val fRes as ( fcxt, fsdd ) = run f
+      val ( gcxt, gsdd ) = runG ()
     in
-      if SDD.eq( fsdd, SDD.zero ) then
+      if SDD.eq( gsdd, SDD.zero ) then
         ( emptyContext, SDD.zero )
       else
-      let
-        val ( gcxt, gsdd ) = runG ()
-      in
-        if SDD.eq( gsdd, SDD.zero ) then
-          ( emptyContext, SDD.zero )
-        else
-          ( intersectContexts [fcxt,gcxt], SDD.intersection [fsdd,gsdd])
-      end
+        ( intersectContexts [fcxt,gcxt], SDD.intersection [fsdd,gsdd])
     end
+  end
 
-    | ( NONE, SOME l )   =>
+  | ( NONE, SOME l )   =>
+  let
+    val lRes as ( lcxt, lsdd ) = run l
+  in
+    if SDD.eq( lsdd, SDD.zero ) then
+      ( emptyContext, SDD.zero )
+    else
+    let
+      val ( gcxt, gsdd ) = runG ()
+    in
+      if SDD.eq( gsdd, SDD.zero ) then
+        ( emptyContext, SDD.zero )
+      else
+        ( intersectContexts [lcxt,gcxt], SDD.intersection [lsdd,gsdd])
+    end
+  end
+
+  | ( SOME f, SOME l ) =>
+  let
+    val fRes as ( fcxt, fsdd ) = run f
+  in
+    if SDD.eq( fsdd, SDD.zero ) then
+      ( emptyContext, SDD.zero )
+    else
     let
       val lRes as ( lcxt, lsdd ) = run l
     in
@@ -1174,37 +1191,14 @@ fun satIntersection eval F G L (x as (cxt,sdd)) =
         if SDD.eq( gsdd, SDD.zero ) then
           ( emptyContext, SDD.zero )
         else
-          ( intersectContexts [lcxt,gcxt], SDD.intersection [lsdd,gsdd])
+          ( intersectContexts [ fcxt, lcxt, gcxt ]
+          , SDD.intersection  [ fsdd, lsdd, gsdd]
+          )
       end
     end
-
-    | ( SOME f, SOME l ) =>
-    let
-      val fRes as ( fcxt, fsdd ) = run f
-    in
-      if SDD.eq( fsdd, SDD.zero ) then
-        ( emptyContext, SDD.zero )
-      else
-      let
-        val lRes as ( lcxt, lsdd ) = run l
-      in
-        if SDD.eq( lsdd, SDD.zero ) then
-          ( emptyContext, SDD.zero )
-        else
-        let
-          val ( gcxt, gsdd ) = runG ()
-        in
-          if SDD.eq( gsdd, SDD.zero ) then
-            ( emptyContext, SDD.zero )
-          else
-            ( intersectContexts [ fcxt, lcxt, gcxt ]
-            , SDD.intersection  [ fsdd, lsdd, gsdd]
-            )
-        end
-      end
-    end
-
   end
+end
+
 (*--------------------------------------------------------------------------*)
 fun composition eval a b x =
   eval a (eval b x)
@@ -1215,10 +1209,6 @@ fun commutativeComposition eval hs x =
 
 (*--------------------------------------------------------------------------*)
 fun satCommutativeComposition eval F G x =
-  (* A saturation commutative composition can only be created by the rewriting
-     process. Thus it cannot be applied on |1| and F is always a commutatative
-     composition.
-  *)
   foldl (fn (g,y) => eval g y) (eval F x) G
 
 (*--------------------------------------------------------------------------*)
@@ -1391,6 +1381,10 @@ in
     end
   else
   let
+    (* All saturation enabled operations can only be created by the rewritting
+       process. Thus, when sdd is a terminal, h' can never be a saturation
+       operation.
+    *)
     val h' = rewrite h (SDD.variable sdd)
              handle SDD.IsNotANode => h
   in
