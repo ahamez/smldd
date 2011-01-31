@@ -1214,12 +1214,12 @@ fun commutativeComposition eval hs x =
   foldl (fn (h,y) => eval h y) x hs
 
 (*--------------------------------------------------------------------------*)
-fun satCommutativeComposition eval F G (x as (cxt,sdd)) =
-  if SDD.eq( sdd, SDD.one ) then
-    (* On |1| terminal, F is thus empty *)
-    foldl (fn (h,y) => eval h y) x G
-  else
-    foldl (fn (h,y) => eval h y) (eval F x) G
+fun satCommutativeComposition eval F G x =
+  (* A saturation commutative composition can only be created by the rewriting
+     process. Thus it cannot be applied on |1| and F is always a commutatative
+     composition.
+  *)
+  foldl (fn (g,y) => eval g y) (eval F x) G
 
 (*--------------------------------------------------------------------------*)
 fun fixpoint eval h (x as (cxt,sdd)) =
