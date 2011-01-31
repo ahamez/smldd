@@ -16,6 +16,7 @@ in
     ./TestOrder.sml
     ./TestTools.sml
     ./TestBitWord.sml
+    ./TestEnv.sml
     ./main.sml
   end
 end

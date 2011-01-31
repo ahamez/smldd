@@ -22,6 +22,10 @@ print "\nTest BitWord\n";
 SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
                                  ( TestBitWord.suite() );
 
+print "\nTest Env\n";
+SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
+                                 ( TestEnv.suite() );
+
 
 testDot();
 
