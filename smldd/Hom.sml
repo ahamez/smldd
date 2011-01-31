@@ -1082,16 +1082,11 @@ fun commutativeComposition eval hs sdd =
 
 (*--------------------------------------------------------------------------*)
 fun satCommutativeComposition eval F G sdd =
-  if SDD.eq( sdd, SDD.one ) then
-    (* Standard composition *)
-    foldl (fn (h,acc) => eval h acc) SDD.one (F::G)
-  else
-  let
-    val fRes = eval F sdd
-    val gRes = foldl (fn (g,acc) => eval g acc) fRes G
-  in
-    gRes
-  end
+  (* A saturation commutative composition can only be created by the rewriting
+     process. Thus it cannot be applied on |1| and F is always a commutatative
+     composition.
+  *)
+  foldl (fn (g,acc) => eval g acc) (eval F sdd) G
 
 (*--------------------------------------------------------------------------*)
 local (* Fixpoint stuff *)
