@@ -43,7 +43,7 @@ TESTSOURCES=./test/main.mlb               \
             ./test/TestUtil.sml           \
             ./test/TestTools.sml          \
             ./test/TestBitWord.sml        \
-						./test/TestEnv.sml            \
+            ./test/TestEnv.sml            \
             ./test/main.sml
 
 all:
