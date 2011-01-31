@@ -1,8 +1,10 @@
 ML=mlton
 
-TESTFLAGS=
+TESTFLAGS=-cc-opt -O0            \
+          -drop-pass deepFlatten
 
-PROFFLAGS=-profile count       \
+PROFFLAGS=-cc-opt -O0          \
+          -profile count       \
           -profile-branch true \
 
 SOURCES=./smldd/sources.mlb                                  \
@@ -57,7 +59,7 @@ prof: ./test/main-prof
 	@./test/prof.sh
 
 ./test/main-prof: $(TESTSOURCES) $(SOURCES)
-	$(ML) $(TESTFLAGS) $(PROFFLAGS) -output ./test/main-prof ./test/main.mlb
+	$(ML) $(PROFFLAGS) -output ./test/main-prof ./test/main.mlb
 
 cleanTests:
 	rm -f ./test/main
