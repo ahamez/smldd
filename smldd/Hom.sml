@@ -31,21 +31,20 @@ signature HOM = sig
   val removeVariable    : context -> variable -> context
   val eqContext         : context * context -> bool
 
-  datatype UserIn       = FuncValues of (context * values)
-                        | InductiveSkip of variable
-                        | InductiveValues of (context * variable * values)
-                        | InductiveOne
-                        | Selector
-                        | Hash
-                        | Print
+  datatype UserIn       = InValues of (context * variable * values)
+                        | InInductiveSkip of variable
+                        | InInductiveOne
+                        | InSelector
+                        | InHash
+                        | InPrint
 
-  datatype UserOut      = FuncValuesRes of (context * values)
-                        | InductiveSkipRes of bool
-                        | InductiveValuesRes of (context * hom)
-                        | InductiveOneRes of SDD
-                        | SelectorRes of bool
-                        | HashRes of Hash.t
-                        | PrintRes of string
+  datatype UserOut      = OutFuncValues of (context * values)
+                        | OutInductiveSkip of bool
+                        | OutInductiveValues of (context * hom)
+                        | OutInductiveOne of SDD
+                        | OutSelector of bool
+                        | OutHash of Hash.t
+                        | OutPrint of string
 
   type user             = (UserIn -> UserOut) ref
 
@@ -78,11 +77,13 @@ signature HOM = sig
   exception NestedHomOnValues
   exception FunctionHomOnNested
   exception EmptyOperands
-  exception NotUserHash
-  exception NotFuncValues
-  exception NotInductiveSkip
-  exception NotInductiveValues
-  exception NotInductiveOne
+  exception NotOutHash
+  exception NotOutPrint
+  exception NotOutFuncValues
+  exception NotOutInductiveSkip
+  exception NotOutInductiveValues
+  exception NotOutInductiveOne
+  exception NotOutSelector
 
 end
 
@@ -98,11 +99,13 @@ functor HomFun ( structure SDD : SDD
 exception NestedHomOnValues
 exception FunctionHomOnNested
 exception EmptyOperands
-exception NotUserHash
-exception NotFuncValues
-exception NotInductiveSkip
-exception NotInductiveValues
-exception NotInductiveOne
+exception NotOutHash
+exception NotOutPrint
+exception NotOutFuncValues
+exception NotOutInductiveSkip
+exception NotOutInductiveValues
+exception NotOutInductiveOne
+exception NotOutSelector
 
 (*--------------------------------------------------------------------------*)
 type SDD       = SDD.SDD
@@ -245,36 +248,35 @@ structure Definition (* : DATA *) = struct
                                 * t list      (* G *)
                                 )
 
-  and UserIn = FuncValues of (context * values)
-             | InductiveSkip of variable
-             | InductiveValues of (context * variable * values)
-             | InductiveOne
-             | Selector
-             | Hash
-             | Print
+  and UserIn = InValues of (context * variable * values)
+             | InInductiveSkip of variable
+             | InInductiveOne
+             | InSelector
+             | InHash
+             | InPrint
 
-  and UserOut = FuncValuesRes of (context * values)
-              | InductiveSkipRes of bool
-              | InductiveValuesRes of (context * t)
-              | InductiveOneRes of SDD
-              | SelectorRes of bool
-              | HashRes of Hash.t
-              | PrintRes of string
+  and UserOut = OutFuncValues of (context * values)
+              | OutInductiveSkip of bool
+              | OutInductiveValues of (context * t)
+              | OutInductiveOne of SDD
+              | OutSelector of bool
+              | OutHash of Hash.t
+              | OutPrint of string
 
   withtype t = (hom * int)
 
 
   fun funcString (ref f) =
-    (case f Print of
-      PrintRes s => s
-    | _          => "???"
+    (case f InPrint of
+      OutPrint s => s
+    | _          => raise NotOutPrint
     )
     handle Match => "???"
 
   fun funcHash (ref f) =
-    case f Hash of
-      HashRes h => h
-    | _         => raise NotUserHash
+    case f InHash of
+      OutHash h => h
+    | _         => raise NotOutHash
 
  fun eq ( (x,_), (y,_) ) =
  let
@@ -503,33 +505,33 @@ type user = (UserIn -> UserOut) ref
 
 (*--------------------------------------------------------------------------*)
 fun funcValues (ref f) param =
-  case f (FuncValues param) of
-    FuncValuesRes res => res
-  | _                 => raise NotFuncValues
+  case f (InValues param) of
+    OutFuncValues res => res
+  | _                 => raise NotOutFuncValues
 
 (*--------------------------------------------------------------------------*)
 fun inductiveValues (ref i) param =
-  case i (InductiveValues param) of
-    InductiveValuesRes res => res
-  | _                      => raise NotInductiveValues
+  case i (InValues param) of
+    OutInductiveValues res => res
+  | _                      => raise NotOutInductiveValues
 
 (*--------------------------------------------------------------------------*)
 fun inductiveOne (ref i) =
-  case i InductiveOne of
-    InductiveOneRes s => s
-  | _                 => raise NotInductiveOne
+  case i InInductiveOne of
+    OutInductiveOne s => s
+  | _                 => raise NotOutInductiveOne
 
 (*--------------------------------------------------------------------------*)
 fun inductiveSkip (ref i) var =
-  case i (InductiveSkip var ) of
-    InductiveSkipRes b => b
-  | _                  => raise NotInductiveSkip
+  case i (InInductiveSkip var ) of
+    OutInductiveSkip b => b
+  | _                  => raise NotOutInductiveSkip
 
 (*--------------------------------------------------------------------------*)
 fun funcSelector (ref f) =
-  (case f Selector of
-    SelectorRes b => b
-  | _             => false
+  (case f InSelector of
+    OutSelector b => b
+  | _             => raise NotOutSelector
   )
   handle Match => false
 
@@ -1318,7 +1320,7 @@ fun function f var (cxt,sdd) =
                       SDD.Nested _      => raise FunctionHomOnNested
                     | SDD.Values values =>
                     let
-                      val (cxt',values') = funcValues f (cxt,values)
+                      val (cxt',values') = funcValues f (cxt,var,values)
                     in
                       ( cxt', ( SDD.Values values', succ ) )
                     end

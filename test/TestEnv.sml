@@ -13,12 +13,12 @@ structure Test = SMLUnit.Test
 val values = Values o SV.fromList
 
 (*--------------------------------------------------------------------------*)
-fun f0 c (FuncValues (cxt,values)) =
-  FuncValuesRes ( cxt, SV.map (fn x => x + c) values )
-|   f0 _ Print =
-  PrintRes "f0"
-|   f0 _ Hash =
-  HashRes (Hash.hashInt 123)
+fun f0 c (InValues (cxt,vr,values)) =
+  OutFuncValues ( cxt, SV.map (fn x => x + c) values )
+|   f0 _ InPrint =
+  OutPrint "f0"
+|   f0 _ InHash =
+  OutHash (Hash.hashInt 123)
 
 (*--------------------------------------------------------------------------*)
 fun testEmptyContext00 () =

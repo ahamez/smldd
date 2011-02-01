@@ -508,8 +508,8 @@ let
     fun func f v =
     let
       fun funcString (ref f) =
-        case f Hom.Print of
-          Hom.PrintRes s => s
+        case f Hom.InPrint of
+          Hom.OutPrint s => s
         | _              => ""
     in
       node ^ " [label=\"Func(" ^ (funcString f) ^ ","

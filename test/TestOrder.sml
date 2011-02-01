@@ -8,12 +8,12 @@ struct
   open SMLDD.Order
 
   (* ---------------------------------------------------------------- *)
-  fun f3 (Hom.FuncValues (cxt,_)) =
-    Hom.FuncValuesRes ( cxt, SV.fromList [1,2,3] )
-  |   f3 Hom.Print =
-    Hom.PrintRes "f3"
-  |   f3 Hom.Hash =
-    Hom.HashRes (Hash.hashInt 987)
+  fun f3 (Hom.InValues (cxt,_,_)) =
+    Hom.OutFuncValues ( cxt, SV.fromList [1,2,3] )
+  |   f3 Hom.InPrint =
+    Hom.OutPrint "f3"
+  |   f3 Hom.InHash =
+    Hom.OutHash (Hash.hashInt 987)
 
   fun testFlatOrder00 () =
   let
