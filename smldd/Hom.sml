@@ -24,6 +24,7 @@ signature HOM = sig
   type context
   val emptyContext      : context
   val isEmptyContext    : context -> bool
+  val contextToString   : context -> string
   val mergeContexts     : context list -> context
   val intersectContexts : context list -> context
   val addValues         : context -> variable -> values -> context
@@ -116,6 +117,18 @@ val emptyContext = []
 (*--------------------------------------------------------------------------*)
 fun isEmptyContext [] = true
 |   isEmptyContext _  = false
+
+(*--------------------------------------------------------------------------*)
+fun contextToString cxt =
+let
+  val str = map (fn (vr,vls) =>
+                  "(" ^ (Variable.toString vr) ^ ","
+                ^ (Values.toString vls) ^ ")"
+                )
+                cxt
+in
+  String.concatWith " , " str
+end
 
 (*--------------------------------------------------------------------------*)
 fun mergeContexts [] = emptyContext
