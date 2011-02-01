@@ -7,55 +7,58 @@ signature HOM = sig
   type values
   type valuation
 
-  val eq              : hom * hom -> bool
-  val uid             : hom -> int
+  val eq                : hom * hom -> bool
+  val uid               : hom -> int
 
-  val id              : hom
-  val zero            : hom
-  val one             : hom
-  val mkCons          : variable -> valuation -> hom -> hom
-  val mkConst         : SDD -> hom
-  val mkUnion         : hom list -> hom
-  val mkIntersection  : hom list -> hom
-  val mkComposition   : hom -> hom -> hom
-  val mkFixpoint      : hom -> hom
-  val mkNested        : hom -> variable -> hom
+  val id                : hom
+  val zero              : hom
+  val one               : hom
+  val mkCons            : variable -> valuation -> hom -> hom
+  val mkConst           : SDD -> hom
+  val mkUnion           : hom list -> hom
+  val mkIntersection    : hom list -> hom
+  val mkComposition     : hom -> hom -> hom
+  val mkFixpoint        : hom -> hom
+  val mkNested          : hom -> variable -> hom
 
   type context
-  val emptyContext    : context
-  val addValues       : context -> variable -> values -> context
-  val removeVariable  : context -> variable -> context
-  val eqContext       : context * context -> bool
+  val emptyContext      : context
+  val isEmptyContext    : context -> bool
+  val mergeContexts     : context list -> context
+  val intersectContexts : context list -> context
+  val addValues         : context -> variable -> values -> context
+  val removeVariable    : context -> variable -> context
+  val eqContext         : context * context -> bool
 
-  datatype UserIn     = FuncValues of (context * values)
-                      | InductiveSkip of variable
-                      | InductiveValues of (context * variable * values)
-                      | InductiveOne
-                      | Selector
-                      | Hash
-                      | Print
+  datatype UserIn       = FuncValues of (context * values)
+                        | InductiveSkip of variable
+                        | InductiveValues of (context * variable * values)
+                        | InductiveOne
+                        | Selector
+                        | Hash
+                        | Print
 
-  datatype UserOut    = FuncValuesRes of (context * values)
-                      | InductiveSkipRes of bool
-                      | InductiveValuesRes of (context * hom)
-                      | InductiveOneRes of SDD
-                      | SelectorRes of bool
-                      | HashRes of Hash.t
-                      | PrintRes of string
+  datatype UserOut      = FuncValuesRes of (context * values)
+                        | InductiveSkipRes of bool
+                        | InductiveValuesRes of (context * hom)
+                        | InductiveOneRes of SDD
+                        | SelectorRes of bool
+                        | HashRes of Hash.t
+                        | PrintRes of string
 
-  type user           = (UserIn -> UserOut) ref
+  type user             = (UserIn -> UserOut) ref
 
-  val mkFunction      : user -> variable -> hom
-  val mkInductive     : user -> hom
+  val mkFunction        : user -> variable -> hom
+  val mkInductive       : user -> hom
 
-  val eval            : hom -> SDD -> SDD
-  val evalContext     : hom -> (context * SDD) -> (context * SDD)
+  val eval              : hom -> SDD -> SDD
+  val evalContext       : hom -> (context * SDD) -> (context * SDD)
 
-  val toString        : hom -> string
+  val toString          : hom -> string
 
-  val stats           : unit -> string
+  val stats             : unit -> string
 
-  type 'a visitor     =
+  type 'a visitor       =
                      (*Id*)    (unit -> 'a)
                    (*Cons*) -> (variable -> valuation -> hom -> 'a)
                   (*Const*) -> (SDD -> 'a)
@@ -69,7 +72,7 @@ signature HOM = sig
               (*Inductive*) -> (user -> 'a)
                             -> hom
                             -> 'a
-  val mkVisitor       : unit -> 'a visitor
+  val mkVisitor         : unit -> 'a visitor
 
   exception NestedHomOnValues
   exception FunctionHomOnNested
