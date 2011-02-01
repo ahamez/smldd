@@ -152,7 +152,6 @@ let
   else
     loop2 res XS ys
 
-  (* faire le rev ici *)
   fun loop1 acc [] = acc
   |   loop1 acc (c::cs) =
   let
