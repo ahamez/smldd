@@ -78,7 +78,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testMergeContexts00() =
+fun testMergeContexts00 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -90,7 +90,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testMergeContexts01() =
+fun testMergeContexts01 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -102,7 +102,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testMergeContexts02() =
+fun testMergeContexts02 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -115,7 +115,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testMergeContexts03() =
+fun testMergeContexts03 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -129,7 +129,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testMergeContexts04() =
+fun testMergeContexts04 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -143,7 +143,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testIntersectContexts00() =
+fun testIntersectContexts00 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -153,7 +153,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testIntersectContexts01() =
+fun testIntersectContexts01 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 0 (SV.fromList [3,4])
@@ -163,7 +163,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testIntersectContexts02() =
+fun testIntersectContexts02 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [3,4])
@@ -174,7 +174,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testIntersectContexts03() =
+fun testIntersectContexts03 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 0 (SV.fromList [1,2])
@@ -185,7 +185,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testIntersectContexts04() =
+fun testIntersectContexts04 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [2,3])
@@ -207,7 +207,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun testIntersectContexts05() =
+fun testIntersectContexts05 () =
 let
   val cxt0 = addValues emptyContext 0 (SV.fromList [0,1])
   val cxt1 = addValues emptyContext 1 (SV.fromList [2,3])
