@@ -24,6 +24,7 @@ signature HOM = sig
   type context
   val addValues       : context -> variable -> values -> context
   val removeVariable  : context -> variable -> context
+  val eqContext       : context * context -> bool
 
   datatype UserIn     = FuncValues of (context * values)
                       | InductiveSkip of variable
@@ -184,6 +185,16 @@ end
 (*--------------------------------------------------------------------------*)
 fun removeVariable cxt vr =
   List.filter (fn (xvr,_) => not ( Variable.eq( xvr, vr ) )) cxt
+
+(*--------------------------------------------------------------------------*)
+fun eqContext ( [], [] ) = true
+|   eqContext ( [], _  ) = false
+|   eqContext ( _ , [] ) = false
+|   eqContext ( (lvr,lvls)::ls, (rvr,rvls)::rs ) =
+  if Variable.eq( lvr, rvr ) andalso Values.eq( lvls, rvls ) then
+    eqContext( ls, rs )
+  else
+    false
 
 (*--------------------------------------------------------------------------*)
 structure Definition (* : DATA *) = struct
