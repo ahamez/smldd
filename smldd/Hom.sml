@@ -22,6 +22,7 @@ signature HOM = sig
   val mkNested        : hom -> variable -> hom
 
   type context
+  val emptyContext    : context
   val addValues       : context -> variable -> values -> context
   val removeVariable  : context -> variable -> context
   val eqContext       : context * context -> bool
