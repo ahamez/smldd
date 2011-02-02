@@ -856,9 +856,10 @@ let
       | _           => ( F, h::G, L )
 
   val (F,G,L) = foldr helper ([],[],[]) hs
-  val F' = if length F = 0 then NONE else SOME F
-  val L' = if length L = 0 then NONE else SOME L
-
+  val F' = case F of [] => NONE
+                   | _  => SOME F
+  val L' = case L of [] => NONE
+                   | _  => SOME L
 in
   ( F', G, L' )
 end
