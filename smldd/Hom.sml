@@ -881,7 +881,6 @@ in
     val L' = case L of
                NONE   => NONE
              | SOME l => SOME (mkNested (operation l) v)
-    val _ = rewritten := !rewritten + 1
   in
     mk v F' G L'
   end
@@ -912,7 +911,6 @@ fun rewriteFixpoint orig v f =
             case L of
               NONE   => NONE
             | SOME l => SOME (mkNested (mkFixpoint (mkUnion' (id::l))) v)
-          val _ = rewritten := !rewritten + 1;
         in
           mkSatFixpoint v F' (GSel@GNotSel) L'
         end
@@ -940,12 +938,23 @@ end
 
 (*--------------------------------------------------------------------------*)
 fun apply ( h, v ) =
-  case #1 h of
-    Union hs    => rewriteUI mkUnion' mkSatUnion h v hs
-  | Inter hs    => rewriteUI mkIntersection mkSatIntersection h v hs
-  | Fixpoint f  => rewriteFixpoint h v f
-  | ComComp hs  => rewriteComComp h v hs
-  | _           => raise DoNotPanic
+let
+
+  val res =
+    case #1 h of
+      Union hs    => rewriteUI mkUnion' mkSatUnion h v hs
+    | Inter hs    => rewriteUI mkIntersection mkSatIntersection h v hs
+    | Fixpoint f  => rewriteFixpoint h v f
+    | ComComp hs  => rewriteComComp h v hs
+    | _           => raise DoNotPanic
+
+  val _ = if not (eq'( res, h )) then
+            rewritten := !rewritten + 1
+          else
+            ()
+in
+  res
+end
 
 end (* structure Rewrite *)
 
