@@ -846,45 +846,33 @@ fun hash ( (_,uid), v ) =
 (*--------------------------------------------------------------------------*)
 fun partition v hs =
 let
-
-  fun helper ( h, (F,G,L) ) =
-    if skipVariable v h then
-      ( h::F, G, L )
-    else
-      case let val (x,_) = h in x end of
-        Nested(n,_) => ( F, G, n::L )
-      | _           => ( F, h::G, L )
-
-  val (F,G,L) = foldr helper ([],[],[]) hs
-  val F' = case F of [] => NONE
-                   | _  => SOME F
-  val L' = case L of [] => NONE
-                   | _  => SOME L
+  fun helper ( h, ( (F,G,L), hasId ) ) =
+    case #1 h of
+      Id => ( ( F, G, L ), true )
+    | _  => if skipVariable v h then
+              ( ( h::F, G, L ), hasId orelse false )
+            else
+              case let val (x,_) = h in x end of
+                Nested(n,_) => ( ( F, G, n::L ), hasId orelse false )
+              | _           => ( ( F, h::G, L ), hasId orelse false )
 in
-  ( F', G, L' )
+  foldr helper (([],[],[]), false) hs
 end
 
 (*--------------------------------------------------------------------------*)
 fun rewriteUI operation mk orig v xs =
 let
-  val (F,G,L) = partition v xs
+  val ( (F,G,L), hasId ) = partition v xs
+  val F' = if hasId then id::F else F
 in
-
-  if not (Option.isSome F) andalso not (Option.isSome L) then
-    orig
-
-  else
-  let
-    val F' = case F of
-               NONE   => NONE
-             | SOME f => SOME (operation f)
-    val L' = case L of
-               NONE   => NONE
-             | SOME l => SOME (mkNested (operation l) v)
-  in
-    mk v F' G L'
-  end
-
+  case ( F, L ) of
+    ( [], [] ) => orig
+  | ( f, [] )  =>
+      mk v (SOME (operation f)) G NONE
+  | ( [], l )  =>
+      mk v NONE G (SOME (mkNested (operation l) v))
+  | ( f, l  )  =>
+      mk v (SOME (operation f)) G (SOME (mkNested (operation l) v))
 end
 
 (*--------------------------------------------------------------------------*)
@@ -893,31 +881,42 @@ fun rewriteFixpoint orig v f =
   case let val (h,_) = f in h end of
 
     Union xs =>
-      if List.exists (fn x => eq'(x,id)) xs then
-      let
-        val (F,G,L) = partition v xs
-        val (GSel,GNotSel) = List.partition isSelector G
-      in
-        if not (Option.isSome F) andalso not (Option.isSome L) then
-          orig
-
-        else
-        let
-          val F' =
-            case F of
-              NONE   => NONE
-            | SOME f => SOME (mkFixpoint(mkUnion' f)) (* id is contained *)
-          val L' =
-            case L of
-              NONE   => NONE
-            | SOME l => SOME (mkNested (mkFixpoint (mkUnion' (id::l))) v)
-        in
-          mkSatFixpoint v F' (GSel@GNotSel) L'
-        end
-      end
-
-      else (* No id in operands*)
+    let
+      val ( (F,G,L), hasId ) = partition v xs
+    in
+      if not hasId then
         orig
+      else
+      let
+        (* Put selectors in front. It might help in stopping
+           the evaluation early.
+        *)
+        fun getG () =
+        let
+          val (GSel,GNotSel) = List.partition isSelector G
+        in
+          (GSel@GNotSel)
+        end
+      in
+        case ( F, L ) of
+          ( [], [] ) => orig
+        | ( f , [] ) =>
+            mkSatFixpoint v
+                          (SOME (mkFixpoint(mkUnion' (id::f))))
+                          (getG ())
+                          NONE
+        | ( [], l  ) =>
+            mkSatFixpoint v
+                          NONE
+                          (getG ())
+                          (SOME (mkNested (mkFixpoint (mkUnion' (id::l))) v))
+        | ( f,  l  ) =>
+            mkSatFixpoint v
+                          (SOME (mkFixpoint(mkUnion' (id::f))))
+                          (getG ())
+                          (SOME (mkNested (mkFixpoint (mkUnion' (id::l))) v))
+      end
+    end
 
   | _ => orig
 
