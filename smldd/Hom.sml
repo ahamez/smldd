@@ -105,32 +105,31 @@ structure Definition (* : DATA *) = struct
   structure H = Hash
 
   datatype hom = Id
-               | Cons        of ( variable * valuation * t )
+               | Cons        of variable * valuation * t
                | Const       of SDD
                | Union       of t list
                | Inter       of t list
-               | Comp        of ( t * t )
+               | Comp        of t * t
                | ComComp     of t list
                | Fixpoint    of t
                | Nested      of t * variable
-               | Func        of ( (UserIn -> UserOut) ref * variable )
+               | Func        of (UserIn -> UserOut) ref * variable
                | Inductive   of (UserIn -> UserOut) ref
-               | SatUnion    of ( variable
+               | SatUnion    of   variable
                                 * t option
                                 * t list
-                                * t option )
-               | SatInter    of ( variable
+                                * t option
+               | SatInter    of   variable
                                 * t option    (* F *)
                                 * t list      (* G *)
-                                * t option )  (* L *)
-               | SatFixpoint of ( variable
+                                * t option    (* L *)
+               | SatFixpoint of   variable
                                 * t option    (* F *)
                                 * t list      (* G *)
-                                * t option )  (* L *)
-               | SatComComp  of ( variable
+                                * t option    (* L *)
+               | SatComComp  of   variable
                                 * t             (* F *)
                                 * t list        (* G *)
-                                )
 
   and UserIn = FuncValues of values
              | InductiveSkip of variable
