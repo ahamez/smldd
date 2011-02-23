@@ -811,11 +811,11 @@ fun evalCallback lookup h sdd =
     case #1 h of
       Id                => sdd
     | Const c           => c
-    | Cons(var,vl,next) => if eq'( next, id ) then
-                                      SDD.node( var, vl, sdd )
+    | Cons(var,vl,next) => if eq' (next, id) then
+                                      SDD.node (var, vl, sdd)
                                     else
-                                      lookup( Op( h, sdd, lookup ) )
-    | _                 => lookup( Op( h, sdd, lookup ) )
+                                      lookup (Op (h, sdd, lookup))
+    | _                 => lookup( Op(h, sdd, lookup))
 
 (*--------------------------------------------------------------------------*)
 val rewritten = ref 0
@@ -832,45 +832,45 @@ fun configure CacheConfiguration.Name =
   CacheConfiguration.BucketsRes 100000
 
 (*--------------------------------------------------------------------------*)
-type operation = ( hom * variable )
+type operation = (hom * variable)
 type result    = hom
 
 (*--------------------------------------------------------------------------*)
-fun eq ((hx,vx),(hy,vy)) = eq'(hx,hy) andalso Variable.eq(vx,vy)
+fun eq ((hx,vx),(hy,vy)) = eq' (hx, hy) andalso Variable.eq (vx, vy)
 
 (*--------------------------------------------------------------------------*)
-fun hash ( (_,uid), v ) =
-  H.hashCombine( H.hashInt uid, Variable.hash v )
+fun hash ((_, uid), v) =
+  H.hashCombine(H.hashInt uid, Variable.hash v)
 
 (*--------------------------------------------------------------------------*)
 fun partition v hs =
 let
-  fun helper ( h, ( (F,G,L), hasId ) ) =
+  fun helper (h, ((F, G, L), hasId)) =
     case #1 h of
       Id => ( ( F, G, L ), true )
     | _  => if skipVariable v h then
-              ( ( h::F, G, L ), hasId orelse false )
+              ((h::F, G, L), hasId orelse false)
             else
               case let val (x,_) = h in x end of
-                Nested(n,_) => ( ( F, G, n::L ), hasId orelse false )
-              | _           => ( ( F, h::G, L ), hasId orelse false )
+                Nested(n,_) => ((F, G, n::L), hasId orelse false)
+              | _           => ((F, h::G, L), hasId orelse false)
 in
-  foldr helper (([],[],[]), false) hs
+  foldr helper (([], [], []), false) hs
 end
 
 (*--------------------------------------------------------------------------*)
 fun rewriteUI operation mk orig v xs =
 let
-  val ( (F,G,L), hasId ) = partition v xs
+  val ((F, G, L), hasId) = partition v xs
   val F' = if hasId then id::F else F
 in
-  case ( F, L ) of
-    ( [], [] ) => orig
-  | ( f, [] )  =>
+  case (F, L) of
+    ([], []) => orig
+  | (f, [])  =>
       mk v (SOME (operation f)) G NONE
-  | ( [], l )  =>
+  | ([], l)  =>
       mk v NONE G (SOME (mkNested (operation l) v))
-  | ( f, l  )  =>
+  | (f, l )  =>
       mk v (SOME (operation f)) G (SOME (mkNested (operation l) v))
 end
 
@@ -881,7 +881,7 @@ fun rewriteFixpoint orig v f =
 
     Union xs =>
     let
-      val ( (F,G,L), hasId ) = partition v xs
+      val ((F,G,L), hasId) = partition v xs
     in
       if not hasId then
         orig
@@ -892,19 +892,19 @@ fun rewriteFixpoint orig v f =
         *)
         fun getG () =
         let
-          val (GSel,GNotSel) = List.partition isSelector G
+          val (GSel, GNotSel) = List.partition isSelector G
         in
           (GSel@GNotSel)
         end
       in
-        case ( F, L ) of
-          ( [], [] ) => orig
-        | ( f , [] ) =>
+        case (F, L) of
+          ([], []) => orig
+        | (f , []) =>
             mkSatFixpoint v
                           (SOME (mkFixpoint(mkUnion' (id::f))))
                           (getG ())
                           NONE
-        | ( [], l  ) =>
+        | ([], l) =>
             mkSatFixpoint v
                           NONE
                           (getG ())
@@ -922,20 +922,20 @@ fun rewriteFixpoint orig v f =
 (*--------------------------------------------------------------------------*)
 fun rewriteComComp orig v hs =
 let
-  val (F,G) = List.partition (skipVariable v) hs
+  val (F, G) = List.partition (skipVariable v) hs
 in
   case F of
     [] => orig
   | fs =>
   let
-    val (GSel,GNotSel) = List.partition isSelector G
+    val (GSel, GNotSel) = List.partition isSelector G
   in
     mkSatComComp v (mkCommutativeComposition fs) (GSel@GNotSel)
   end
 end
 
 (*--------------------------------------------------------------------------*)
-fun apply ( h, v ) =
+fun apply (h, v) =
 let
 
   val res =
@@ -946,7 +946,7 @@ let
     | ComComp hs  => rewriteComComp h v hs
     | _           => raise DoNotPanic
 
-  val _ = if not (eq'( res, h )) then
+  val _ = if not (eq' (res, h)) then
             rewritten := !rewritten + 1
           else
             ()
@@ -980,11 +980,11 @@ fun evalInsert eval hs xs sdd =
 
 (*--------------------------------------------------------------------------*)
 fun cons eval (var, vl, next) sdd =
-  SDD.node( var, vl, eval next sdd )
+  SDD.node(var, vl, eval next sdd)
 
 (*--------------------------------------------------------------------------*)
 fun union eval hs sdd =
-  SDD.union( evalInsert eval hs [] sdd )
+  SDD.union(evalInsert eval hs [] sdd)
 
 (*--------------------------------------------------------------------------*)
 fun intersection eval hs sdd =
@@ -994,13 +994,13 @@ let
   let
     val tmp = eval h sdd
   in
-    if SDD.eq( tmp, SDD.zero ) then
+    if SDD.eq(tmp, SDD.zero) then
       []
     else
       loop (SDD.insert res tmp) hs
   end
 in
-  SDD.intersection( loop [] hs )
+  SDD.intersection(loop [] hs)
 end
 
 (*--------------------------------------------------------------------------*)
@@ -1033,43 +1033,43 @@ let
     loop res G
   end
 in
-  case ( F , L ) of
-    ( NONE, NONE ) => SDD.intersection(rung [])
+  case (F , L) of
+    (NONE, NONE) => SDD.intersection(rung [])
 
-  | ( SOME f, NONE ) =>
+  | (SOME f, NONE) =>
   let
     val fres = eval f sdd
   in
-    if SDD.eq( fres, SDD.zero ) then
+    if SDD.eq(fres, SDD.zero) then
       SDD.zero
     else
-      SDD.intersection( rung [fres] )
+      SDD.intersection(rung [fres])
   end
 
   | ( NONE, SOME l ) =>
   let
     val lres = eval l sdd
   in
-    if SDD.eq( lres, SDD.zero ) then
+    if SDD.eq(lres, SDD.zero) then
       SDD.zero
     else
-      SDD.intersection( rung [lres] )
+      SDD.intersection(rung [lres])
   end
 
   | ( SOME f, SOME l ) =>
   let
     val fres = eval f sdd
   in
-    if SDD.eq( fres, SDD.zero ) then
+    if SDD.eq(fres, SDD.zero) then
       SDD.zero
     else
     let
       val lres = eval l sdd
     in
-      if SDD.eq( lres, SDD.zero ) then
+      if SDD.eq(lres, SDD.zero) then
         SDD.zero
       else
-        SDD.intersection( rung (SDD.insert [fres] lres) )
+        SDD.intersection(rung (SDD.insert [fres] lres))
     end
   end
 end
@@ -1080,11 +1080,11 @@ fun composition eval a b sdd =
 
 (*--------------------------------------------------------------------------*)
 fun commutativeComposition eval hs sdd =
-  foldl (fn (h,acc) => eval h acc) sdd hs
+  foldl (fn (h, acc) => eval h acc) sdd hs
 
 (*--------------------------------------------------------------------------*)
 fun satCommutativeComposition eval F G sdd =
-  foldl (fn (g,acc) => eval g acc) (eval F sdd) G
+  foldl (fn (g, acc) => eval g acc) (eval F sdd) G
 
 (*--------------------------------------------------------------------------*)
 local (* Fixpoint stuff *)
@@ -1111,7 +1111,7 @@ let
     val r  = case F of NONE => sdd | SOME f => eval f sdd
     val r' = case L of NONE => r   | SOME l => eval l r
   in
-    foldl (fn (g,sdd) => SDD.union[ sdd, eval g sdd ]) r' G
+    foldl (fn (g, sdd) => SDD.union[ sdd, eval g sdd ]) r' G
   end
 in
   fixpointHelper loop sdd
@@ -1121,20 +1121,20 @@ end (* local fixpoint stuff *)
 
 (*--------------------------------------------------------------------------*)
 fun nested eval h var sdd =
-  if SDD.eq( sdd, SDD.one ) then
+  if SDD.eq (sdd, SDD.one) then
     SDD.one
 
   (* skipVariable made nested propagated to the correct variable *)
   else if isSelector h then
-     SDD.nodeAlpha( var
-                  , map (fn ( vl, succ) =>
-                          case vl of
-                            SDD.Values _ => raise NestedHomOnValues
-                          | SDD.Nested nvl =>
-                              ( SDD.Nested (eval h nvl), succ )
-                        )
-                        (SDD.alpha sdd)
-                  )
+     SDD.nodeAlpha ( var
+                   , map (fn (vl, succ) =>
+                           case vl of
+                             SDD.Values _ => raise NestedHomOnValues
+                           | SDD.Nested nvl =>
+                               (SDD.Nested (eval h nvl), succ)
+                         )
+                         (SDD.alpha sdd)
+                   )
   else
     SDD.union (foldl
                 (fn ( (vl,succ), acc ) =>
@@ -1144,7 +1144,7 @@ fun nested eval h var sdd =
                     let
                       val nvl' = eval h nvl
                     in
-                      SDD.insert acc (SDD.node( var, SDD.Nested nvl', succ))
+                      SDD.insert acc (SDD.node (var, SDD.Nested nvl', succ))
                     end
                 )
                 []
@@ -1156,15 +1156,15 @@ fun function f var sdd =
   if SDD.eq( sdd, SDD.one ) then
     SDD.one
   else if funcSelector f then
-    SDD.nodeAlpha( var
-                 , map (fn ( vl, succ) =>
-                         case vl of
-                           SDD.Nested _ => raise FunctionHomOnNested
-                         | SDD.Values values =>
-                             ( SDD.Values (funcValues f values), succ )
-                       )
-                       (SDD.alpha sdd)
-                 )
+    SDD.nodeAlpha ( var
+                  , map (fn (vl, succ) =>
+                          case vl of
+                            SDD.Nested _ => raise FunctionHomOnNested
+                          | SDD.Values values =>
+                              (SDD.Values (funcValues f values), succ)
+                        )
+                        (SDD.alpha sdd)
+                  )
   else
     SDD.union (foldl
                 (fn ( (vl,succ), acc ) =>
@@ -1174,7 +1174,7 @@ fun function f var sdd =
                 let
                   val values' = funcValues f values
                 in
-                  SDD.insert acc (SDD.node( var, SDD.Values values', succ))
+                  SDD.insert acc (SDD.node (var, SDD.Values values', succ))
                 end
                 )
                 []
@@ -1183,13 +1183,13 @@ fun function f var sdd =
 
 (*--------------------------------------------------------------------------*)
 fun inductive eval i sdd =
-  if SDD.eq( sdd, SDD.one ) then
+  if SDD.eq (sdd, SDD.one) then
     inductiveOne i
   else
   let
     val var = SDD.variable sdd
   in
-    SDD.union (foldl (fn ( ( v, succ ), acc ) =>
+    SDD.union (foldl (fn ((v, succ), acc) =>
                        case v of
                          SDD.Nested _  => raise Domain
                        | SDD.Values vl =>
@@ -1211,7 +1211,7 @@ val skipped = ref 0
 (* Dispatch the evaluation of an homomorphism to the corresponding
    function. Used by CacheFun.
 *)
-fun apply ( Op( h, sdd, lookup) ) =
+fun apply (Op(h, sdd, lookup)) =
 let
   val _ = evals := !evals + 1
   val skip = let val v = SDD.variable sdd in skipVariable v h end
@@ -1225,17 +1225,17 @@ in
     in
       if isSelector h then
         SDD.nodeAlpha( var
-                     , map (fn ( vl, succ) =>
-                             ( vl, eval h succ )
+                     , map (fn (vl, succ) =>
+                             (vl, eval h succ)
                            )
                            (SDD.alpha sdd)
                      )
       else
-        SDD.union (foldl (fn ( (vl, succ), acc ) =>
+        SDD.union (foldl (fn ((vl, succ), acc) =>
                          let
                            val succ' = eval h succ
                          in
-                           SDD.insert acc (SDD.node( var, vl, succ'))
+                           SDD.insert acc (SDD.node (var, vl, succ'))
                          end
                          )
                          []
@@ -1282,18 +1282,18 @@ val cacheLookup = cache.lookup
    Warning! Duplicate logic with Evaluation.evalCallback!
 *)
 fun eval h sdd =
-  if SDD.eq( sdd, SDD.zero ) then
+  if SDD.eq (sdd, SDD.zero) then
     SDD.zero
   else
     case #1 h of
-      Id                => sdd
-    | Const c           => c
-    | Cons(var,vl,next) =>
-      if eq( next, id ) then
-        SDD.node( var, vl, sdd )
+      Id                 => sdd
+    | Const c            => c
+    | Cons (var,vl,next) =>
+      if eq (next, id) then
+        SDD.node (var, vl, sdd)
       else
-        cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
-    | _ => cache.lookup( Evaluation.Op( h, sdd, cacheLookup ) )
+        cache.lookup (Evaluation.Op (h, sdd, cacheLookup))
+    | _ => cache.lookup (Evaluation.Op (h, sdd, cacheLookup))
 
 (*--------------------------------------------------------------------------*)
 type 'a visitor =
