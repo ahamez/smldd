@@ -1,7 +1,7 @@
 signature VALUES =
 sig
 
-  (* values view *)
+  (* Values view, e.g. what the user really works with *)
   type values
 
   val hash            : values -> Hash.t

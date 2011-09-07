@@ -5,46 +5,92 @@ signature SDD = sig
   type variable
   type values
 
+  (* An SDD node holds a valuation on all arcs going to its successors. A valuation
+     can be a nested SDD or a set of values (at the deepest level of the
+     hierarchy). *)
   datatype valuation      = Nested of SDD
                           | Values of values
 
+  (* Return the |0| terminal. *)
   val zero                : SDD
+  (* Return the |1| terminal. *)
   val one                 : SDD
+  (* Create an SDD variable {valuation} -> successor. *)
   val node                : variable * valuation * SDD -> SDD
+  (* Create an SDD from an alpha (associative list of valuation * SDD). *)
   val nodeAlpha           : variable * (valuation * SDD) list -> SDD
+  (* Create an SDD from a sequence of (variable * valuation). *)
   val fromList            : (variable * valuation ) list -> SDD
 
+  (* Perform the union of a list of SDDs. Raise IncompatibleSDD if two or more
+     SDDs in the list are incompatible. *)
   val union               : SDD list -> SDD
+  (* Perform the intersection of a list of SDDs. Raise IncompatibleSDD if two
+     or more SDDs in the list are incompatible.*)
   val intersection        : SDD list -> SDD
+  (* Perform the difference of two SDDs. Raise IncompatibleSDD if the two SDDs
+     are incompatible.*)
   val difference          : SDD * SDD -> SDD
+  (* Tell if an SDD is the empty set. Same as x = |0| *)
   val empty               : SDD -> bool
-
+  (* Tell if two SDDs are equals. Constant time. *)
   val eq                  : SDD * SDD -> bool
+  (* Compare two SDDs. Constant time. *)
   val lt                  : SDD * SDD -> bool
+  (* Return the unique identifier of an SDD. Warning, uids are recycled! *)
   val uid                 : SDD -> int
+  (* Return the variable of an SDD. Raise IsNotANode if it's a terminal. *)
   val variable            : SDD -> variable
+  (* Return the alpha function of an SDD as an associative list.
+     Raise IsNotANode if the given SDD is a terminal. *)
   val alpha               : SDD -> (valuation * SDD) list
+  (* Retrurn the hash value of an SDD. *)
   val hash                : SDD -> Hash.t
-
-  val insert              : SDD list -> SDD -> SDD list
-  val sort                : SDD list -> SDD list
-
-  val values              : valuation -> values
-  val nested              : valuation -> SDD
-  val hashValuation       : valuation -> Hash.t
-  val eqValuation         : (valuation * valuation) -> bool
-  val valuationToString   : valuation -> string
-
+  (* Export an SDD to a string. Do not use on big SDDs. *)
   val toString            : SDD -> string
 
+  (* Helper function to insert an SDD in a sorted list. *)
+  val insert              : SDD list -> SDD -> SDD list
+  (* Helper function to sort a list of SDDs. *)
+  val sort                : SDD list -> SDD list
+
+  (* Return the values of a valuation. Raise IsNotValues if the valuation is
+     a nested SDD. *)
+  val values              : valuation -> values
+  (* Return the nested SDD of a valuation. Raise IsNotNested if the valuation is
+     not a nested SDD. *)
+  val nested              : valuation -> SDD
+  (* Return the hash value of a valuation. *)
+  val hashValuation       : valuation -> Hash.t
+  (* Tell if two valuations are equals. Constant time if both valuations are
+     nested SDDs. Otherwise, it depends on the compare function of values. *)
+  val eqValuation         : (valuation * valuation) -> bool
+  (* Export a valuation to a string. *)
+  val valuationToString   : valuation -> string
+
+  (* The possible modes of an SDD visitor:
+       - Cached    : store (all) results of the visitation
+       - NonCached : do not cache results of visitation.
+       - Once      : visit only once each node
+  *)
   datatype 'a visitorMode = Cached | NonCached | Once of 'a
-  type 'a visitor         =  (unit -> 'a)
+  (* The type of the visitor funcion. A visitor is created by mkVisitor.
+     Then, the visitor must be given the the functions described below.
+     *)
+  type 'a visitor         =  (* |0| terminal visited, provided by user *)
+                             (unit -> 'a)
+                             (* |1| terminal visited, provided by user *)
                           -> (unit -> 'a)
+                             (* An SDD node visited, provided by user *)
                           -> (int -> variable -> (valuation * SDD) list -> 'a)
+                             (* The SDD to visit *)
                           -> SDD
+                             (* The result of the visitation*)
                           -> 'a
+  (* Create a visitor on a SDD *)
   val mkVisitor           : 'a visitorMode -> 'a visitor
 
+  (* Export some statistics to string *)
   val stats               : unit -> string
 
   exception IncompatibleSDD
@@ -74,9 +120,9 @@ structure Definition (* : DATA *) = struct
 
   datatype sdd = Zero
                | One
-               | Node of { variable : variable
-                         , alpha : (storedValues * t) Vector.vector
-                         }
+               | Node  of { variable : variable
+                          , alpha : (storedValues * t) Vector.vector
+                          }
                | HNode of { variable : variable
                           , alpha : (t * t) Vector.vector
                           }
@@ -223,31 +269,34 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-(* Extract the identifier of an SDD *)
-fun uid (_,x) = x
-fun eq (x,y) = uid x = uid y
-
-(*--------------------------------------------------------------------------*)
-fun lt (x,y) = uid x < uid y
+fun uid (_, x) = x
+fun eq (x, y)  = uid x = uid y
+fun lt (x, y)  = uid x < uid y
 
 (*--------------------------------------------------------------------------*)
 (* Help construct sorted operands of SDDs *)
-fun insert [] x = [x]
-|   insert (L as (l::ls)) x =
-  if eq( x, l ) then
-    L
-  else if uid x < uid l then
-    x::L
-  else
-    l::insert ls x
+fun insert ls x =
+let
+  fun helper acc [] x = x::acc
+  |   helper acc (L as (l::ls)) x =
+    if eq(x, l) then
+      L@acc
+    else if lt(x, l) then
+      x::L@acc
+    else
+      helper (l::acc) ls x
+in
+  helper [] ls x
+end
 
 (*--------------------------------------------------------------------------*)
+(* Insert sort is sufficient as lists to sort are often small enough *)
 fun sort [] = []
 |   sort xs = foldr (fn (x,acc) => insert acc x) [] xs
 
 (*--------------------------------------------------------------------------*)
 (* Called by the unicity table to construct an SDD with an id *)
-fun mkNode node uid = ( node, uid )
+fun mkNode node uid = (node, uid)
 
 (*--------------------------------------------------------------------------*)
 (* Return the |0| ("zero") terminal *)
@@ -258,7 +307,9 @@ val zero = SDDUT.unify (mkNode Zero)
 val one = SDDUT.unify (mkNode One)
 
 (*--------------------------------------------------------------------------*)
-fun empty x = eq( x, zero )
+(* An SDD is empty if it's |0|. By contruction, all SDDs terminated by |0|
+   are reduced to |0|. *)
+fun empty x = eq(x, zero)
 
 (*--------------------------------------------------------------------------*)
 (* Return a node with a set of discrete values on arc *)
@@ -335,11 +386,12 @@ datatype operation = Union of ( SDD list * (operation -> result)  )
 
 (*--------------------------------------------------------------------------*)
 (* Check compatibility of operands *)
-fun checkCompatibility []     = raise DoNotPanic
-|   checkCompatibility(x::xs) =
+fun checkCompatibility []      = raise DoNotPanic
+|   checkCompatibility (x::xs) =
 
   foldl (fn ( (sx,_), y as (sy,_) ) =>
         case (sx,sy) of
+            (* All |0| shhould have been filtered before calling the cache *)
             (Zero,_)  => raise DoNotPanic
           | (_,Zero)  => raise DoNotPanic
           | (One,One) => y
@@ -363,26 +415,19 @@ fun checkCompatibility []     = raise DoNotPanic
    (a list of values, each one leading to a list of successors).
    Thus, it makes it usable by squareUnion. *)
 fun alphaToList alpha =
-  Vector.foldr
-    (fn (x,acc) => let val (vl,succ) = x in (vl,[succ])::acc end )
-    []
-    alpha
+  Vector.foldr (fn ((vl, succ), acc) => (vl, [succ])::acc) [] alpha
 
 (*--------------------------------------------------------------------------*)
-(* Apply alphaToList to a node: SDD -> ( storedValues * SDD list ) list
+(* Apply alphaToList to a node: SDD -> (storedValues * SDD list) list
    Warning! Duplicate logic with alphaNodeToList! *)
-fun flatAlphaNodeToList n =
-  case n of
-    (Node{alpha=alpha,...},_) => alphaToList alpha
-  | _ => raise DoNotPanic
+fun flatAlphaNodeToList (Node{alpha=alpha, ...}, _) = alphaToList alpha
+|   flatAlphaNodeToList _                           = raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
-(* Apply alphaToList to a node: SDD -> ( SDD * SDD list ) list
+(* Apply alphaToList to a node: SDD -> (SDD * SDD list) list
    Warning! Duplicate logic with flatAlphaNodeToList! *)
-fun alphaNodeToList n =
-  case n of
-    (HNode{alpha=alpha,...},_) => alphaToList alpha
-  | _ => raise DoNotPanic
+fun alphaNodeToList (HNode{alpha=alpha,...}, _) = alphaToList alpha
+|   alphaNodeToList _                           = raise DoNotPanic
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.union! Operands should be sorted by caller. *)
@@ -404,19 +449,20 @@ fun intersectionCallback _      [] = zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning: duplicate with SDD.intersection! *)
-fun differenceCallback lookup ( x, y ) =
-  if eq( x, y ) then          (* No need to cache *)
+fun differenceCallback lookup (x, y) =
+  if eq(x, y) then    (* No need to cache *)
     zero
   else if empty x then  (* No need to cache *)
     zero
   else if empty y then  (* No need to cache *)
     x
   else
-    lookup(Diff( x, y, lookup ))
+    lookup(Diff(x, y, lookup))
 
 (*--------------------------------------------------------------------------*)
 fun union cacheLookup xs =
 let
+  (* Raise IncompatibleSDD *)
   val _ = checkCompatibility xs
 in
   case let val (x,_) = hd xs in x end of
@@ -424,7 +470,8 @@ in
   (* All operands are |1| *)
     One        => one
 
-  (* There shouldn't be any |0|, they should have been filtered *)
+  (* There shouldn't be any |0|, they should have been removed before calling the
+     cache. *)
   | Zero       => raise DoNotPanic
 
   (* Flat node case *)
@@ -435,7 +482,8 @@ in
     in
       flatNodeAlpha
       ( var
-      , unionFlatDiscreteSDD Values.storedToList Values.storedFromList
+      , unionFlatDiscreteSDD Values.storedToList
+                             Values.storedFromList
                              Values.storedEq
                              Values.storedLt
                              Values.valueLt
@@ -521,11 +569,13 @@ fun intersection cacheLookup xs =
                                      Values.storedLt
     in
       flatNodeAlpha( var
-                   , squareUnion'( foldl commonApply' initial operands ) )
+                   , squareUnion' (foldl commonApply' initial operands)
+                   )
     end (* Flat node case *)
 
   | HNode{variable=var,...}  =>
     let
+      (* Raise IncompatibleSDD *)
       val _ = checkCompatibility xs
 
       val ( initial, operands ) = case map alphaNodeToList xs of
@@ -544,15 +594,18 @@ fun intersection cacheLookup xs =
                                      lt
     in
       hierNodeAlpha( var
-                   , squareUnion' ( foldl commonApply' initial operands ) )
+                   , squareUnion' (foldl commonApply' initial operands)
+                   )
     end (* Hierachical node case *)
 
 (* end fun intersection *)
 
 (*--------------------------------------------------------------------------*)
 (* Compute the difference of two SDDs *)
-fun difference cacheLookup ( (l,_), (r,_) ) =
+fun difference cacheLookup ((l,_), (r,_)) =
 let
+  (* Factorize the code for Node and HNode, the algorithm is the same, only
+     callbacks change. *)
   fun nodeDifference lvr rvr la ra vlEq
                      vlUnion vlInter vlDiff vlEmpty vlLt hierNodeAlpha
   =
@@ -568,8 +621,8 @@ let
       let
         (* Difference is a binary operation, while commonApply
            expects an n-ary operation *)
-        fun callback xs =
-          differenceCallback cacheLookup ( List.nth(xs,0), List.nth(xs,1) )
+        fun callback (x1::x2::_) =
+          differenceCallback cacheLookup (x1, x2)
 
         val commonApply' = commonApply vlInter
                                        vlEmpty
@@ -619,9 +672,11 @@ in
   | ( Node{variable=lvr,alpha=la}, Node{variable=rvr,alpha=ra} ) =>
     nodeDifference lvr rvr la ra
                    Values.storedEq
-                   Values.storedUnion Values.storedIntersection
+                   Values.storedUnion
+                   Values.storedIntersection
                    Values.storedDifference
-                   Values.storedEmpty Values.storedLt
+                   Values.storedEmpty
+                   Values.storedLt
                    flatNodeAlpha
 
   | ( HNode{variable=lvr,alpha=la}, HNode{variable=rvr,alpha=ra} ) =>
@@ -630,12 +685,12 @@ in
                    (unionCallback cacheLookup)
                    (intersectionCallback cacheLookup)
                    (differenceCallback cacheLookup)
-                   empty lt
+                   empty
+                   lt
                    hierNodeAlpha
 
-  | ( Node{...}, _ ) => raise IncompatibleSDD
-  | ( HNode{...}, _ ) => raise IncompatibleSDD
-
+  | ( Node{...}, _)  => raise IncompatibleSDD
+  | ( HNode{...}, _) => raise IncompatibleSDD
 
 end (* end fun difference *)
 
@@ -649,16 +704,18 @@ fun apply (Union( xs, cacheLookup))  = union        cacheLookup xs
 (* Hash an SDD operation *)
 fun hash x =
 let
-  fun hashOperands( h0, xs ) =
-    foldl (fn ( (_,uid), h ) => H.hashCombine( H.hashInt uid, h)) h0 xs
+  fun hashOperands(h0, xs) =
+    foldl (fn ((_,uid), h) => H.hashCombine(H.hashInt uid, h)) h0 xs
 in
   case x of
-    Union(xs,_)  => hashOperands( H.hashInt 15411567, xs)
-  | Inter(xs,_ ) => hashOperands( H.hashInt 78995947, xs)
-  | Diff( (_,luid), (_,ruid) ,_ ) =>
+    Union(xs, _) => hashOperands(H.hashInt 15411567, xs)
+  | Inter(xs, _) => hashOperands(H.hashInt 78995947, xs)
+  | Diff((_, luid), (_, ruid), _) =>
       H.hashCombine( H.hashInt 94169137
                    , H.hashCombine( H.hashInt luid
-                                  , H.hashInt ruid ) )
+                                  , H.hashInt ruid
+                                  )
+                   )
 end
 
 (*--------------------------------------------------------------------------*)
@@ -678,10 +735,10 @@ let
       false
 in
   case (x,y) of
-    ( Union(xs,_), Union(ys,_) )     => helper xs ys
-  | ( Inter(xs,_), Inter(ys,_) )     => helper xs ys
-  | ( Diff(lx,ly,_), Diff(rx,ry,_) ) => SDDeq(lx,rx) andalso SDDeq(ly,ry)
-  | ( _, _ )                         => false
+    (Union(xs, _), Union(ys, _))       => helper xs ys
+  | (Inter(xs, _), Inter(ys, _))       => helper xs ys
+  | (Diff(lx, ly, _), Diff(rx, ry, _)) => SDDeq(lx,rx) andalso SDDeq(ly,ry)
+  | (_, _)                         => false
 end
 
 (*--------------------------------------------------------------------------*)
@@ -692,7 +749,7 @@ in (* local SDD manipulations *)
 
 (*--------------------------------------------------------------------------*)
 (* Cache of operations on SDDs *)
-structure SDDOpCache = CacheFun( structure Operation = SDDOperations )
+structure SDDOpCache = CacheFun(structure Operation = SDDOperations)
 
 (*--------------------------------------------------------------------------*)
 (* Let operations in Op call the cache *)
@@ -705,7 +762,7 @@ fun union xs =
   case List.filter (not o empty) xs of
     []  => zero (* No need to cache *)
   | [x] => x    (* No need to cache *)
-  | xs' => SDDOpCache.lookup(SDDOperations.Union( xs', cacheLookup ))
+  | xs' => SDDOpCache.lookup(SDDOperations.Union(xs', cacheLookup))
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.intersectionCallback!
@@ -714,27 +771,27 @@ fun intersection []  = zero
 |   intersection [x] = x
 |   intersection xs  =
   case List.find empty xs of
-    NONE   => SDDOpCache.lookup(SDDOperations.Inter(xs,cacheLookup))
+    NONE   => SDDOpCache.lookup(SDDOperations.Inter(xs, cacheLookup))
   | SOME _ => zero
 
 (*--------------------------------------------------------------------------*)
 (* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
-fun difference (x,y) =
- if eq( x, y ) then          (* No need to cache *)
+fun difference (x, y) =
+ if eq(x, y) then          (* No need to cache *)
    zero
- else if eq( x, zero ) then  (* No need to cache *)
+ else if eq(x, zero) then  (* No need to cache *)
    zero
- else if eq( y, zero ) then  (* No need to cache *)
+ else if eq(y, zero) then  (* No need to cache *)
    x
  else
-   SDDOpCache.lookup(SDDOperations.Diff( x, y, cacheLookup ))
+   SDDOpCache.lookup(SDDOperations.Diff(x, y, cacheLookup))
 
 (*--------------------------------------------------------------------------*)
 end (* local SDD manipulations *)
 
 (*--------------------------------------------------------------------------*)
-fun nodeAlpha ( _ , []    ) = zero
-|   nodeAlpha ( vr, alpha ) =
+fun nodeAlpha (_ , [])   = zero
+|   nodeAlpha (vr, alpha) =
   case hd alpha of
     (Values _, _) =>
     let
@@ -759,12 +816,12 @@ fun nodeAlpha ( _ , []    ) = zero
     let
       val squareUnion' = squareUnion uid union union eq lt
       val alpha' =
-        List.mapPartial (fn ( Nested n, succ ) =>
+        List.mapPartial (fn (Nested n, succ) =>
                           if empty n orelse empty succ then
                             NONE
                           else
                             SOME ( n, [succ] )
-                        |   ( Values _, _ ) =>
+                        |   (Values _, _) =>
                           raise (Fail "Values in an hierarchical node")
                         )
                         alpha
@@ -774,28 +831,23 @@ fun nodeAlpha ( _ , []    ) = zero
 
 (*--------------------------------------------------------------------------*)
 (* Return the variable of an SDD. Needed by HomFun*)
-fun variable (x,_) =
-  case x of
-    Node{variable=var,...}  => var
-  | HNode{variable=var,...} => var
-  | _                       => raise IsNotANode
+fun variable (Node{variable=var, ...}, _)  = var
+|   variable (HNode{variable=var, ...}, _) = var
+|   variable _                             = raise IsNotANode
 
 (*--------------------------------------------------------------------------*)
-fun values x = case x of Nested _ => raise IsNotValues
-                       | Values v => v
+fun values (Values v) = v
+|   values (Nested _) = raise IsNotValues
 
 (*--------------------------------------------------------------------------*)
-fun nested x = case x of Values _ => raise IsNotNested
-                       | Nested s => s
+fun nested (Values _) = raise IsNotNested
+|   nested (Nested s) = s
 
 (*--------------------------------------------------------------------------*)
 fun alpha (sdd,_) =
 let
   fun alphaHelper a f =
-      Vector.foldr
-      (fn (x,acc) => let val (vl,succ) = x in (f vl,succ)::acc end )
-      []
-      a
+    Vector.foldr (fn ((vl, succ), acc) => (f vl,succ)::acc) [] a
 in
   case sdd of
     Node{alpha=a,...}  => alphaHelper a (fn x => Values (Values.mkUsable x))
@@ -806,14 +858,13 @@ end
 (*--------------------------------------------------------------------------*)
 (* Return the hash value of a valuation. Needed by HomFun *)
 fun hashValuation (Nested(_,uid)) = H.hashInt uid
-|   hashValuation (Values v)            = Values.hash v
+|   hashValuation (Values v)      = Values.hash v
 
 (*--------------------------------------------------------------------------*)
 (* Compare two valuations. Needed by HomFun *)
-fun eqValuation (x,y) =
-  case (x,y) of ( Nested nx, Nested ny ) => eq( nx, ny )
-              | ( Values vx, Values vy ) => Values.eq( vx, vy )
-              | ( _ , _ )                => false
+fun eqValuation (Nested nx, Nested ny) = eq(nx, ny)
+|   eqValuation (Values vx, Values vy) = Values.eq(vx, vy)
+|   eqValuation (_, _)                 = false
 
 (*--------------------------------------------------------------------------*)
 (* Export a valuation to a string. Needed by HomFun *)
@@ -839,8 +890,8 @@ let
     val (x,uid) = s
   in
     case x of
-      Zero                      => zero ()
-    | One                       => one ()
+      Zero                    => zero ()
+    | One                     => one ()
     | Node  {variable=v,...}  => node uid v (alpha s)
     | HNode {variable=v,...}  => node uid v (alpha s)
   end
@@ -852,9 +903,8 @@ in
 
     | Cached =>
       let
-        val cache : (( SDD, 'a ) HT.hash_table)
-            = ( HT.mkTable( fn x => hash x , eq )
-                          ( 10000, DoNotPanic ) )
+        val cache : ((SDD, 'a) HT.hash_table) =
+          (HT.mkTable(fn x => hash x , eq) (10000, DoNotPanic))
 
         fun visitorCache cache zero one node s =
           case HT.find cache s of
@@ -874,15 +924,14 @@ in
 
     | Once (neutral:'a) =>
       let
-        val cache : (( SDD, unit ) HT.hash_table)
-            = ( HT.mkTable( fn x => hash x , eq )
-                          ( 10000, DoNotPanic ) )
+        val cache : ((SDD, unit) HT.hash_table) =
+          (HT.mkTable (fn x => hash x , eq) (10000, DoNotPanic))
 
         fun visitorOnce cache zero one node s =
           case HT.find cache s of
             NONE  =>
               (
-                HT.insert cache ( s, () );
+                HT.insert cache (s, ());
                 visitorBase zero one node s
               )
           | SOME _ => neutral

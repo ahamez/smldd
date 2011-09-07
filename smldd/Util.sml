@@ -29,8 +29,8 @@ let
   |   helper (x::xs) =
     let
       val x'    = extract x
-      val left  = List.filter (fn y => lt( extract y , x' ) ) xs
-      val right = List.filter (fn y => gt( extract y , x' ) ) xs
+      val left  = List.filter (fn y => lt( extract y , x')) xs
+      val right = List.filter (fn y => gt( extract y , x')) xs
     in
       helper left @ [x] @ helper right
     end
@@ -47,7 +47,7 @@ let
   |   helper (x::xs) =
     let
       val x'    = extract x
-      val (left,right)  = List.partition (fn y => lt( extract y , x' ) ) xs
+      val (left,right)  = List.partition (fn y => lt( extract y , x' )) xs
     in
       helper left @ [x] @ helper right
     end
@@ -64,7 +64,7 @@ fun shuffle xs =
 let
 
   val _ = case MLton.Random.seed() of
-             NONE  => MLton.Random.srand (Word.fromInt 42)
+            NONE   => MLton.Random.srand (Word.fromInt 42)
           | SOME v => MLton.Random.srand v
 
   val a = Array.fromList xs
