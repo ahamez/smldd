@@ -15,89 +15,89 @@ val values = Values o SV.fromList
 (*--------------------------------------------------------------------------*)
 (* Some functions used by mkFunction *)
 (*--------------------------------------------------------------------------*)
-  fun pre c (FuncValues values) =
-    FuncValuesRes (SV.mapPartial (fn x => if x < c then NONE else SOME (x-c))
-                           values
-            )
-  |   pre _ Selector = SelectorRes true
-  |   pre c Print    = PrintRes ("Pre" ^ (Int.toString c))
-  |   pre c Hash =
-    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
+  fun pre c (InValues (_,values)) =
+    OutFuncValues ( SV.mapPartial (fn x => if x < c then NONE else SOME (x-c))
+                                  values
+                  )
+  |   pre _ InSelector = OutSelector true
+  |   pre c InPrint    = OutPrint ("Pre" ^ (Int.toString c))
+  |   pre c InHash =
+    OutHash ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
 
 (*--------------------------------------------------------------------------*)
-  fun preTest c (FuncValues values) =
-    FuncValuesRes (SV.mapPartial (fn x => if x < c then SOME x else NONE)
-                                values
-                 )
-  |   preTest c Print = PrintRes ("Pre" ^ (Int.toString c))
-  |   preTest _ Selector = SelectorRes true
-  |   preTest c Hash =
-    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
+  fun preTest c (InValues (_,values)) =
+    OutFuncValues ( SV.mapPartial (fn x => if x < c then SOME x else NONE)
+                                  values
+                  )
+  |   preTest c InPrint = OutPrint ("Pre" ^ (Int.toString c))
+  |   preTest _ InSelector = OutSelector true
+  |   preTest c InHash =
+    OutHash ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 4956317) )
 
 (*--------------------------------------------------------------------------*)
-  fun post c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
-  |   post c Print = PrintRes ("Post" ^ (Int.toString c))
-  |   post c Hash =
-    HashRes ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 1481673) )
+  fun post c (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => x + c) values)
+  |   post c InPrint = OutPrint ("Post" ^ (Int.toString c))
+  |   post c InHash =
+    OutHash ( Hash.hashCombine( Hash.hashInt c, Hash.hashInt 1481673) )
 
 (*--------------------------------------------------------------------------*)
-  fun f0 c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
-  |   f0 _ Print =
-    PrintRes "f0"
-  |   f0 _ Hash =
-    HashRes (Hash.hashInt 123)
+  fun f0 c (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => x + c) values)
+  |   f0 _ InPrint =
+    OutPrint "f0"
+  |   f0 _ InHash =
+    OutHash (Hash.hashInt 123)
 
 (*--------------------------------------------------------------------------*)
-  fun f1 (FuncValues values) =
-    FuncValuesRes (SV.mapPartial (fn x => if x > 2 then SOME x else NONE )
-                           values
-            )
-  |   f1 Print =
-    PrintRes "f1"
-  |   f1 Hash =
-    HashRes (Hash.hashInt 456)
+  fun f1 (InValues (_,values)) =
+    OutFuncValues (SV.mapPartial (fn x => if x > 2 then SOME x else NONE )
+                                 values
+                  )
+  |   f1 InPrint =
+    OutPrint "f1"
+  |   f1 InHash =
+    OutHash (Hash.hashInt 456)
 
 (*--------------------------------------------------------------------------*)
-  fun f2 (FuncValues _) =
-    FuncValuesRes (SV.fromList [])
-  |   f2 Print =
-    PrintRes "f2"
-  |   f2 Hash =
-    HashRes (Hash.hashInt 789)
+  fun f2 (InValues (_,_)) =
+    OutFuncValues (SV.fromList [])
+  |   f2 InPrint =
+    OutPrint "f2"
+  |   f2 InHash =
+    OutHash (Hash.hashInt 789)
 
 (*--------------------------------------------------------------------------*)
-  fun f3 (FuncValues _) =
-    FuncValuesRes (SV.fromList [1,2,3])
-  |   f3 Print =
-    PrintRes "f3"
-  |   f3 Hash =
-    HashRes (Hash.hashInt 987)
+  fun f3 (InValues (_,_)) =
+    OutFuncValues (SV.fromList [1,2,3])
+  |   f3 InPrint =
+    OutPrint "f3"
+  |   f3 InHash =
+    OutHash (Hash.hashInt 987)
 
 (*--------------------------------------------------------------------------*)
-  fun f4 (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x) values)
-  |   f4 Print =
-    PrintRes "f4"
-  |   f4 Hash =
-    HashRes (Hash.hashInt 654)
+  fun f4 (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => x) values)
+  |   f4 InPrint =
+    OutPrint "f4"
+  |   f4 InHash =
+    OutHash (Hash.hashInt 654)
 
 (*--------------------------------------------------------------------------*)
-  fun f5 (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => if x < 4 then x + 1 else x) values)
-  |   f5 Print =
-    PrintRes "f5"
-  |   f5 Hash =
-    HashRes (Hash.hashInt 321)
+  fun f5 (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => if x < 4 then x + 1 else x) values)
+  |   f5 InPrint =
+    OutPrint "f5"
+  |   f5 InHash =
+    OutHash (Hash.hashInt 321)
 
 (*--------------------------------------------------------------------------*)
-  fun f6 (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x) values)
-  |   f6 Hash =
-    HashRes (Hash.hashInt 654)
-  |   f6 Selector =
-    SelectorRes true
+  fun f6 (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => x) values )
+  |   f6 InHash =
+    OutHash (Hash.hashInt 654)
+  |   f6 InSelector =
+    OutSelector true
 
 (*--------------------------------------------------------------------------*)
 (*--------------------------------------------------------------------------*)
@@ -304,23 +304,23 @@ end
 (*--------------------------------------------------------------------------*)
 fun testFunction12 () =
 let
-  fun f (FuncValues _) = raise Domain
-  |   f Hash = SelectorRes true
+  fun f (InValues _) = raise Domain
+  |   f InHash = OutSelector true
 in
   ( mkFunction (ref f) 0 ; fail "Must fail" )
-  handle x => assertEqualExceptionName x NotUserHash
+  handle x => assertEqualExceptionName x NotOutHash
 end
 
 (*--------------------------------------------------------------------------*)
 fun testFunction13 () =
 let
-  fun f (FuncValues _) = SelectorRes true
-  |   f Hash = HashRes (Hash.hashInt 42)
+  fun f (InValues _) = OutSelector true
+  |   f InHash = OutHash (Hash.hashInt 42)
   val s0   = node( 0, (values[0,1,2,3]), one )
   val h = mkFunction (ref f) 0
 in
   ( eval h s0 ; fail "Must fail" )
-  handle x => assertEqualExceptionName x NotFuncValues
+  handle x => assertEqualExceptionName x NotOutFuncValues
 end
 
 (*--------------------------------------------------------------------------*)
@@ -906,12 +906,12 @@ end
 (*--------------------------------------------------------------------------*)
 fun testFactorization00 () =
 let
-  fun f c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
-  |   f c Print =
-    PrintRes ("f" ^ (Int.toString c))
-  |   f c Hash =
-    HashRes (Hash.hashInt c)
+  fun f c (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => x + c) values)
+  |   f c InPrint =
+    OutPrint ("f" ^ (Int.toString c))
+  |   f c InHash =
+    OutHash (Hash.hashInt c)
 
   val a = mkFunction (ref (f 0)) 0
   val b = mkFunction (ref (f 1)) 0
@@ -944,12 +944,12 @@ end
 (*--------------------------------------------------------------------------*)
 fun testFactorization01 () =
 let
-  fun f c (FuncValues values) =
-    FuncValuesRes (SV.map (fn x => x + c) values)
-  |   f c Print =
-    PrintRes ("f" ^ (Int.toString c))
-  |   f c Hash =
-    HashRes (Hash.hashInt c)
+  fun f c (InValues (_,values)) =
+    OutFuncValues (SV.map (fn x => x + c) values)
+  |   f c InPrint =
+    OutPrint ("f" ^ (Int.toString c))
+  |   f c InHash =
+    OutHash (Hash.hashInt c)
 
   val a = mkFunction (ref (f 0)) 0
   val b = mkFunction (ref (f 1)) 0
