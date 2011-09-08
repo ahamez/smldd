@@ -1,3 +1,4 @@
+(* TODO: do not use intermediary list for simple tasks like insert... *)
 (*--------------------------------------------------------------------------*)
 structure IntSortedVector = struct
 
@@ -92,7 +93,7 @@ end
 (*--------------------------------------------------------------------------*)
 fun toString vec =
 let
-  val l = List.map (fn x => Int32.toString x ) (Util.IntVectorToList vec)
+  val l = List.map (fn x => Int32.toString x) (Util.IntVectorToList vec)
   val s = String.concatWith "," l
 in
   "{" ^ s ^ "}"

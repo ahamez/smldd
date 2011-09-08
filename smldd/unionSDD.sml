@@ -12,9 +12,6 @@
 fun unionSDD uid valEq valInter valDiff valEmpty xs =
 let
 
-  val ( initial, operands ) = case xs of []     => raise DoNotPanic
-                                       | y::ys  => ( y, ys )
-
   fun mergeSuccs [] [] = []
   |   mergeSuccs xs [] = xs
   |   mergeSuccs [] ys = ys
@@ -41,14 +38,12 @@ let
      ('aSuccs @ bSuccs') because sqaureUnion will remove these duplicates
      when it will create a union operation of these successors.
   *)
-  fun oneArcOfA a []
-  = ( [a], [] )
+  fun oneArcOfA a [] = ( [a], [] )
 
-  |   oneArcOfA (aVal,aSuccs) ((bVal,bSuccs)::bAlpha)
-  =
+  |   oneArcOfA (aVal,aSuccs) ((bVal,bSuccs)::bAlpha) =
+
     if valEq( aVal, bVal ) then
       ( [( aVal, mergeSuccs aSuccs bSuccs )], bAlpha )
-
     else
     let
       val inter = valInter [aVal,bVal]
@@ -99,6 +94,9 @@ let
     in
       partition (acc@res) ( aAlpha, rem )
     end
+
+  val (initial, operands) = case xs of []     => raise DoNotPanic
+                                     | y::ys  => ( y, ys )
 
 in
   foldl (partition []) initial operands

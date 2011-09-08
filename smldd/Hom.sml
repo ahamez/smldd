@@ -7,7 +7,9 @@ signature HOM = sig
   type values
   type valuation
 
+  (* Tell if two Homss are equals. Constant time. *)
   val eq              : hom * hom -> bool
+  (* Return the unique identifier of an Hom. Warning, uids are recycled! *)
   val uid             : hom -> int
 
   val id              : hom
