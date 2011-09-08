@@ -67,27 +67,27 @@ end (* local fromList, map, mapPartial *)
 
 (*--------------------------------------------------------------------------*)
 fun eq (l,r) =
+let
+  fun helper 0 = true
+  |   helper i =
+    if IntVector.sub(l,i-1) = IntVector.sub(r,i-1) then
+      helper (i - 1)
+    else
+      false
+in
   if IntVector.length l <> IntVector.length r then
     false
   else
-    let
-      fun helper 0 = true
-      |   helper i =
-        if IntVector.sub(l,i-1) = IntVector.sub(r,i-1) then
-          helper (i - 1)
-        else
-          false
-    in
-      helper (IntVector.length l)
-    end
+    helper (IntVector.length l)
+end
 
 (*--------------------------------------------------------------------------*)
 fun hash vec =
-  let
-    fun helper (x1,x2) = Hash.hashCombine ( Hash.hashInt x1, x2 )
-  in
-    IntVector.foldl helper (Hash.hashInt 42) vec
-  end
+let
+  fun combine (x1,x2) = Hash.hashCombine ( Hash.hashInt x1, x2 )
+in
+  IntVector.foldl combine (Hash.hashInt 42) vec
+end
 
 (*--------------------------------------------------------------------------*)
 fun toString vec =
