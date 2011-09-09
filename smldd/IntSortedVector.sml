@@ -153,79 +153,137 @@ fun mkEmpty () = IntVector.fromList []
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun union ( s1, s2 ) =
+fun union (s1, s2) =
 let
-  fun helper acc ~1 ~1 = acc
-  |   helper acc ~1 y  = (Util.IntVectorRangeToList s2 0 y ) @ acc
-  |   helper acc x ~1  = (Util.IntVectorRangeToList s1 0 x ) @ acc
-  |   helper acc x y   =
-  let
-    val l = IntVector.sub( s1, x )
-    val r = IntVector.sub( s2, y )
-  in
-    if l > r then
-      helper (l::acc) (x-1) y
-    else if l < r then
-      helper (r::acc) x (y-1)
+
+  val llen = IntVector.length s1
+  val rlen = IntVector.length s2
+  val tmp = IntArray.array(llen + rlen, 0)
+  val len = ref 0
+
+  fun loop i li ri =
+    if li < llen andalso ri < rlen then
+    let
+      val l = IntVector.sub(s1, li)
+      val r = IntVector.sub(s2, ri)
+    in
+      if l < r then
+      ( IntArray.update(tmp, i, l)
+      ; len := !len + 1
+      ; loop (i+1) (li+1) ri
+      )
+      else if l > r then
+      ( IntArray.update(tmp, i, r)
+      ; len := !len + 1
+      ; loop (i+1) li (ri+1)
+      )
+      else
+      ( IntArray.update(tmp, i, l)
+      ; len := !len + 1
+      ; loop (i+1) (li+1) (ri+1)
+      )
+    end
     else
-      helper (l::acc) (x-1) (y-1)
-  end
+    let
+      fun copy tmpi cont conti contlen =
+        if conti < contlen then
+        ( IntArray.update(tmp, tmpi, IntVector.sub(cont, conti))
+        ; len := !len + 1
+        ; copy (tmpi+1) cont (conti+1) contlen
+        )
+        else
+        ()
+    in
+    (* Copy what remains in either s1 or s2 *)
+    ( copy i s1 li llen
+    ; copy i s2 ri rlen
+    )
+    end
+
+  val _ = loop 0 0 0
 in
-  IntVector.fromList( helper []
-                             (IntVector.length s1 - 1)
-                             (IntVector.length s2 - 1)
-                    )
+  IntVector.tabulate(!len, fn i => IntArray.sub(tmp, i))
 end
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun intersection ( s1, s2 ) =
+fun intersection (s1, s2) =
 let
-  fun helper acc ~1 _ = acc
-  |   helper acc _ ~1 = acc
-  |   helper acc x y  =
-  let
-    val l = IntVector.sub( s1, x )
-    val r = IntVector.sub( s2, y )
-  in
-    if l = r then
-      helper (l::acc) (x-1) (y-1)
-    else if l > r then
-      helper acc (x-1) y
+
+  val llen = IntVector.length s1
+  val rlen = IntVector.length s2
+  val tmp = IntArray.array(Int.min(llen, rlen), 0)
+  val len = ref 0
+
+  fun loop i li ri =
+    if li < llen andalso ri < rlen then
+    let
+      val l = IntVector.sub(s1, li)
+      val r = IntVector.sub(s2, ri)
+    in
+      if l = r then
+      ( IntArray.update(tmp, i, l)
+      ; len := !len + 1
+      ; loop (i+1) (li+1) (ri+1)
+      )
+      else if l < r then
+        loop i (li+1) ri
+      else
+        loop i li (ri+1)
+    end
     else
-      helper acc x (y-1)
-  end
+      ()
+
+  val _ = loop 0 0 0
+
 in
-  IntVector.fromList( helper []
-                             (IntVector.length s1 - 1)
-                             (IntVector.length s2 - 1)
-                    )
+  IntVector.tabulate(!len, fn i => IntArray.sub(tmp, i))
 end
 
 (*--------------------------------------------------------------------------*)
 (* s1 and s2 MUST already be sorted *)
-fun difference (s1,s2) =
+fun difference (s1, s2) =
 let
-  fun helper acc ~1 ~1 = acc
-  |   helper acc ~1 _  = acc
-  |   helper acc x ~1  = (Util.IntVectorRangeToList s1 0 x) @ acc
-  |   helper acc x y   =
-  let
-    val l = IntVector.sub( s1, x )
-    val r = IntVector.sub( s2, y )
-  in
-    if l = r then
-      helper acc (x-1) (y-1)
-    else if l > r then
-      helper (l::acc) (x-1) y
+
+  val llen = IntVector.length s1
+  val rlen = IntVector.length s2
+  val tmp = IntArray.array(llen, 0)
+  val len = ref 0
+
+  fun loop i li ri =
+    if li < llen andalso ri < rlen then
+    let
+      val l = IntVector.sub(s1, li)
+      val r = IntVector.sub(s2, ri)
+    in
+      if l = r then
+        loop i (li+1) (ri+1)
+      else if l < r then
+      ( IntArray.update(tmp, i, l)
+      ; len := !len + 1
+      ; loop (i+1) (li+1) ri
+      )
+      else
+        loop i li (ri+1)
+    end
     else
-      helper acc x (y-1)
-  end
+    let
+      fun copy tmpi cont conti contlen =
+        if conti < contlen then
+        ( IntArray.update(tmp, tmpi, IntVector.sub(cont, conti))
+        ; len := !len + 1
+        ; copy (tmpi+1) cont (conti+1) contlen
+        )
+        else
+        ()
+    in
+      copy i s1 li llen
+    end
+
+  val _ = loop 0 0 0
+
 in
-  IntVector.fromList( helper []
-                             (IntVector.length s1 - 1)
-                             (IntVector.length s2 - 1)
-                    )
+  IntVector.tabulate(!len, fn i => IntArray.sub(tmp, i))
 end
 
 (*--------------------------------------------------------------------------*)
