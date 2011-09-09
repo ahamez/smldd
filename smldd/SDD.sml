@@ -5,9 +5,9 @@ signature SDD = sig
   type variable
   type values
 
-  (* An SDD node holds a valuation on all arcs going to its successors. A valuation
-     can be a nested SDD or a set of values (at the deepest level of the
-     hierarchy). *)
+  (* An SDD node holds a valuation on all arcs going to its successors. A
+     valuation can be a nested SDD or a set of values (at the deepest level
+     of the hierarchy). *)
   datatype valuation      = Nested of SDD
                           | Values of values
 
@@ -470,8 +470,8 @@ in
   (* All operands are |1| *)
     One        => one
 
-  (* There shouldn't be any |0|, they should have been removed before calling the
-     cache. *)
+  (* There shouldn't be any |0|, they should have been removed before
+     calling the cache. *)
   | Zero       => raise DoNotPanic
 
   (* Flat node case *)
@@ -719,7 +719,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-(* We need an alias for the equality of SDDs as the next eq will mask it... *)
+(* We need an alias for the equality of SDDs as the next eq will mask it. *)
 val SDDeq = eq
 
 (* Compare two SDD operations *)
