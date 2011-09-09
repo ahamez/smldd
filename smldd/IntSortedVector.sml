@@ -22,12 +22,56 @@ else
 in (* local fromList, map, mapPartial *)
 
 (*--------------------------------------------------------------------------*)
-fun insert vec x =
+fun contains vec x =
 let
-  val L = Util.IntVectorToList vec
+  fun containsHelper first last =
+    if last < first then
+      NONE
+    else if x < IntVector.sub(vec, first)
+    orelse x > IntVector.sub(vec, last) then
+      NONE
+    else if x = IntVector.sub(vec, first) then
+      SOME first
+    else if x = IntVector.sub(vec, last) then
+      SOME last
+    else
+    let
+      val middleIndex = first + (Int.quot(last - first, 2))
+      val middleValue = IntVector.sub(vec, middleIndex)
+    in
+      if x = middleValue then
+        SOME middleIndex
+      else if x < middleValue then
+        containsHelper first (middleIndex - 1)
+      else
+        containsHelper (middleIndex + 1) last
+    end
 in
-  IntVector.fromList (insertHelper L x)
+  containsHelper 0 (IntVector.length vec - 1)
 end
+
+(*--------------------------------------------------------------------------*)
+fun insert vec x =
+  case contains vec x of
+    SOME _ => vec
+  | NONE   =>
+    let
+      val vecLen = IntVector.length vec
+      val inserted = ref false
+      fun helper i =
+        if not (!inserted) then
+          if i >= vecLen orelse x < IntVector.sub(vec, i) then
+          ( inserted := true
+          ; x
+          )
+          else
+            IntVector.sub(vec, i)
+        else
+          IntVector.sub(vec, i - 1)
+
+    in
+      IntVector.tabulate (vecLen + 1, helper)
+    end
 
 (*--------------------------------------------------------------------------*)
 fun fromList [] = IntVector.fromList []
@@ -42,7 +86,7 @@ fun map f vec =
   let
     val L = Util.IntVectorToList vec
   in
-    IntVector.fromList( foldl (fn (x,xs) => insertHelper xs (f x)) [] L )
+    IntVector.fromList( foldl (fn (x,xs) => insertHelper xs (f x)) [] L)
   end
 
 (*--------------------------------------------------------------------------*)
@@ -53,10 +97,9 @@ fun mapPartial f vec =
   let
     val L = Util.IntVectorToList vec
   in
-    IntVector.fromList( foldl (fn (x,xs) =>
-                                case f x of
-                                  NONE    => xs
-                                | SOME x' => insertHelper xs x'
+    IntVector.fromList( foldl (fn (x,xs) => case f x of
+                                              NONE    => xs
+                                            | SOME x' => insertHelper xs x'
                               )
                               []
                               L
@@ -85,7 +128,7 @@ end
 (*--------------------------------------------------------------------------*)
 fun hash vec =
 let
-  fun combine (x1,x2) = Hash.hashCombine ( Hash.hashInt x1, x2 )
+  fun combine (x1,x2) = Hash.hashCombine (Hash.hashInt x1, x2)
 in
   IntVector.foldl combine (Hash.hashInt 42) vec
 end
