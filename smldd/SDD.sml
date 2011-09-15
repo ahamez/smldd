@@ -361,7 +361,8 @@ fun node ( vr , vl , next ) =
   | Nested nested => hierNode( vr, nested, next )
 
 (*--------------------------------------------------------------------------*)
-val fromList = foldr (fn ((vr,vl),acc) => node( vr, vl, acc)) one
+fun fromList [] = zero
+|   fromList xs = foldr (fn ((vr,vl),acc) => node( vr, vl, acc)) one xs
 
 (*--------------------------------------------------------------------------*)
 val hash = H.hashInt o uid
