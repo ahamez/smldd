@@ -21,7 +21,7 @@ signature HOM = sig
   val one             : hom
   (* Return the SDD var --(vl)--> x where x is the result of the application
      of h on the SDD to which the cons operation is applied *)
-  val mkCons          : variable -> valuation -> hom (*h*)- > hom
+  val mkCons          : variable -> valuation -> hom -> hom
   (* Always return the SDD given at its construction whatever is its
      argument on which it's applied *)
   val mkConst         : SDD -> hom
