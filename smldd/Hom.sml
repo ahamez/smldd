@@ -129,7 +129,8 @@ structure Definition (* : DATA *) = struct
                | Nested      of t * variable
                | Func        of (UserIn -> UserOut) ref * variable
                | Inductive   of (UserIn -> UserOut) ref
-               (* All Sat* operations aren't exposed to the user.
+               (* All Sat* operations aren't exposed to the user, .i.e there is
+                  no corresponding building function in the public interface.
                   They are created internally to enable saturation
                   automatically. *)
                | SatUnion    of   variable
@@ -744,23 +745,23 @@ fun mkFixpoint h =
 
 (*--------------------------------------------------------------------------*)
 fun mkFunction f var =
-  UT.unify( mkHom (Func(f,var)) )
+  UT.unify(mkHom (Func(f,var)))
 
 (*--------------------------------------------------------------------------*)
 fun mkInductive i =
-  UT.unify( mkHom (Inductive i) )
+  UT.unify(mkHom (Inductive i))
 
 (*--------------------------------------------------------------------------*)
 fun mkSatUnion var F G L =
-  UT.unify( mkHom (SatUnion(var, F, G, L)) )
+  UT.unify(mkHom (SatUnion(var, F, G, L)))
 
 (*--------------------------------------------------------------------------*)
 fun mkSatIntersection var F G L =
-  UT.unify( mkHom (SatInter(var, F, G, L)) )
+  UT.unify(mkHom (SatInter(var, F, G, L)))
 
 (*--------------------------------------------------------------------------*)
 fun mkSatFixpoint var F G L =
-  UT.unify( mkHom (SatFixpoint(var, F, G, L)) )
+  UT.unify(mkHom (SatFixpoint(var, F, G, L)))
 
 (*--------------------------------------------------------------------------*)
 fun mkSatComComp var F G =
