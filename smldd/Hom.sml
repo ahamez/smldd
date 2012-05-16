@@ -52,20 +52,6 @@ signature HOM = sig
   (* Export some statistics as a string. *)
   val stats           : unit -> string
 
-  type 'a visitor     =
-                     (*Id*)    (unit -> 'a)
-                   (*Cons*) -> (variable -> valuation -> hom -> 'a)
-                  (*Const*) -> (SDD -> 'a)
-                  (*Union*) -> (hom list -> 'a)
-           (*Intersection*) -> (hom list -> 'a)
-            (*Composition*) -> (hom -> hom -> 'a)
-               (*Fixpoint*) -> (hom -> 'a)
-                 (*Nested*) -> (hom -> variable -> 'a)
-              (*Inductive*) -> (user -> 'a)
-                            -> hom
-                            -> 'a
-  val mkVisitor       : unit -> 'a visitor
-
   exception NestedHomOnValues
   exception EmptyOperands
   exception NotOutHash
@@ -504,41 +490,6 @@ fun eval h sdd =
                             else
                               cache.lookup(Evaluation.Op(h, sdd, cacheLookup))
     | _ => cache.lookup(Evaluation.Op (h, sdd, cacheLookup))
-
-(*--------------------------------------------------------------------------*)
-type 'a visitor =
-                     (*Id*)    (unit -> 'a)
-                   (*Cons*) -> (variable -> valuation -> hom -> 'a)
-                  (*Const*) -> (SDD -> 'a)
-                  (*Union*) -> (hom list -> 'a)
-           (*Intersection*) -> (hom list -> 'a)
-            (*Composition*) -> (hom -> hom -> 'a)
-               (*Fixpoint*) -> (hom -> 'a)
-                 (*Nested*) -> (hom -> variable -> 'a)
-              (*Inductive*) -> (user -> 'a)
-                            -> hom
-                            -> 'a
-
-(*--------------------------------------------------------------------------*)
-fun mkVisitor (():unit) : 'a visitor =
-let
-
-  fun visitor id cons const union inter comp fixpoint nested inductive h
-  =
-    case #1 h of
-      Id               => id ()
-    | Cons(v, vl, nxt) => cons v vl nxt
-    | Const s          => const s
-    | Union hs         => union hs
-    | Inter hs         => inter hs
-    | Comp(a, b)       => comp a b
-    | Fixpoint h       => fixpoint h
-    | Nested(h, v)     => nested h v
-    | Inductive i      => inductive i
-
-in
-  visitor
-end
 
 (*--------------------------------------------------------------------------*)
 fun stats () = (cache.stats())
