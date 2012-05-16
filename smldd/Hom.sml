@@ -295,9 +295,9 @@ fun mkNested h vr =
     UT.unify( mkHom (Nested(h,vr)) )
 
 (*--------------------------------------------------------------------------*)
-fun mkUnion' []  = raise EmptyOperands
-|   mkUnion' [x] = x
-|   mkUnion' xs  =
+fun mkUnion []  = raise EmptyOperands
+|   mkUnion [x] = x
+|   mkUnion xs  =
 let
 
   val nesteds : ( ( variable , hom list ref ) HT.hash_table )
@@ -319,7 +319,7 @@ let
   val operands = foldr unionHelper [] xs
 
   val nesteds' = HT.foldi (fn ( v, ref hs, acc) =>
-                            (mkNested (mkUnion' hs) v) :: acc
+                            (mkNested (mkUnion hs) v) :: acc
                           )
                           []
                           nesteds
@@ -332,11 +332,6 @@ in
   | [x] => x
   | _   => UT.unify( mkHom (Union operands') )
 end
-
-(*--------------------------------------------------------------------------*)
-(* A sorting wrapper for mkUnion' which does the real job.
-   Prefer mkUnion' for internal work. *)
-val mkUnion = mkUnion' o (Util.sortUnique uid (op<) (op>))
 
 (*--------------------------------------------------------------------------*)
 fun mkIntersection []  = raise EmptyOperands
