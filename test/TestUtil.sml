@@ -5,14 +5,6 @@ open Util
 open SMLUnit.Assert
 structure Test = SMLUnit.Test
 
-fun testShuffle00 () =
-let
-  val l = List.tabulate (100, Util.id)
-  val r = shuffle l
-in
-  assertTrue( l <> r )
-end
-
 fun testIntInfToString00 () =
 let
   val x = IntInf.fromInt 0
@@ -127,30 +119,9 @@ fun testTake04 () =
 fun testVectorToList00 () =
   assertTrue( VectorToList (Vector.fromList [1,2]) = [1,2] )
 
-fun testExplodeRightBy00 () =
-  assertTrue( explodeRightBy [1,2,3] 1 = [[1],[2],[3]])
-
-fun testExplodeRightBy01 () =
-  assertTrue( explodeRightBy [1,2,3] 2 = [[1],[2,3]])
-
-fun testExplodeRightBy02 () =
-  ( explodeRightBy [1,2,3] ~2; fail "Must fail" )
-  handle x => assertEqualExceptionName x Subscript
-
-fun testExplodeRightBy03 () =
-  ( explodeRightBy [1,2,3] 5; fail "Must fail" )
-  handle x => assertEqualExceptionName x Subscript
-
-fun testExplodeRightBy04 () =
-  assertTrue( explodeRightBy [1,2,3] 3 = [[1,2,3]])
-
-fun testExplodeRightBy05 () =
-  assertTrue( explodeRightBy [1,2,3] 0 = [[1,2,3]])
-
 fun suite () =
     Test.labelTests
-    [ ("testShuffle00"          , testShuffle00        )
-    , ("testIntInfToString00"   , testIntInfToString00 )
+    [ ("testIntInfToString00"   , testIntInfToString00 )
     , ("testIntInfToString01"   , testIntInfToString01 )
     , ("testIntInfToString02"   , testIntInfToString02 )
     , ("testIntInfToString03"   , testIntInfToString03 )
@@ -166,13 +137,6 @@ fun suite () =
     , ("testTake02"             , testTake02           )
     , ("testTake03"             , testTake03           )
     , ("testTake04"             , testTake04           )
-    , ("testVectorToList00"     , testVectorToList00   )
-    , ("testExplodeRightBy00"   , testExplodeRightBy00 )
-    , ("testExplodeRightBy01"   , testExplodeRightBy01 )
-    , ("testExplodeRightBy02"   , testExplodeRightBy02 )
-    , ("testExplodeRightBy03"   , testExplodeRightBy03 )
-    , ("testExplodeRightBy04"   , testExplodeRightBy04 )
-    , ("testExplodeRightBy05"   , testExplodeRightBy05 )
     ]
 
 end

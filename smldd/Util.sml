@@ -10,18 +10,6 @@ fun IntVectorToList (vec : IntVector.vector) =
   IntVector.foldr (fn (elm,acc) => elm::acc) [] vec
 
 (*--------------------------------------------------------------------------*)
-fun IntVectorRangeToList ( vec : IntVector.vector ) i j =
-let
-  fun loop acc k =
-    if k < i then
-      acc
-    else
-      loop (IntVector.sub( vec, k ) :: acc) (k - 1)
-in
-  loop [] j
-end
-
-(*--------------------------------------------------------------------------*)
 fun sortUnique extract lt gt xs =
 let
 
@@ -40,49 +28,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun sort extract lt xs =
-let
-
-  fun helper []      = []
-  |   helper (x::xs) =
-    let
-      val x'    = extract x
-      val (left,right)  = List.partition (fn y => lt( extract y , x' )) xs
-    in
-      helper left @ [x] @ helper right
-    end
-
-in
-  helper xs
-end
-
-(*--------------------------------------------------------------------------*)
 fun id x = x
-
-(*--------------------------------------------------------------------------*)
-fun shuffle xs =
-let
-
-  val _ = case MLton.Random.seed() of
-            NONE   => MLton.Random.srand (Word.fromInt 42)
-          | SOME v => MLton.Random.srand v
-
-  val a = Array.fromList xs
-
-  fun loop 0 = a
-  |   loop i =
-  let
-    val j   = Word.toInt( Word.mod( MLton.Random.rand(), Word.fromInt i ) )
-    val tmp = Array.sub( a, j )
-    val _   = Array.update( a, j, Array.sub( a, i ) )
-    val _   = Array.update( a, i, tmp )
-  in
-    loop (i-1)
-  end
-
-in
-  Array.foldr (fn (x,acc) => x::acc) [] (loop ((Array.length a) -1))
-end
 
 (*--------------------------------------------------------------------------*)
 (* Our own take function which does not check bounds *)
@@ -173,25 +119,6 @@ in
   in
     a ^ "." ^ b ^ "E" ^ c
   end
-end
-
-(*--------------------------------------------------------------------------*)
-(* Create packets of size i from list xs. Process from the right of the list*)
-fun explodeRightBy xs i =
-let
-
-  fun helper ( x, [] ) = [[x]]
-  |   helper ( x, Y as (y::ys) ) =
-    if length y = i then
-      [x] :: Y
-    else
-      (x::y)::ys
-
-in
-  if i < 0 orelse i > length xs then
-    raise Subscript
-  else
-    foldr helper [] xs
 end
 
 (*--------------------------------------------------------------------------*)
