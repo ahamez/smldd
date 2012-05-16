@@ -48,8 +48,6 @@
 ^HomFun.Evaluation.apply.<case Id>
 ^HomFun.Evaluation.apply.<case Const _>
 ^HomFun.Evaluation.Rewrite.apply.<case _>
-^HomFun.Evaluation.satUnion.<case true>
-^HomFun.Evaluation.satIntersection.<case true>
 ^HomFun.mkVisitor.visitor.<case _>
 ^squareUnion.mergeSuccs.insert.insertHelper.<case true>
 ^squareUnion.mergeVls.insert.<case true>

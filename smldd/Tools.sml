@@ -397,16 +397,6 @@ let
     ^ (helper cval f)
     ^ (helper cval g)
 
-    fun comcomp hs =
-      node ^ " [label=\"@\"];\n"
-    ^ (foldl (fn (h,str) =>
-               str ^ node ^ " -> " ^ (uid h) ^ ";\n"
-             )
-             ""
-             hs
-      )
-    ^ (foldl (fn (h,str) => str ^ (helper cval h)) "" hs)
-
     fun fixpoint h =
       node ^ " [label=\"*\"];\n"
     ^ node ^ " -> " ^ (uid h) ^ ";\n"
@@ -417,22 +407,11 @@ let
     ^ node ^ " -> " ^ (uid h) ^ ";\n"
     ^ (helper cval h)
 
-    fun func f v =
-    let
-      fun funcString (ref f) =
-        case f Hom.InPrint of
-          Hom.OutPrint s => s
-        | _              => ""
-    in
-      node ^ " [label=\"Func(" ^ (funcString f) ^ ","
-    ^ (Variable.toString v) ^ ")\"];\n"
-    end
-
-    fun inductive _ = ""
+    fun inductive _ = "inductive"
 
     val visitor = Hom.mkVisitor ()
-    val visit = visitor id cons const union inter comp comcomp fixpoint
-                        nested func inductive
+    val visit = visitor id cons const union inter comp fixpoint
+                        nested inductive
   in
     visit h
   end
