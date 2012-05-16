@@ -372,7 +372,7 @@ local (* SDD manipulation *)
 
 (*--------------------------------------------------------------------*)
 (* Operations to manipulate SDD. Used by the cache. *)
-structure SDDOperations (* : OPERATION *) = struct
+structure Evaluation (* : OPERATION *) = struct
 
 (*--------------------------------------------------------------------------*)
 fun configure CacheConfiguration.Name =
@@ -725,49 +725,23 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-end (* end struct SDDOperations *)
+end (* end struct Evaluation *)
 
 (*--------------------------------------------------------------------------*)
 in (* local SDD manipulations *)
 
 (*--------------------------------------------------------------------------*)
 (* Cache of operations on SDDs *)
-structure SDDOpCache = CacheFun(structure Operation = SDDOperations)
+structure cache = CacheFun(structure Operation = Evaluation)
 
 (*--------------------------------------------------------------------------*)
-(* Let operations in Op call the cache *)
-val cacheLookup = SDDOpCache.lookup
+fun union xs = Evaluation.unionCallback cache.lookup xs
 
 (*--------------------------------------------------------------------------*)
-(* Warning! Duplicate with SDD.SDDOperations.unionCallback!
-   Operands should be sorted by caller. *)
-fun union xs =
-  case List.filter (not o empty) xs of
-    []  => zero (* No need to cache *)
-  | [x] => x    (* No need to cache *)
-  | xs' => SDDOpCache.lookup(SDDOperations.Union(xs', cacheLookup))
+fun intersection xs = Evaluation.intersectionCallback cache.lookup xs
 
 (*--------------------------------------------------------------------------*)
-(* Warning! Duplicate with SDD.SDDOperations.intersectionCallback!
-   Operands should be sorted by caller. *)
-fun intersection []  = zero
-|   intersection [x] = x
-|   intersection xs  =
-  case List.find empty xs of
-    NONE   => SDDOpCache.lookup(SDDOperations.Inter(xs, cacheLookup))
-  | SOME _ => zero
-
-(*--------------------------------------------------------------------------*)
-(* Warning! Duplicate with SDD.SDDOperations.differenceCallback! *)
-fun difference (x, y) =
- if eq(x, y) then          (* No need to cache *)
-   zero
- else if eq(x, zero) then  (* No need to cache *)
-   zero
- else if eq(y, zero) then  (* No need to cache *)
-   x
- else
-   SDDOpCache.lookup(SDDOperations.Diff(x, y, cacheLookup))
+fun difference xy = Evaluation.differenceCallback cache.lookup xy
 
 (*--------------------------------------------------------------------------*)
 end (* local SDD manipulations *)
@@ -924,7 +898,7 @@ in
 end
 
 (*--------------------------------------------------------------------------*)
-fun stats () = SDDOpCache.stats()
+fun stats () = cache.stats()
 
 (*--------------------------------------------------------------------------*)
 end (* end functor SDDFun *)

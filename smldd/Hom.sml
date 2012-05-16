@@ -331,21 +331,6 @@ fun hash (Op( (_,uid), s, _ ) ) =
   H.hashCombine( H.hashInt uid, SDD.hash s )
 
 (*--------------------------------------------------------------------------*)
-(* Evaluate an homomorphism on an SDD. Warning! Duplicate with Hom.eval! *)
-fun evalCallback lookup h sdd =
-  if SDD.empty sdd then
-    SDD.zero
-  else
-    case #1 h of
-      Id                  => sdd
-    | Const c             => c
-    | Cons(var, vl, next) => if eq'(next, id) then
-                               SDD.node (var, vl, sdd)
-                             else
-                               lookup (Op (h, sdd, lookup))
-    | _                   => lookup(Op(h, sdd, lookup))
-
-(*--------------------------------------------------------------------------*)
 (* Evaluate a list of homomorphisms and insert the result sorted into a list
    of results*)
 fun evalInsert eval hs xs sdd =
@@ -445,8 +430,24 @@ fun inductive eval i sdd =
   end
 
 (*--------------------------------------------------------------------------*)
-val evals   = ref 0
+val evals = ref 0
 
+(*--------------------------------------------------------------------------*)
+(* Evaluate an homomorphism on an SDD. *)
+fun evalCallback lookup h sdd =
+  if SDD.empty sdd then
+    SDD.zero
+  else
+    case #1 h of
+      Id                  => sdd
+    | Const c             => c
+    | Cons(var, vl, next) => if eq'(next, id) then
+                               SDD.node (var, vl, sdd)
+                             else
+                               lookup (Op (h, sdd, lookup))
+    | _                   => lookup(Op(h, sdd, lookup))
+
+(*--------------------------------------------------------------------------*)
 (* Dispatch the evaluation of an homomorphism to the corresponding
    function. Used by CacheFun.
 *)
@@ -474,21 +475,8 @@ end (* structure Evaluation *)
 (*--------------------------------------------------------------------------*)
 structure cache = CacheFun(structure Operation = Evaluation)
 
-(* Evaluate an homomorphism on an SDD.
-   Warning! Duplicate logic with Evaluation.evalCallback!
-*)
-fun eval h sdd =
-  if SDD.eq (sdd, SDD.zero) then
-    SDD.zero
-  else
-    case #1 h of
-      Id                 => sdd
-    | Const c            => c
-    | Cons (var,vl,next) => if eq (next, id) then
-                              SDD.node (var, vl, sdd)
-                            else
-                              cache.lookup(Evaluation.Op(h, sdd, cache.lookup))
-    | _ => cache.lookup(Evaluation.Op (h, sdd, cache.lookup))
+(* Evaluate an homomorphism on an SDD. *)
+fun eval h sdd = Evaluation.evalCallback cache.lookup h sdd
 
 (*--------------------------------------------------------------------------*)
 fun stats () = (cache.stats())
