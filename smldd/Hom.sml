@@ -473,7 +473,6 @@ end (* structure Evaluation *)
 
 (*--------------------------------------------------------------------------*)
 structure cache = CacheFun(structure Operation = Evaluation)
-val cacheLookup = cache.lookup
 
 (* Evaluate an homomorphism on an SDD.
    Warning! Duplicate logic with Evaluation.evalCallback!
@@ -488,8 +487,8 @@ fun eval h sdd =
     | Cons (var,vl,next) => if eq (next, id) then
                               SDD.node (var, vl, sdd)
                             else
-                              cache.lookup(Evaluation.Op(h, sdd, cacheLookup))
-    | _ => cache.lookup(Evaluation.Op (h, sdd, cacheLookup))
+                              cache.lookup(Evaluation.Op(h, sdd, cache.lookup))
+    | _ => cache.lookup(Evaluation.Op (h, sdd, cache.lookup))
 
 (*--------------------------------------------------------------------------*)
 fun stats () = (cache.stats())
