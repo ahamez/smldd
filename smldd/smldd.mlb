@@ -5,23 +5,17 @@ in
 
   signature VARIABLE
   signature VALUES
-  signature IDENTIFIER
   signature SMLDD
 
   functor SMLDDFun
 
-  structure IntIdentifier
-  structure StringIdentifier
   structure IntVariable
   structure IntSortedVector
   structure DiscreteIntValues
-  structure BitWord
-  structure BitWordValues
 
   structure Hash
   structure Util
 
   structure SMLDD
-  structure BWSMLDD
 
 end

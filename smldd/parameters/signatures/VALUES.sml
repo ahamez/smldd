@@ -16,8 +16,6 @@ sig
   type stored
   eqtype value
 
-  val discrete              : bool
-
   val storedToList          : stored -> value list
   val storedFromList        : value list -> stored
 

@@ -15,22 +15,16 @@ SOURCES=./smldd/sources.mlb                                  \
         ./smldd/storage/signatures/OPERATION.sml             \
         ./smldd/storage/Cache.sml                            \
         ./smldd/storage/UnicityTable.sml                     \
-        ./smldd/BitWord.sml                                  \
         ./smldd/IntSortedVector.sml                          \
-        ./smldd/parameters/signatures/IDENTIFIER.sml         \
         ./smldd/parameters/signatures/VALUES.sml             \
         ./smldd/parameters/signatures/VARIABLE.sml           \
-        ./smldd/parameters/instances/BitWordValues.sml       \
         ./smldd/parameters/instances/DiscreteIntValues.sml   \
         ./smldd/parameters/instances/IntVariable.sml         \
-        ./smldd/parameters/instances/StringIdentifier.sml    \
         ./smldd/squareUnion.sml                              \
         ./smldd/commonApply.sml                              \
         ./smldd/unionSDD.sml                                 \
-        ./smldd/unionFlatDiscreteSDD.sml                     \
         ./smldd/SDD.sml                                      \
         ./smldd/Hom.sml                                      \
-        ./smldd/Order.sml                                    \
         ./smldd/Tools.sml                                    \
         ./smldd/configurations.sml
 
@@ -38,11 +32,9 @@ TESTSOURCES=./test/main.mlb               \
             ./test/testConfigurations.sml \
             ./test/TestDot.sml            \
             ./test/TestHom.sml            \
-            ./test/TestOrder.sml          \
             ./test/TestSDD.sml            \
             ./test/TestUtil.sml           \
             ./test/TestTools.sml          \
-            ./test/TestBitWord.sml        \
             ./test/main.sml
 
 all:

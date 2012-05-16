@@ -56,8 +56,6 @@
 ^DiscreteIntValues.Operations.apply.<case Union \\[\\]>
 ^DiscreteIntValues.storedUnion.<case \\[\\]>
 ^DiscreteIntValues.storedIntersection.<case \\[\\]>
-^unionFlatDiscreteSDD.insertVl.<case _ \\(_, _\\)>
-^unionFlatDiscreteSDD.mergeValues.insert.<case true>
 ^unionSDD.<case \\[\\]>
 
 ##############################################################################

@@ -477,24 +477,6 @@ in
 
   (* Flat node case *)
   | Node{variable=var,...}  =>
-    if Values.discrete then
-    let
-      val xs' = map flatAlphaNodeToList xs
-    in
-      flatNodeAlpha
-      ( var
-      , unionFlatDiscreteSDD Values.storedToList
-                             Values.storedFromList
-                             Values.storedEq
-                             Values.storedLt
-                             Values.valueLt
-                             eq
-                             uid
-                             (unionCallback cacheLookup)
-                             xs'
-      )
-    end
-    else
     let
       val xs' = map flatAlphaNodeToList xs
       val squareUnion' = squareUnion uid

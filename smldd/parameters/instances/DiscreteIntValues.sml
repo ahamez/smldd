@@ -21,9 +21,6 @@ structure Definition (* : DATA *) = struct
 end (* structure Definition *)
 
 (*--------------------------------------------------------------------------*)
-val discrete = true
-
-(*--------------------------------------------------------------------------*)
 type stored = Definition.t
 type values = SV.t
 type value  = int

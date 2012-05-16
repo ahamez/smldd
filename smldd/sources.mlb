@@ -23,27 +23,19 @@ in
   ./storage/Cache.sml
   ./storage/UnicityTable.sml
 
-  ./BitWord.sml
   ./IntSortedVector.sml
 
   ./parameters/signatures/VALUES.sml
   ./parameters/signatures/VARIABLE.sml
-  ./parameters/signatures/IDENTIFIER.sml
 
-  ./parameters/instances/BitWordValues.sml
   ./parameters/instances/DiscreteIntValues.sml
   ./parameters/instances/IntVariable.sml
-  ./parameters/instances/IntIdentifier.sml
-  ./parameters/instances/StringIdentifier.sml
 
   ./squareUnion.sml
   ./commonApply.sml
   ./unionSDD.sml
-  ./unionFlatDiscreteSDD.sml
   ./SDD.sml
   ./Hom.sml
-  ./PowTable.sml
-  ./Order.sml
   ./Tools.sml
 
   ./SMLDD.sml

@@ -2,8 +2,6 @@
 signature TOOLS = sig
 
   type SDD
-  type identifier
-  type order
   type variable
   type values
   type hom
@@ -12,9 +10,6 @@ signature TOOLS = sig
 
   val nbPaths          : SDD -> IntInf.int
   val paths            : SDD -> (variable * values) list list
-  val orderPaths       : order -> SDD -> (identifier * values) list list
-  val orderFilterPaths : order -> (values -> values) -> SDD
-                               -> (identifier * values) list list
   val valuesPaths      : SDD -> values list list
   val nbNodes          : mode -> SDD -> LargeInt.int
   val toDot            : mode -> SDD -> string
@@ -29,19 +24,12 @@ functor ToolsFun ( structure SDD : SDD
                    and Hom       : HOM      where type SDD = SDD.SDD
                                             where type variable = SDD.variable
                                             where type values = SDD.values
-                   and Order     : ORDER
-                                            where type variable = SDD.variable
-                                            where type values = SDD.values
-                                            where type SDD = SDD.SDD
-                                            where type hom = Hom.hom
                  )
   : TOOLS
 = struct
 
 (*--------------------------------------------------------------------------*)
 type SDD        = SDD.SDD
-type identifier = Order.identifier
-type order      = Order.order
 type variable   = Variable.t
 type values     = Values.values
 type hom        = Hom.hom
@@ -129,82 +117,6 @@ fun paths x = pathsBase (fn (var,v) => (var,v)) x
 fun valuesPaths x = pathsBase (fn (_,v) => v ) x
 
 end (* local paths, valuesPaths *)
-
-(*--------------------------------------------------------------------------*)
-fun orderPaths' ord filter x =
-let
-
-  fun zero () = raise Domain
-  fun one  () = []
-
-  val visit = SDD.mkVisitor SDD.NonCached zero one
-
-  fun node varPath _ var alpha =
-    foldl (fn ( (vl,succ), paths ) =>
-          let
-            val visitCached = SDD.mkVisitor SDD.Cached zero one
-            val succPaths = visitCached (node varPath) succ
-          in
-            case succPaths of
-
-              (* Succ was |1| *)
-              [] => (case vl of
-                      SDD.Values v =>
-                      let
-                        val id = case Order.identifier ord (varPath@[var]) of
-                                   NONE   => raise Fail "orderPaths no ID 1"
-                                 | SOME i => i
-                        val v' = case filter of
-                                   NONE   => v
-                                 | SOME f => f v
-                      in
-                        if Values.empty v' then
-                          paths
-                        else
-                          [ ( id, v ) ]::paths
-                      end
-                    | SDD.Nested n =>
-                        ( visitCached (node (varPath@[var])) n ) @ paths
-                    )
-
-            | _  => foldl (fn ( path, paths ) =>
-                            case vl of
-                              SDD.Values v =>
-                              let
-                                val id =
-                                  case Order.identifier ord (varPath@[var]) of
-                                    NONE   => raise Fail "orderPaths no ID 2"
-                                  | SOME i => i
-                                val v' = case filter of
-                                           NONE   => v
-                                         | SOME f => f v
-                              in
-                                if Values.empty v' then
-                                  path::paths
-                                else
-                                  ((id,v)::path)::paths
-                              end
-                            | SDD.Nested n =>
-                                foldl (fn ( nestedPath, paths ) =>
-                                        (nestedPath @ path)::paths
-                                      )
-                                      paths
-                                      (visitCached (node (varPath@[var])) n)
-                          )
-                          paths
-                          succPaths
-          end
-          )
-          []
-          alpha
-
-in
-  visit (node []) x
-end
-
-(*--------------------------------------------------------------------------*)
-fun orderPaths order x = orderPaths' order NONE x
-fun orderFilterPaths order filter x = orderPaths' order (SOME filter) x
 
 (*--------------------------------------------------------------------------*)
 fun nbNodes mode x =
