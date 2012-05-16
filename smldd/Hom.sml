@@ -297,47 +297,12 @@ fun mkNested h vr =
 (*--------------------------------------------------------------------------*)
 fun mkUnion []  = raise EmptyOperands
 |   mkUnion [x] = x
-|   mkUnion xs  =
-let
-
-  val nesteds : ( ( variable , hom list ref ) HT.hash_table )
-      = (HT.mkTable( Variable.hash , Variable.eq ) ( 10000, DoNotPanic ))
-
-  fun unionHelper ( h, operands ) =
-  case #1 h of
-
-    Union ys      => foldr unionHelper operands ys
-
-  | Nested(g,v)   => (case HT.find nesteds v of
-                       NONE    => HT.insert nesteds ( v, ref [g] )
-                     | SOME hs => hs := !hs @ [g]
-                     ; operands
-                     )
-
-  | _             => h::operands
-
-  val operands = foldr unionHelper [] xs
-
-  val nesteds' = HT.foldi (fn ( v, ref hs, acc) =>
-                            (mkNested (mkUnion hs) v) :: acc
-                          )
-                          []
-                          nesteds
-
-  val operands' = nesteds' @ operands
-
-in
-  case operands' of
-    []  => raise EmptyOperands
-  | [x] => x
-  | _   => UT.unify( mkHom (Union operands') )
-end
+|   mkUnion xs  = UT.unify(mkHom(Union xs))
 
 (*--------------------------------------------------------------------------*)
 fun mkIntersection []  = raise EmptyOperands
 |   mkIntersection [x] = x
-|   mkIntersection xs  =
-  UT.unify( mkHom (Inter xs) )
+|   mkIntersection xs  = UT.unify( mkHom (Inter xs) )
 
 (*--------------------------------------------------------------------------*)
 fun mkComposition x y =
