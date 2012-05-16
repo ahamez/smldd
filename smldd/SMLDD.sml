@@ -14,7 +14,6 @@ signature SMLDD = sig
   structure Tools      : TOOLS      where type variable   = Variable.t
                                     where type values     = values
                                     where type SDD        = SDD.SDD
-                                    where type hom        = Hom.hom
 
 end (* signature SMLDD *)
 
@@ -41,7 +40,6 @@ functor SMLDDFun ( structure Variable   : VARIABLE
   structure Tools = ToolsFun( structure SDD      = SDD
                             ; structure Variable = Variable
                             ; structure Values   = Values
-                            ; structure Hom      = Hom
                             )
 
 end (* functor SMLDDFun *)

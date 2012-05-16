@@ -4,16 +4,12 @@ signature TOOLS = sig
   type SDD
   type variable
   type values
-  type hom
 
   datatype mode  = Sharing | Hierarchy
 
   val nbPaths          : SDD -> IntInf.int
-  val paths            : SDD -> (variable * values) list list
-  val valuesPaths      : SDD -> values list list
   val nbNodes          : mode -> SDD -> LargeInt.int
   val toDot            : mode -> SDD -> string
-  val homToDot         : hom -> string
 
 end (* signature TOOLS *)
 
@@ -21,9 +17,6 @@ end (* signature TOOLS *)
 functor ToolsFun ( structure SDD : SDD
                    and Variable  : VARIABLE where type t      = SDD.variable
                    and Values    : VALUES   where type values = SDD.values
-                   and Hom       : HOM      where type SDD = SDD.SDD
-                                            where type variable = SDD.variable
-                                            where type values = SDD.values
                  )
   : TOOLS
 = struct
@@ -32,7 +25,6 @@ functor ToolsFun ( structure SDD : SDD
 type SDD        = SDD.SDD
 type variable   = Variable.t
 type values     = Values.values
-type hom        = Hom.hom
 
 (*--------------------------------------------------------------------------*)
 datatype mode = Sharing | Hierarchy
@@ -64,59 +56,6 @@ let
 in
   visit node x
 end (* fun visitNbPaths *)
-
-(*--------------------------------------------------------------------------*)
-local (* paths, valuesPaths *)
-
-fun pathsBase mk x =
-let
-
-  fun zero () = raise Domain
-  fun one  () = []
-
-  val visit = SDD.mkVisitor SDD.Cached zero one
-
-  fun node _ var alpha =
-    foldl (fn ( (vl,succ), paths ) =>
-          let
-            val succPaths = visit node succ
-          in
-            case succPaths of
-
-              (* Succ was |1| *)
-              [] => (case vl of
-                      SDD.Values v => [mk (var,v)]::paths
-                    | SDD.Nested n => (visit node n) @ paths
-                    )
-
-            | _  => foldl (fn ( path, paths ) =>
-                            case vl of
-                              SDD.Values v => ((mk (var,v))::path)::paths
-                            | SDD.Nested n =>
-                                foldl (fn ( nestedPath, paths ) =>
-                                        (nestedPath @ path)::paths
-                                      )
-                                      paths
-                                      (visit node n)
-                          )
-                          paths
-                          succPaths
-          end
-          )
-          []
-          alpha
-
-in
-  visit node x
-end (* fun paths *)
-
-in (* local paths, valuesPaths *)
-
-fun paths x = pathsBase (fn (var,v) => (var,v)) x
-
-fun valuesPaths x = pathsBase (fn (_,v) => v ) x
-
-end (* local paths, valuesPaths *)
 
 (*--------------------------------------------------------------------------*)
 fun nbNodes mode x =
@@ -348,79 +287,6 @@ fun toDot mode x =
   ^ "}\n"
   else
     toDotHelper mode x
-
-(*--------------------------------------------------------------------------*)
-fun homToDot h =
-let
-
-  val cpt = ref 0
-
-  fun helper father h =
-  let
-
-    val cval = !cpt
-    val _ = cpt := !cpt + 1
-    val myUid = Hom.uid h
-    val node = "\"" ^ (Int.toString father) ^ (Int.toString myUid) ^ "\""
-    fun uid g = "\"" ^ (Int.toString cval) ^ (Int.toString (Hom.uid g)) ^ "\""
-
-    fun id _ = node ^ " [label=\"ID\"];\n"
-
-    fun cons _ _ _ = "\n"
-
-    fun const _ = "\n"
-
-    fun union hs =
-      node ^ " [label=\"+\"];\n"
-    ^ (foldl (fn (h,str) =>
-               str ^ node ^ " -> " ^ (uid h) ^ ";\n"
-             )
-             ""
-             hs
-      )
-    ^ (foldl (fn (h,str) => str ^ (helper cval h)) "" hs)
-
-    fun inter hs =
-      node ^ " [label=\"^\"];\n"
-    ^ (foldl (fn (h,str) =>
-               str ^ node ^ " -> " ^ (uid h) ^ ";\n"
-             )
-             ""
-             hs
-      )
-    ^ (foldl (fn (h,str) => str ^ (helper cval h)) "" hs)
-
-    fun comp f g =
-      node ^ " [label=\"o\"];\n"
-    ^ node ^ " -> " ^ (uid f) ^ " [label=\"left\"];\n"
-    ^ node ^ " -> " ^ (uid g) ^ " [label=\"right\"];\n"
-    ^ (helper cval f)
-    ^ (helper cval g)
-
-    fun fixpoint h =
-      node ^ " [label=\"*\"];\n"
-    ^ node ^ " -> " ^ (uid h) ^ ";\n"
-    ^ (helper cval h)
-
-    fun nested h v =
-      node ^ " [label=\"Nested(" ^ (Variable.toString v) ^ ")\"];\n"
-    ^ node ^ " -> " ^ (uid h) ^ ";\n"
-    ^ (helper cval h)
-
-    fun inductive _ = "inductive"
-
-    val visitor = Hom.mkVisitor ()
-    val visit = visitor id cons const union inter comp fixpoint
-                        nested inductive
-  in
-    visit h
-  end
-
-in
-  "digraph hom {\n\n"
-^ (helper (!cpt) h)
-^ "}\n"
-end
 
 (*--------------------------------------------------------------------------*)
 end (* fun ToolsFun *)

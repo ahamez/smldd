@@ -10,10 +10,6 @@ print "\nTest Util\n";
 SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
                                  ( TestUtil.suite() );
 
-print "\nTest Tools\n";
-SMLUnit.TextUITestRunner.runTest { output = TextIO.stdOut }
-                                 ( TestTools.suite() );
-
 testDot();
 
 print "\n";
