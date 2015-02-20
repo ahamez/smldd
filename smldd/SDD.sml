@@ -392,7 +392,7 @@ fun checkCompatibility []      = raise DoNotPanic
 
   foldl (fn ( (sx,_), y as (sy,_) ) =>
         case (sx,sy) of
-            (* All |0| shhould have been filtered before calling the cache *)
+            (* All |0| should have been filtered before calling the cache *)
             (Zero,_)  => raise DoNotPanic
           | (_,Zero)  => raise DoNotPanic
           | (One,One) => y
